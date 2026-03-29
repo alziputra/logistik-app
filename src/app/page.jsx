@@ -258,15 +258,25 @@ export default function SuratSerahTerimaApp() {
     e.preventDefault();
     if (!db) return;
     
+    // 1. Tangkap semua isian form
     const form = new FormData(e.target);
     const namaBarang = form.get("nama");
+    
+    // 2. Susun data baru (termasuk data vendor dan kontrak)
     const newInv = {
       nama: namaBarang,
-      stok: Number(form.get("stok")),
-      satuan: form.get("satuan"),
+      stok: Number(form.get("stok")) || 0,
+      satuan: form.get("satuan") || "Pcs",
+      vendor_nama: form.get("vendor_nama") || "",
+      no_spk: form.get("no_spk") || "",
+      no_pks: form.get("no_pks") || "",
+      tanggal_mulai: form.get("tanggal_mulai") || "",
+      tanggal_selesai: form.get("tanggal_selesai") || "",
+      masa_sewa_bulan: Number(form.get("masa_sewa_bulan")) || 0,
+      created_at: new Date().toISOString(),
     };
 
-    // CEK DUPLIKAT: Jangan biarkan admin membuat 2 barang dengan nama sama
+    // 3. CEK DUPLIKAT: Jangan biarkan admin membuat 2 barang dengan nama sama
     const isDuplicate = inventory.some(
       (i) => i.nama.toLowerCase() === namaBarang.toLowerCase()
     );
@@ -276,13 +286,21 @@ export default function SuratSerahTerimaApp() {
     }
 
     try {
-      const invRef = collection(db, "artifacts", appId, "public", "data", "inventory");
+      // 4. PERBAIKAN PATH FIREBASE
+      // Gunakan fallback "logistikku_app_01" jika process.env.NEXT_PUBLIC_APP_ID kosong/undefined
+      const safeAppId = appId || "logistikku_app_01";
+      
+      const invRef = collection(db, "artifacts", safeAppId, "public", "data", "inventory");
+      
+      // 5. Simpan ke Firebase
       await addDoc(invRef, newInv);
+      
       showNotif("Master barang berhasil ditambahkan!");
-      e.target.reset();
+      e.target.reset(); // Kosongkan form setelah berhasil
+      
     } catch (error) {
-      console.error(error);
-      showNotif("Gagal menambah barang", "error");
+      console.error("Firebase Error:", error);
+      showNotif("Gagal menambah barang. Cek koneksi atau aturan Firebase.", "error");
     }
   };
 

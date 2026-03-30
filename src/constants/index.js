@@ -15,7 +15,7 @@ export const createInitialFormData = () => ({
   lokasi: "Jakarta",
 
   // Format Flat Keys
-  pengirimNama: "Ahmad Dendi Saputra",
+  pengirimNama: "Ahmad Dendy Syaputra",
   pengirimJabatan: "Staff Logistik",
   pengirimInstansi: "Departemen Logistik",
 

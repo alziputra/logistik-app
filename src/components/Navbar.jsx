@@ -7,10 +7,11 @@ import {
   Database,
   Plus,
   Menu,
-  X
+  X,
+  LogOut
 } from "lucide-react";
 
-const Navbar = ({ view, setView, startNewDocument }) => {
+const Navbar = ({ view, setView, startNewDocument, handleLogout }) => {
   // State untuk mengontrol buka/tutup menu di mobile
   const [isOpen, setIsOpen] = useState(false);
 
@@ -111,9 +112,15 @@ const Navbar = ({ view, setView, startNewDocument }) => {
 
         {/* Footer Sidebar */}
         <div className="p-4 border-t border-gray-100 shrink-0">
+          <button
+            onClick={handleLogout}
+            className="w-full py-2.5 px-4 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-colors"
+          >
+            <LogOut className="w-4 h-4" /> Keluar Sistem
+          </button>
           <p className="text-xs text-center text-gray-400 font-medium">
             © 2026 Departemen Logistik
-            Developed by alzi rahmana
+            Developed by alzi rahmana putra
           </p>
         </div>
       </aside>

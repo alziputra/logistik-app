@@ -1,9 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {
-  CheckCircle,
-} from "lucide-react";
+import { CheckCircle } from "lucide-react";
 
 // ✅ IMPORT CONSTANTS (RELATIVE PATH)
 import {
@@ -23,9 +21,8 @@ import {
 } from "firebase/firestore";
 
 import {
-  signInAnonymously,
-  signInWithCustomToken,
   onAuthStateChanged,
+  signOut
 } from "firebase/auth";
 
 // ✅ IMPORT COMPONENTS
@@ -34,9 +31,11 @@ import DashboardView from "../components/DashboardView";
 import AdminView from "../components/AdminView";
 import FormView from "../components/FormView";
 import PreviewView from "../components/PreviewView";
+import LoginView from "../components/LoginView";
 
 export default function SuratSerahTerimaApp() {
   const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [view, setView] = useState("dashboard");
   const [notification, setNotification] = useState({
     show: false,
@@ -56,37 +55,39 @@ export default function SuratSerahTerimaApp() {
   const appId = process.env.NEXT_PUBLIC_APP_ID;
 
   // ==============================
-  // AUTH
+  // AUTHENTICATION LOGIC
   // ==============================
   useEffect(() => {
-    const initAuth = async () => {
-      if (!auth) return;
-      try {
-        if (typeof __initial_auth_token !== "undefined" && __initial_auth_token) {
-          await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-          await signInAnonymously(auth);
-        }
-      } catch (e) {
-        console.error("Auth error", e);
-      }
-    };
+    if (!auth) return;
+    
+    // Dengarkan perubahan status login
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setAuthLoading(false); // Selesai memuat
+    });
 
-    initAuth();
-
-    if (auth) {
-      const unsubscribe = onAuthStateChanged(auth, setUser);
-      return () => unsubscribe();
-    }
+    return () => unsubscribe();
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setView("dashboard"); // Reset tampilan saat login lagi nanti
+    } catch (error) {
+      showNotif("Gagal logout", "error");
+    }
+  };
+
   // ==============================
-  // FIRESTORE
+  // FIRESTORE (Data Fetching)
   // ==============================
   useEffect(() => {
     if (!user || !db) return;
 
-    const invRef = collection(db, "artifacts", appId, "public", "data", "inventory");
+    // Tambahkan fallback appId di sini juga untuk berjaga-jaga
+    const safeAppId = appId || "logistikku_app_01";
+
+    const invRef = collection(db, "artifacts", safeAppId, "public", "data", "inventory");
     const unsubInv = onSnapshot(
       invRef,
       (snap) => {
@@ -95,7 +96,7 @@ export default function SuratSerahTerimaApp() {
       console.error
     );
 
-    const trxRef = collection(db, "artifacts", appId, "public", "data", "transactions");
+    const trxRef = collection(db, "artifacts", safeAppId, "public", "data", "transactions");
     const unsubTrx = onSnapshot(
       trxRef,
       (snap) => {
@@ -111,7 +112,7 @@ export default function SuratSerahTerimaApp() {
       unsubInv();
       unsubTrx();
     };
-  }, [user]);
+  }, [user, appId]); // Tambahkan appId sebagai dependency
 
   // ==============================
   // HELPERS
@@ -187,8 +188,10 @@ export default function SuratSerahTerimaApp() {
     if (!user || !db) return showNotif("Database tidak tersedia", "error");
 
     try {
+      const safeAppId = appId || "logistikku_app_01";
+      
       // 1. Simpan riwayat transaksi
-      const trxRef = collection(db, "artifacts", appId, "public", "data", "transactions");
+      const trxRef = collection(db, "artifacts", safeAppId, "public", "data", "transactions");
       const newTrx = {
         ...formData,
         items, // Tetap simpan array 'items' asli agar S/N tercatat satu per satu
@@ -227,13 +230,13 @@ export default function SuratSerahTerimaApp() {
 
         if (invItem) {
           // JIKA BARANG SUDAH ADA: Gunakan increment() agar aman dari bentrok
-          const itemRef = doc(db, "artifacts", appId, "public", "data", "inventory", invItem.id);
+          const itemRef = doc(db, "artifacts", safeAppId, "public", "data", "inventory", invItem.id);
           await updateDoc(itemRef, {
             stok: increment(diff),
           });
         } else {
           // JIKA BARANG BARU DITULIS MANUAL: Buatkan master barunya
-          const invRef = collection(db, "artifacts", appId, "public", "data", "inventory");
+          const invRef = collection(db, "artifacts", safeAppId, "public", "data", "inventory");
           await addDoc(invRef, {
             nama: item.nama,
             stok: diff, 
@@ -286,8 +289,7 @@ export default function SuratSerahTerimaApp() {
     }
 
     try {
-      // 4. PERBAIKAN PATH FIREBASE
-      // Gunakan fallback "logistikku_app_01" jika process.env.NEXT_PUBLIC_APP_ID kosong/undefined
+      // 4. Gunakan fallback appId
       const safeAppId = appId || "logistikku_app_01";
       
       const invRef = collection(db, "artifacts", safeAppId, "public", "data", "inventory");
@@ -307,6 +309,27 @@ export default function SuratSerahTerimaApp() {
   // ==============================
   // RENDER
   // ==============================
+  // Mencegah layar berkedip saat mengecek status login
+  if (authLoading) {
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Memuat sistem...</div>;
+  }
+
+  // Jika belum login, tampilkan layar Login
+  if (!user) {
+    return (
+      <>
+        {notification.show && (
+          <div className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-5 py-3 rounded-xl shadow-xl text-white ${
+            notification.type === "success" ? "bg-green-600" : "bg-red-500"
+          }`}>
+            <span>{notification.message}</span>
+          </div>
+        )}
+        <LoginView showNotif={showNotif} />
+      </>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 pb-12 font-sans text-gray-900 pt-16 md:pt-0 md:pl-64 print:pl-0 print:pt-0">
       {notification.show && (
@@ -318,7 +341,13 @@ export default function SuratSerahTerimaApp() {
         </div>
       )}
 
-      <Navbar view={view} setView={setView} startNewDocument={startNewDocument} />
+      {/*  Menambahkan handleLogout ke Navbar */}
+      <Navbar 
+        view={view} 
+        setView={setView} 
+        startNewDocument={startNewDocument} 
+        handleLogout={handleLogout} 
+      />
 
       {view === "dashboard" && (
         <DashboardView

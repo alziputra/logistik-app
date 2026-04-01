@@ -24,7 +24,7 @@ export const createInitialFormData = () => ({
   penerimaInstansi: "",
 
   mengetahuiNama: "Zoni Rahmawan Putra",
-  mengetahuiJabatan: "Kepala Bagian Logistik",
+  mengetahuiJabatan: "Kepala Bagian Pengadaan dan Logistik",
 });
 
 export const createInitialItem = () => ({

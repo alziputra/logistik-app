@@ -79,6 +79,45 @@ export default function SuratSerahTerimaApp() {
   };
 
   // ==============================
+  // FITUR AUTO LOGOUT (IDLE TIMEOUT 15 MENIT)
+  // ==============================
+  useEffect(() => {
+    // Jika belum login, tidak perlu menjalankan timer
+    if (!user) return;
+
+    let timeoutId;
+    // 15 menit = 15 * 60 detik * 1000 milidetik = 900.000 ms
+    // const IDLE_TIME = 5* 1000; // Untuk testing, set ke 5 detik saja 
+    const IDLE_TIME = 10 * 60 * 1000; // 10 menit
+
+    const resetTimer = () => {
+      // Hapus timer lama
+      if (timeoutId) clearTimeout(timeoutId);
+      
+      // Buat timer baru
+      timeoutId = setTimeout(() => {
+        handleLogout(); // Lakukan logout
+        showNotif("Sesi telah habis karena tidak ada aktivitas. Silakan login kembali.", "error");
+      }, IDLE_TIME);
+    };
+
+    // Daftar aktivitas yang akan me-reset timer (gerak mouse, klik, ketik, sentuh layar HP)
+    const events = ["mousemove", "mousedown", "keypress", "touchstart", "scroll"];
+    
+    // Pasang sensor (event listener) ke seluruh halaman
+    events.forEach((event) => window.addEventListener(event, resetTimer));
+
+    // Jalankan timer untuk pertama kalinya saat login
+    resetTimer();
+
+    // BERSIHKAN sensor saat komponen ditutup atau user logout (agar tidak memberatkan memori)
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      events.forEach((event) => window.removeEventListener(event, resetTimer));
+    };
+  }, [user]); // Effect ini akan berjalan ulang setiap kali status 'user' berubah
+
+  // ==============================
   // FIRESTORE (Data Fetching)
   // ==============================
   useEffect(() => {
@@ -356,6 +395,7 @@ export default function SuratSerahTerimaApp() {
           setItems={setItems}
           setActiveTransaction={setActiveTransaction}
           setView={setView}
+          user={user}
         />
       )}
 

@@ -7,10 +7,12 @@ import {
   ArrowLeft, 
   Search, 
   Download,
-  FileText
+  FileText,
+  User // Pastikan ikon User di-import
 } from "lucide-react";
 
-const DashboardView = ({ transactions, setFormData, setItems, setActiveTransaction, setView }) => {
+// Terima props `user` dari komponen induk
+const DashboardView = ({ transactions, setFormData, setItems, setActiveTransaction, setView, user }) => {
   // STATE UNTUK PENCARIAN
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -105,7 +107,22 @@ const DashboardView = ({ transactions, setFormData, setItems, setActiveTransacti
 
   return (
     <div className="max-w-7xl mx-auto p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Dashboard Logistik</h2>
+      {/* HEADER DASHBOARD DENGAN INFO USER */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+        <h2 className="text-2xl font-bold text-gray-800">Dashboard Logistik</h2>
+        
+        {/* Tampilkan profil user jika data user tersedia */}
+        {user && (
+          <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200">
+            <div className="bg-blue-100 p-2 rounded-full flex-shrink-0">
+              <User className="w-5 h-5 text-blue-600" />
+            </div>
+            <div className="text-sm">
+              <p className="font-bold text-gray-800 leading-tight">{user.email}</p>
+            </div>
+          </div>
+        )}
+      </div>
       
       {/* CARD STATISTIK */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">

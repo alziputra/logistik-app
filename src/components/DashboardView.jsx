@@ -112,7 +112,7 @@ const DashboardView = ({ view, transactions, setFormData, setItems, setActiveTra
               <BarChart3 className="w-5 h-5 text-purple-600" />
             </div>
             <div>
-              <h3 className="font-bold text-lg text-gray-800">Visualisasi Stok Barang</h3>
+              <h3 className="font-bold text-lg text-gray-800">Stok Barang</h3>
               <p className="text-sm text-gray-500">Grafik keseluruhan ketersediaan barang di gudang saat ini</p>
             </div>
           </div>

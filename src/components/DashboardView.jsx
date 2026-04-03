@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { 
   History, Plus, ArrowLeft, Search, Download, FileText, 
-  User, Activity, BarChart3, Package 
+  User, Activity, BarChart3, Package, AlertTriangle, Clock 
 } from "lucide-react";
 
-// Menerima prop 'inventory'
-const DashboardView = ({ view, transactions, setFormData, setItems, setActiveTransaction, setView, user, inventory = [] }) => {
+// Menerima prop 'inventory' dan 'notifSewa'
+const DashboardView = ({ view, transactions, setFormData, setItems, setActiveTransaction, setView, user, inventory = [], notifSewa = [] }) => {
   const [searchQuery, setSearchQuery] = useState("");
 
   // ==============================
@@ -26,10 +26,7 @@ const DashboardView = ({ view, transactions, setFormData, setItems, setActiveTra
   // ==============================
   // PERSIAPAN DATA GRAFIK BARANG
   // ==============================
-  // PERBAIKAN: Gunakan Number() untuk memastikan stok dibaca sebagai angka, bukan teks
   const chartData = [...inventory].sort((a, b) => Number(b.stok) - Number(a.stok));
-  
-  // Mencari nilai stok tertinggi untuk menghitung persentase tinggi balok grafik
   const maxStok = chartData.length > 0 ? Math.max(...chartData.map((i) => Number(i.stok))) : 1;
 
   // ==============================
@@ -71,124 +68,186 @@ const DashboardView = ({ view, transactions, setFormData, setItems, setActiveTra
   // ==========================================================
   if (view === "dashboard") {
     return (
-      <div className="max-w-7xl mx-auto p-6 animate-in fade-in duration-300">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-          <h2 className="text-2xl font-bold text-gray-800">Dashboard Logistik</h2>
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 animate-in fade-in duration-300">
+        
+        {/* HEADER */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-3">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-800 tracking-tight">Dashboard Logistik</h2>
           {user && (
-            <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-full shadow-sm border border-gray-200">
-              <div className="bg-blue-100 p-2 rounded-full flex-shrink-0">
-                <User className="w-5 h-5 text-blue-600" />
+            <div className="flex items-center gap-2.5 bg-white px-3 py-1.5 rounded-full shadow-sm border border-gray-200">
+              <div className="bg-blue-100 p-1.5 rounded-full flex-shrink-0">
+                <User className="w-4 h-4 text-blue-600" />
               </div>
-              <div className="text-sm">
-                <p className="text-gray-500 text-xs font-medium leading-tight">Admin Aktif:</p>
-                <p className="font-bold text-gray-800 leading-tight">{user.email}</p>
+              <div className="text-sm pr-1">
+                <p className="text-gray-500 text-[10px] font-medium leading-tight uppercase tracking-wide">Admin Aktif</p>
+                <p className="font-bold text-gray-800 text-xs leading-tight">{user.email}</p>
               </div>
             </div>
           )}
         </div>
         
         {/* CARD STATISTIK */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-            <div className="bg-blue-100 p-4 rounded-full"><History className="w-6 h-6 text-blue-600" /></div>
-            <div><p className="text-sm text-gray-500">Total Transaksi</p><p className="text-2xl font-bold">{stats.total}</p></div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-3">
+            <div className="bg-blue-100 p-3 rounded-xl"><History className="w-5 h-5 text-blue-600" /></div>
+            <div><p className="text-xs text-gray-500 font-medium">Total Transaksi</p><p className="text-xl font-bold text-gray-800">{stats.total}</p></div>
           </div>
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-            <div className="bg-green-100 p-4 rounded-full"><Plus className="w-6 h-6 text-green-600" /></div>
-            <div><p className="text-sm text-gray-500">Masuk (Bulan Ini)</p><p className="text-2xl font-bold">{stats.masuk}</p></div>
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-3">
+            <div className="bg-green-100 p-3 rounded-xl"><Plus className="w-5 h-5 text-green-600" /></div>
+            <div><p className="text-xs text-gray-500 font-medium">Masuk (Bulan Ini)</p><p className="text-xl font-bold text-gray-800">{stats.masuk}</p></div>
           </div>
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
-            <div className="bg-orange-100 p-4 rounded-full"><ArrowLeft className="w-6 h-6 text-orange-600 transform rotate-180" /></div>
-            <div><p className="text-sm text-gray-500">Keluar (Bulan Ini)</p><p className="text-2xl font-bold">{stats.keluar}</p></div>
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-3">
+            <div className="bg-orange-100 p-3 rounded-xl"><ArrowLeft className="w-5 h-5 text-orange-600 transform rotate-180" /></div>
+            <div><p className="text-xs text-gray-500 font-medium">Keluar (Bulan Ini)</p><p className="text-xl font-bold text-gray-800">{stats.keluar}</p></div>
           </div>
         </div>
 
-        {/* ======================= */}
-        {/* GRAFIK STOK BARANG */}
-        {/* ======================= */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
-          <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
-            <div className="bg-purple-100 p-2.5 rounded-xl">
-              <BarChart3 className="w-5 h-5 text-purple-600" />
-            </div>
-            <div>
-              <h3 className="font-bold text-lg text-gray-800">Stok Barang</h3>
-              <p className="text-sm text-gray-500">Grafik keseluruhan ketersediaan barang di gudang saat ini</p>
-            </div>
-          </div>
-          
-          <div className="p-6">
-            {chartData.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-gray-500">
-                <Package className="w-12 h-12 text-gray-300 mb-3" />
-                <p>Belum ada data stok barang.</p>
+        {/* AREA NOTIFIKASI MASA SEWA */}
+        {notifSewa && notifSewa.length > 0 && (
+          <div className="bg-red-50/80 rounded-xl shadow-sm border border-red-100 overflow-hidden mb-5 animate-in slide-in-from-bottom-4 duration-500">
+            <div className="px-5 py-3 border-b border-red-100/50 flex justify-between items-center gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="bg-red-100 p-1.5 rounded-full animate-pulse">
+                  <AlertTriangle className="w-4 h-4 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-sm text-red-800">Perhatian: Masa Sewa Segera Habis!</h3>
+                  <p className="text-xs text-red-600 font-medium">Terdapat {notifSewa.length} perangkat printer yang memerlukan perpanjangan.</p>
+                </div>
               </div>
-            ) : (
-              // Kontainer utama grafik
-              <div className="flex items-end gap-3 h-72 overflow-x-auto custom-scrollbar pb-2 pt-8 px-2">
-                {chartData.map((item) => {
-                  const stokValue = Number(item.stok);
-                  const heightPct = maxStok > 0 ? (stokValue / maxStok) * 100 : 0;
-                  
-                  return (
-                    // PERBAIKAN: Menambahkan 'h-full' agar wadah mengambil tinggi maksimal
-                    <div key={item.id} className="flex flex-col items-center shrink-0 w-24 group h-full">
-                      
-                      {/* Area khusus untuk batang grafik, menggunakan flex-1 agar memenuhi ruang */}
-                      <div className="w-full flex-1 flex flex-col justify-end relative">
-                        {/* Batang Grafik */}
-                        <div 
-                          className="w-full bg-purple-500 hover:bg-purple-400 rounded-t-md transition-all relative flex flex-col justify-end shadow-sm cursor-pointer"
-                          style={{ height: `${heightPct}%`, minHeight: '4px' }}
-                          title={`${item.nama} \nStok: ${stokValue} ${item.satuan || ''}`}
-                        >
-                          {/* Label Angka Stok di atas batang */}
-                          <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-gray-700 bg-white px-1.5 rounded border border-gray-100">
-                            {stokValue}
+              <button onClick={() => setView("perangkat_printer")} className="hidden sm:block text-xs font-bold text-red-600 hover:text-red-800 transition-colors bg-white/60 px-3 py-1.5 rounded-lg border border-red-100 hover:bg-white">
+                Kelola &rarr;
+              </button>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs whitespace-nowrap">
+                <thead className="text-red-700 bg-red-100/30 font-medium">
+                  <tr>
+                    <th className="px-5 py-2.5">Outlet</th>
+                    <th className="px-5 py-2.5">Hardware</th>
+                    <th className="px-5 py-2.5">Serial Number</th>
+                    <th className="px-5 py-2.5 text-right">Sisa Waktu</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-red-100/50">
+                  {notifSewa.slice(0, 3).map((printer) => ( // Dibatasi 3 saja di dashboard agar tidak kepanjangan
+                    <tr key={printer.id} className="hover:bg-red-50/50 transition-colors">
+                      <td className="px-5 py-2.5 font-semibold text-red-900">{printer.outlet}</td>
+                      <td className="px-5 py-2.5 text-red-800">{printer.produk}</td>
+                      <td className="px-5 py-2.5 text-red-800 font-mono">{printer.sn}</td>
+                      <td className="px-5 py-2.5 text-right">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-100 text-red-700 rounded font-bold text-[10px]">
+                          <Clock className="w-3 h-3" />
+                          {printer.sisaBulan === 0 ? "< 1 bln" : `${printer.sisaBulan} bln`}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {notifSewa.length > 3 && (
+              <div className="text-center py-2 bg-red-50 text-xs text-red-600 font-medium border-t border-red-100/50 cursor-pointer hover:bg-red-100 transition-colors" onClick={() => setView("perangkat_printer")}>
+                Lihat {notifSewa.length - 3} perangkat lainnya...
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* MAIN GRID: GRAFIK (KIRI) & AKTIVITAS (KANAN) */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          
+          {/* KIRI: GRAFIK STOK */}
+          <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col">
+            <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/30 flex items-center gap-3 shrink-0">
+              <div className="bg-purple-100 p-2 rounded-lg">
+                <BarChart3 className="w-4 h-4 text-purple-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-sm text-gray-800">Visualisasi Stok Gudang</h3>
+              </div>
+            </div>
+            
+            <div className="p-4 flex-1 flex flex-col justify-end">
+              {chartData.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full py-10 text-gray-400">
+                  <Package className="w-10 h-10 mb-2 opacity-50" />
+                  <p className="text-sm">Belum ada data stok.</p>
+                </div>
+              ) : (
+                <div className="flex items-end gap-2 h-56 overflow-x-auto custom-scrollbar pb-2 pt-6 px-1">
+                  {chartData.map((item) => {
+                    const stokValue = Number(item.stok);
+                    const heightPct = maxStok > 0 ? (stokValue / maxStok) * 100 : 0;
+                    return (
+                      <div key={item.id} className="flex flex-col items-center shrink-0 w-20 group h-full">
+                        <div className="w-full flex-1 flex flex-col justify-end relative">
+                          <div 
+                            className="w-full bg-gradient-to-t from-purple-500 to-purple-400 hover:from-purple-400 hover:to-purple-300 rounded-t-md transition-all relative flex flex-col justify-end shadow-sm cursor-pointer"
+                            style={{ height: `${heightPct}%`, minHeight: '4px' }}
+                            title={`${item.nama} \nStok: ${stokValue} ${item.satuan || ''}`}
+                          >
+                            <span className="absolute -top-5 left-1/2 -translate-x-1/2 text-[10px] font-bold text-gray-600 bg-white/90 backdrop-blur-sm px-1.5 rounded shadow-sm border border-gray-100 opacity-0 group-hover:opacity-100 transition-opacity">
+                              {stokValue}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="h-8 mt-2 w-full flex justify-center items-start">
+                          <span className="text-[10px] text-gray-500 text-center line-clamp-2 leading-tight px-1 font-medium" title={item.nama}>
+                            {item.nama}
                           </span>
                         </div>
                       </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
 
-                      {/* Label Nama Barang dengan area tinggi tetap (h-10) di bawah */}
-                      <div className="h-10 mt-3 w-full flex justify-center items-start">
-                        <span className="text-[11px] text-gray-600 text-center line-clamp-2 leading-tight px-1 font-medium" title={item.nama}>
-                          {item.nama}
+          {/* KANAN: AKTIVITAS TERBARU */}
+          <div className="lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col">
+            <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/30 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="bg-blue-100 p-2 rounded-lg">
+                  <Activity className="w-4 h-4 text-blue-600" />
+                </div>
+                <h3 className="font-bold text-sm text-gray-800">Aktivitas Terakhir</h3>
+              </div>
+            </div>
+            
+            <div className="p-0 flex-1 overflow-y-auto custom-scrollbar max-h-[300px] lg:max-h-none">
+              {transactions.length === 0 ? (
+                <div className="p-8 text-center text-gray-400 text-sm">
+                  Belum ada aktivitas.
+                </div>
+              ) : (
+                <div className="divide-y divide-gray-50">
+                  {transactions.slice(0, 5).map((trx) => (
+                    <div key={trx.id} className="p-4 hover:bg-gray-50 transition-colors flex flex-col gap-2">
+                      <div className="flex justify-between items-start">
+                        <p className="font-bold text-sm text-gray-800 leading-none">{trx.nomorSurat}</p>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-wide ${trx.jenisTransaksi === "Barang Masuk" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>
+                          {trx.jenisTransaksi === "Barang Masuk" ? "MASUK" : "KELUAR"}
                         </span>
                       </div>
-
+                      <div className="text-xs text-gray-500 flex items-center gap-1.5 mt-1">
+                        <span className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">{trx.tanggal}</span>
+                        <span className="truncate">{trx.pengirimNama} ➔ {trx.penerimaNama}</span>
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            {transactions.length > 5 && (
+              <button onClick={() => setView("riwayat")} className="w-full p-3 text-xs font-bold text-blue-600 bg-gray-50 hover:bg-blue-50 transition-colors border-t border-gray-100">
+                Lihat Semua Riwayat &rarr;
+              </button>
             )}
           </div>
-        </div>
-
-        {/* INFO TAMBAHAN: AKTIVITAS TERBARU */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
-            <Activity className="w-5 h-5 text-blue-600" />
-            <h3 className="font-bold text-lg text-gray-800">5 Transaksi Terakhir</h3>
-          </div>
-          <div className="p-0">
-            {transactions.length === 0 ? (
-              <p className="p-8 text-center text-gray-500">Belum ada aktivitas transaksi.</p>
-            ) : (
-              <div className="divide-y divide-gray-100">
-                {transactions.slice(0, 5).map((trx) => (
-                  <div key={trx.id} className="p-4 px-6 hover:bg-gray-50 flex justify-between items-center transition-colors">
-                    <div>
-                      <p className="font-semibold text-gray-800">{trx.nomorSurat}</p>
-                      <p className="text-sm text-gray-500">{trx.tanggal} • {trx.pengirimNama} ➔ {trx.penerimaNama}</p>
-                    </div>
-                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${trx.jenisTransaksi === "Barang Masuk" ? "bg-green-50 text-green-700" : "bg-orange-50 text-orange-700"}`}>
-                      {trx.jenisTransaksi}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          
         </div>
       </div>
     );
@@ -199,68 +258,67 @@ const DashboardView = ({ view, transactions, setFormData, setItems, setActiveTra
   // ==========================================================
   if (view === "riwayat") {
     return (
-      <div className="max-w-7xl mx-auto p-6 animate-in fade-in duration-300">
-        <h2 className="text-2xl font-bold text-gray-800 mb-6">Pusat Riwayat Transaksi</h2>
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 animate-in fade-in duration-300">
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-5 tracking-tight">Pusat Riwayat Transaksi</h2>
         
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div>
-              <h3 className="font-bold text-lg text-gray-800">Data Transaksi</h3>
-              <p className="text-sm text-gray-500 mt-1">Gunakan kotak pencarian untuk mencari riwayat secara spesifik.</p>
+              <h3 className="font-bold text-sm text-gray-800">Daftar Log Transaksi</h3>
             </div>
             
-            <div className="flex flex-col sm:flex-row w-full lg:w-auto gap-3 items-center">
-              <div className="relative w-full sm:w-72">
-                <Search className="h-4 w-4 text-gray-400 absolute left-3 top-3.5" />
-                <input type="text" placeholder="Cari no surat, barang, pihak..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm transition-all shadow-sm" />
+            <div className="flex flex-col sm:flex-row w-full lg:w-auto gap-2 items-center">
+              <div className="relative w-full sm:w-64">
+                <Search className="h-4 w-4 text-gray-400 absolute left-3 top-2.5" />
+                <input type="text" placeholder="Cari data..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm shadow-sm transition-all" />
               </div>
-              <button onClick={exportToExcel} disabled={filteredTransactions.length === 0} className="w-full sm:w-auto px-5 py-2.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap">
-                <Download className="w-4 h-4" /> Export Excel
+              <button onClick={exportToExcel} disabled={filteredTransactions.length === 0} className="w-full sm:w-auto px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white font-medium rounded-lg text-sm transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap">
+                <Download className="w-4 h-4" /> Export CSV
               </button>
             </div>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left min-w-[1000px]">
+            <table className="w-full text-left min-w-[900px] text-sm">
               <thead>
-                <tr className="text-sm text-gray-500 border-b border-gray-100 bg-white">
-                  <th className="p-4 font-semibold w-28">Tanggal</th>
-                  <th className="p-4 font-semibold w-48">No. Surat</th>
-                  <th className="p-4 font-semibold w-36">Jenis</th>
-                  <th className="p-4 font-semibold min-w-[200px]">Barang Terkait</th>
-                  <th className="p-4 font-semibold min-w-[200px]">Pihak Terlibat</th>
-                  <th className="p-4 font-semibold text-right w-36">Aksi</th>
+                <tr className="text-xs text-gray-500 border-b border-gray-100 bg-white uppercase tracking-wide">
+                  <th className="py-3 px-5 font-semibold w-28">Tanggal</th>
+                  <th className="py-3 px-5 font-semibold w-44">No. Surat</th>
+                  <th className="py-3 px-5 font-semibold w-32">Jenis</th>
+                  <th className="py-3 px-5 font-semibold min-w-[200px]">Barang Terkait</th>
+                  <th className="py-3 px-5 font-semibold min-w-[200px]">Pihak Terlibat</th>
+                  <th className="py-3 px-5 font-semibold text-right w-28">Aksi</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-gray-50">
                 {transactions.length === 0 ? (
-                  <tr><td colSpan="6" className="py-16 text-center text-gray-500"><FileText className="w-16 h-16 mx-auto text-gray-300 mb-4" /><p className="font-medium text-gray-600">Belum ada transaksi.</p></td></tr>
+                  <tr><td colSpan="6" className="py-12 text-center text-gray-500"><FileText className="w-12 h-12 mx-auto text-gray-300 mb-3" /><p className="font-medium text-sm">Belum ada transaksi.</p></td></tr>
                 ) : filteredTransactions.length === 0 ? (
-                  <tr><td colSpan="6" className="py-16 text-center text-gray-500"><Search className="w-12 h-12 mx-auto text-gray-300 mb-4" /><p className="font-medium text-gray-600">Transaksi tidak ditemukan</p></td></tr>
+                  <tr><td colSpan="6" className="py-12 text-center text-gray-500"><Search className="w-10 h-10 mx-auto text-gray-300 mb-3" /><p className="font-medium text-sm">Data tidak ditemukan</p></td></tr>
                 ) : (
                   filteredTransactions.map((trx) => (
-                    <tr key={trx.id} className="border-b border-gray-50 hover:bg-gray-50/80 transition-colors">
-                      <td className="p-4 text-sm text-gray-600">{trx.tanggal}</td>
-                      <td className="p-4 font-semibold text-sm text-gray-800">{trx.nomorSurat}</td>
-                      <td className="p-4">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${trx.jenisTransaksi === "Barang Masuk" ? "bg-green-50 text-green-700 border border-green-100" : "bg-orange-50 text-orange-700 border border-orange-100"}`}>{trx.jenisTransaksi}</span>
+                    <tr key={trx.id} className="hover:bg-gray-50/80 transition-colors">
+                      <td className="py-3 px-5 text-gray-600 font-medium">{trx.tanggal}</td>
+                      <td className="py-3 px-5 font-bold text-gray-800">{trx.nomorSurat}</td>
+                      <td className="py-3 px-5">
+                        <span className={`inline-flex px-2 py-1 rounded text-[11px] font-bold tracking-wide border ${trx.jenisTransaksi === "Barang Masuk" ? "bg-green-50 text-green-700 border-green-100" : "bg-orange-50 text-orange-700 border-orange-100"}`}>{trx.jenisTransaksi}</span>
                       </td>
-                      <td className="p-4 text-sm text-gray-700">
+                      <td className="py-3 px-5 text-gray-700">
                         {trx.items && trx.items.length > 0 ? (
-                          <div className="line-clamp-2" title={trx.items.map(i => i.nama).join(", ")}>
+                          <div className="line-clamp-2 text-xs" title={trx.items.map(i => i.nama).join(", ")}>
                             {trx.items.map((i, idx) => (
-                              <span key={i.id || idx}>{i.nama} <span className="text-gray-400 text-xs">({i.kuantitas})</span>{idx < trx.items.length - 1 ? ", " : ""}</span>
+                              <span key={i.id || idx}>{i.nama} <span className="text-gray-400">({i.kuantitas})</span>{idx < trx.items.length - 1 ? ", " : ""}</span>
                             ))}
                           </div>
-                        ) : <span className="text-gray-400 italic">-</span>}
+                        ) : <span className="text-gray-400 italic text-xs">-</span>}
                       </td>
-                      <td className="p-4 text-sm">
-                        <p className="text-gray-800 font-medium">{trx.pengirimNama || "?"}</p>
-                        <p className="text-gray-400 text-xs mt-0.5 flex items-center gap-1"><ArrowLeft className="w-3 h-3 transform rotate-180 text-gray-300" />{trx.penerimaNama || "?"}</p>
+                      <td className="py-3 px-5 text-xs">
+                        <p className="text-gray-800 font-semibold truncate max-w-[200px]">{trx.pengirimNama || "?"}</p>
+                        <p className="text-gray-500 flex items-center gap-1 mt-0.5 truncate max-w-[200px]"><ArrowLeft className="w-3 h-3 transform rotate-180 shrink-0" />{trx.penerimaNama || "?"}</p>
                       </td>
-                      <td className="p-4 text-right">
-                        <button onClick={() => { setFormData(trx); setItems(trx.items || []); setActiveTransaction(trx); setView("preview"); }} className="text-sm text-blue-600 hover:text-blue-800 font-medium bg-blue-50 hover:bg-blue-100 px-4 py-2 rounded-lg transition-colors inline-block">
-                          Lihat Surat
+                      <td className="py-3 px-5 text-right">
+                        <button onClick={() => { setFormData(trx); setItems(trx.items || []); setActiveTransaction(trx); setView("preview"); }} className="text-xs text-blue-600 hover:text-blue-800 font-bold bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded transition-colors inline-block whitespace-nowrap">
+                          Detail
                         </button>
                       </td>
                     </tr>

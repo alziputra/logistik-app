@@ -3,11 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { CheckCircle } from "lucide-react";
 
-// ✅ IMPORT CONSTANTS (RELATIVE PATH)
-import {
-  createInitialFormData,
-  createInitialItem,
-} from "../constants";
+// ✅ IMPORT CONSTANTS
+import { createInitialFormData, createInitialItem } from "../constants";
 
 // ✅ IMPORT FIREBASE
 import { auth, db } from "../lib/firebase";
@@ -20,10 +17,7 @@ import {
   increment,
 } from "firebase/firestore";
 
-import {
-  onAuthStateChanged,
-  signOut
-} from "firebase/auth";
+import { onAuthStateChanged, signOut } from "firebase/auth";
 
 // ✅ IMPORT COMPONENTS
 import Navbar from "../components/Navbar";
@@ -32,8 +26,8 @@ import AdminView from "../components/AdminView";
 import FormView from "../components/FormView";
 import PreviewView from "../components/PreviewView";
 import LoginView from "../components/LoginView";
-// --- TAMBAHAN IMPORT KOMPONEN BARU ---
-import DataPrinter from "../components/DataPrinter"; // (Catatan: Pastikan path ini sesuai dengan lokasi Anda menyimpan DataPrinter.jsx)
+// --- IMPORT KOMPONEN BARU ---
+import DataPrinter from "../components/DataPrinter"; 
 
 export default function SuratSerahTerimaApp() {
   const [user, setUser] = useState(null);
@@ -49,6 +43,10 @@ export default function SuratSerahTerimaApp() {
   const [outlets, setOutlets] = useState([]); // State untuk menyimpan data outlet
   const [transactions, setTransactions] = useState([]); // State untuk menyimpan data transaksi (riwayat)
 
+  // [BARU] State khusus untuk data Printer dan Notifikasinya
+  const [printers, setPrinters] = useState([]);
+  const [notifSewa, setNotifSewa] = useState([]);
+
   // Form Data untuk surat serah terima
   const [formData, setFormData] = useState(() => createInitialFormData());
   const [items, setItems] = useState(() => [createInitialItem()]);
@@ -58,11 +56,37 @@ export default function SuratSerahTerimaApp() {
   const appId = process.env.NEXT_PUBLIC_APP_ID;
 
   // ==============================
+  // HELPERS
+  // ==============================
+  const showNotif = (message, type = "success") => {
+    setNotification({ show: true, message, type });
+    setTimeout(
+      () => setNotification({ show: false, message: "", type: "success" }),
+      3500,
+    );
+  };
+
+  // [BARU] Fungsi menghitung sisa bulan untuk Notifikasi Sewa
+  const hitungSisaBulan = (tanggalSelesai) => {
+    if (!tanggalSelesai) return null;
+    
+    const hariIni = new Date();
+    const tglSelesai = new Date(tanggalSelesai);
+    
+    if (isNaN(tglSelesai)) return null;
+
+    const selisihBulan = (tglSelesai.getFullYear() - hariIni.getFullYear()) * 12 
+                       + (tglSelesai.getMonth() - hariIni.getMonth());
+                       
+    return selisihBulan;
+  };
+
+  // ==============================
   // AUTHENTICATION LOGIC
   // ==============================
   useEffect(() => {
     if (!auth) return;
-    
+
     // Pasang listener untuk memantau status login user
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
@@ -85,40 +109,48 @@ export default function SuratSerahTerimaApp() {
   // FITUR AUTO LOGOUT (IDLE TIMEOUT 15 MENIT)
   // ==============================
   useEffect(() => {
-    // Jika belum ada user yang login, tidak perlu pasang timer
     if (!user) return;
 
     let timeoutId;
-    // 15 menit = 15 * 60 detik * 1000 milidetik = 900.000 ms
-    // const IDLE_TIME = 5* 1000; // Untuk testing, set ke 5 detik saja 
     const IDLE_TIME = 10 * 60 * 1000; // 10 menit
 
+    const handleIdleLogout = async () => {
+      try {
+        await signOut(auth);
+        setView("dashboard");
+      } catch (error) {
+        showNotif("Gagal logout", "error");
+      }
+    };
+
     const resetTimer = () => {
-      // Bersihkan timer yang sudah ada
       if (timeoutId) clearTimeout(timeoutId);
-      
-      // Pasang timer baru
+
       timeoutId = setTimeout(() => {
-        handleLogout(); // Logout otomatis setelah idle
-        showNotif("Sesi telah habis karena tidak ada aktivitas. Silakan login kembali.", "error");
+        handleIdleLogout();
+        showNotif(
+          "Sesi telah habis karena tidak ada aktivitas. Silakan login kembali.",
+          "error",
+        );
       }, IDLE_TIME);
     };
 
-    //
-    const events = ["mousemove", "mousedown", "keypress", "touchstart", "scroll"];
-    
-    // Pasang event listener untuk berbagai aktivitas user
-    events.forEach((event) => window.addEventListener(event, resetTimer));
+    const events = [
+      "mousemove",
+      "mousedown",
+      "keypress",
+      "touchstart",
+      "scroll",
+    ];
 
-    // Jalankan timer untuk pertama kalinya saat login
+    events.forEach((event) => window.addEventListener(event, resetTimer));
     resetTimer();
 
-    // Bersihkan event listener dan timer saat komponen unmount atau saat user logout
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
       events.forEach((event) => window.removeEventListener(event, resetTimer));
     };
-  }, [user]); // Pasang efek ini setiap kali status user berubah (login/logout)
+  }, [user]);
 
   // ==============================
   // FIRESTORE (Data Fetching)
@@ -141,31 +173,45 @@ export default function SuratSerahTerimaApp() {
       setTransactions(data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
     }, console.error);
 
-    // 3. Fetch Outlets / Instansi (TAMBAHKAN BLOK INI)
+    // 3. Fetch Outlets / Instansi
     const outRef = collection(db, "artifacts", safeAppId, "public", "data", "outlets");
     const unsubOut = onSnapshot(outRef, (snap) => {
-      // Urutkan berdasarkan nama outlet abjad A-Z
       const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       setOutlets(data.sort((a, b) => a.nama.localeCompare(b.nama)));
+    }, console.error);
+
+    // 4. [BARU] Fetch Data Printer & Hitung Notifikasi Realtime
+    const printerRef = collection(db, "artifacts", safeAppId, "public", "data", "printers");
+    const unsubPrinter = onSnapshot(printerRef, (snap) => {
+      const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setPrinters(data);
+
+      const peringatan = [];
+      data.forEach(printer => {
+        // Hanya cek yang statusnya Sewa Berjalan dan punya tanggal selesai
+        if (printer.tanggalSelesai && printer.status === "Sewa Berjalan") {
+          const sisa = hitungSisaBulan(printer.tanggalSelesai);
+          // Jika sisa waktu <= 3 bulan dan belum minus (masih masa sewa)
+          if (sisa !== null && sisa <= 3 && sisa >= 0) {
+            peringatan.push({
+              ...printer,
+              sisaBulan: sisa
+            });
+          }
+        }
+      });
+      // Urutkan peringatan dari yang paling mendesak (sisa bulan terkecil)
+      peringatan.sort((a, b) => a.sisaBulan - b.sisaBulan);
+      setNotifSewa(peringatan);
     }, console.error);
 
     return () => {
       unsubInv();
       unsubTrx();
-      unsubOut(); // <--- JANGAN LUPA DIBERSIHKAN
+      unsubOut();
+      unsubPrinter(); // [BARU] Bersihkan listener printer
     };
   }, [user, appId]);
-
-  // ==============================
-  // HELPERS
-  // ==============================
-  const showNotif = (message, type = "success") => {
-    setNotification({ show: true, message, type });
-    setTimeout(
-      () => setNotification({ show: false, message: "", type: "success" }),
-      3500
-    );
-  };
 
   const generateNomorSurat = () => {
     const total = transactions.length + 1;
@@ -175,11 +221,11 @@ export default function SuratSerahTerimaApp() {
     return `${String(total).padStart(3, "0")}/00108.00/${String(bulan).padStart(2, "0")}/${tahun}`;
   };
 
-  const startNewDocument = (jenis = "Barang Keluar") => { // <--- Terima parameter jenis transaksi
+  const startNewDocument = (jenis = "Barang Keluar") => {
     setFormData({
       ...createInitialFormData(),
       nomorSurat: generateNomorSurat(),
-      jenisTransaksi: jenis, // <--- Set jenis transaksi sesuai parameter yang diterima
+      jenisTransaksi: jenis, 
     });
 
     setItems([createInitialItem()]);
@@ -188,7 +234,6 @@ export default function SuratSerahTerimaApp() {
   };
 
   const addItem = () => {
-    // ✅ FIX
     setItems((prev) => [...prev, createInitialItem()]);
   };
 
@@ -219,7 +264,7 @@ export default function SuratSerahTerimaApp() {
           return updated;
         }
         return item;
-      })
+      }),
     );
   };
 
@@ -231,57 +276,49 @@ export default function SuratSerahTerimaApp() {
 
     try {
       const safeAppId = appId || "logistikku_app_01";
-      
-      // 1. Simpan riwayat transaksi
+
       const trxRef = collection(db, "artifacts", safeAppId, "public", "data", "transactions");
       const newTrx = {
         ...formData,
-        items, // Tetap simpan array 'items' asli agar S/N tercatat satu per satu
+        items, 
         createdAt: new Date().toISOString(),
       };
       await addDoc(trxRef, newTrx);
 
-      // 2. AGREGASI (Gabungkan kuantitas untuk barang dengan nama yang sama)
       const aggregatedItems = {};
       for (const item of items) {
         if (!item.nama) continue;
         const key = item.nama.toLowerCase();
-        
+
         if (aggregatedItems[key]) {
           aggregatedItems[key].kuantitas += Number(item.kuantitas);
         } else {
-          // Buat salinan (copy) agar tidak merusak data asli
           aggregatedItems[key] = { ...item, kuantitas: Number(item.kuantitas) };
         }
       }
 
-      // 3. Update stok di database Firebase
       for (const key in aggregatedItems) {
         const item = aggregatedItems[key];
-        
-        // Cari apakah barang ada di Master Data
+
         const invItem = inventory.find(
-          (i) => i.nama.toLowerCase() === item.nama.toLowerCase()
+          (i) => i.nama.toLowerCase() === item.nama.toLowerCase(),
         );
 
-        // Tentukan nilai plus/minus
         const diff =
           formData.jenisTransaksi === "Barang Keluar"
             ? -Number(item.kuantitas)
             : Number(item.kuantitas);
 
         if (invItem) {
-          // JIKA BARANG SUDAH ADA: Gunakan increment() agar aman dari bentrok
           const itemRef = doc(db, "artifacts", safeAppId, "public", "data", "inventory", invItem.id);
           await updateDoc(itemRef, {
             stok: increment(diff),
           });
         } else {
-          // JIKA BARANG BARU DITULIS MANUAL: Buatkan master barunya
           const invRef = collection(db, "artifacts", safeAppId, "public", "data", "inventory");
           await addDoc(invRef, {
             nama: item.nama,
-            stok: diff, 
+            stok: diff,
             satuan: item.satuan,
           });
         }
@@ -302,12 +339,10 @@ export default function SuratSerahTerimaApp() {
   const handleAddInventory = async (e) => {
     e.preventDefault();
     if (!db) return;
-    
-    // 1. Tangkap semua isian form
+
     const form = new FormData(e.target);
     const namaBarang = form.get("nama");
-    
-    // 2. Susun data baru (termasuk data vendor dan kontrak)
+
     const newInv = {
       nama: namaBarang,
       stok: Number(form.get("stok")) || 0,
@@ -321,9 +356,8 @@ export default function SuratSerahTerimaApp() {
       created_at: new Date().toISOString(),
     };
 
-    // 3. CEK DUPLIKAT: Jangan biarkan admin membuat 2 barang dengan nama sama
     const isDuplicate = inventory.some(
-      (i) => i.nama.toLowerCase() === namaBarang.toLowerCase()
+      (i) => i.nama.toLowerCase() === namaBarang.toLowerCase(),
     );
 
     if (isDuplicate) {
@@ -331,17 +365,12 @@ export default function SuratSerahTerimaApp() {
     }
 
     try {
-      // 4. Gunakan fallback appId
       const safeAppId = appId || "logistikku_app_01";
-      
       const invRef = collection(db, "artifacts", safeAppId, "public", "data", "inventory");
-      
-      // 5. Simpan ke Firebase
+
       await addDoc(invRef, newInv);
-      
       showNotif("Master barang berhasil ditambahkan!");
-      e.target.reset(); // Kosongkan form setelah berhasil
-      
+      e.target.reset(); 
     } catch (error) {
       console.error("Firebase Error:", error);
       showNotif("Gagal menambah barang. Cek koneksi atau aturan Firebase.", "error");
@@ -354,18 +383,21 @@ export default function SuratSerahTerimaApp() {
   const handleAddOutlet = async (e) => {
     e.preventDefault();
     if (!db) return;
-    
+
     const form = new FormData(e.target);
     const namaOutlet = form.get("nama");
-    
+
     const newOutlet = {
       kode: form.get("kode") || "-",
       nama: namaOutlet,
       created_at: new Date().toISOString(),
     };
 
-    const isDuplicate = outlets.some((o) => o.nama.toLowerCase() === namaOutlet.toLowerCase());
-    if (isDuplicate) return showNotif(`Gagal: "${namaOutlet}" sudah ada di Master Outlet!`, "error");
+    const isDuplicate = outlets.some(
+      (o) => o.nama.toLowerCase() === namaOutlet.toLowerCase(),
+    );
+    if (isDuplicate)
+      return showNotif(`Gagal: "${namaOutlet}" sudah ada di Master Outlet!`, "error");
 
     try {
       const safeAppId = appId || "logistikku_app_01";
@@ -379,22 +411,20 @@ export default function SuratSerahTerimaApp() {
     }
   };
 
-  // FUNGSI RAHASIA UNTUK BULK IMPORT 1 KLIK
   const handleBulkImportOutlets = async (dataArray) => {
     if (!db) return;
     try {
       showNotif("Sedang mengimpor data massal... Mohon tunggu.", "success");
       const safeAppId = appId || "logistikku_app_01";
       const outRef = collection(db, "artifacts", safeAppId, "public", "data", "outlets");
-      
+
       let count = 0;
       for (const item of dataArray) {
-        // Cek duplikat agar tidak dobel jika diklik 2 kali
-        if (!outlets.some(o => o.nama === item.nama)) {
+        if (!outlets.some((o) => o.nama === item.nama)) {
           await addDoc(outRef, {
             kode: item.kode,
             nama: item.nama,
-            created_at: new Date().toISOString()
+            created_at: new Date().toISOString(),
           });
           count++;
         }
@@ -409,19 +439,23 @@ export default function SuratSerahTerimaApp() {
   // ==============================
   // RENDER
   // ==============================
-  // Mencegah layar berkedip saat mengecek status login
   if (authLoading) {
-    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Memuat sistem...</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        Memuat sistem...
+      </div>
+    );
   }
 
-  // Jika belum login, tampilkan layar Login
   if (!user) {
     return (
       <>
         {notification.show && (
-          <div className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-5 py-3 rounded-xl shadow-xl text-white ${
-            notification.type === "success" ? "bg-green-600" : "bg-red-500"
-          }`}>
+          <div
+            className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-5 py-3 rounded-xl shadow-xl text-white ${
+              notification.type === "success" ? "bg-green-600" : "bg-red-500"
+            }`}
+          >
             <span>{notification.message}</span>
           </div>
         )}
@@ -433,20 +467,23 @@ export default function SuratSerahTerimaApp() {
   return (
     <div className="min-h-screen bg-gray-50 pb-12 font-sans text-gray-900 pt-16 md:pt-0 md:pl-64 print:pl-0 print:pt-0">
       {notification.show && (
-        <div className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-5 py-3 rounded-xl shadow-xl text-white ${
-          notification.type === "success" ? "bg-green-600" : "bg-red-500"
-        }`}>
+        <div
+          className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-5 py-3 rounded-xl shadow-xl text-white ${
+            notification.type === "success" ? "bg-green-600" : "bg-red-500"
+          }`}
+        >
           <CheckCircle className="w-5 h-5" />
           <span>{notification.message}</span>
         </div>
       )}
 
-      {/* Menambahkan handleLogout ke Navbar */}
-      <Navbar 
-        view={view} 
-        setView={setView} 
-        startNewDocument={startNewDocument} 
-        handleLogout={handleLogout} 
+      {/* [BARU] Mengirim notifSewa.length ke Navbar untuk Lonceng */}
+      <Navbar
+        view={view}
+        setView={setView}
+        startNewDocument={startNewDocument}
+        handleLogout={handleLogout}
+        notifCount={notifSewa.length} 
       />
 
       {(view === "dashboard" || view === "riwayat") && (
@@ -459,13 +496,14 @@ export default function SuratSerahTerimaApp() {
           setActiveTransaction={setActiveTransaction}
           setView={setView}
           user={user}
+          notifSewa={notifSewa} // [BARU] Mengirim daftar notifikasi ke Dashboard
         />
       )}
 
       {(view === "master_barang" || view === "master_outlet") && (
-        <AdminView 
-          activeMenu={view} // Kirimkan view yang sedang aktif agar AdminView tahu tab mana yang harus dirender
-          inventory={inventory} 
+        <AdminView
+          activeMenu={view}
+          inventory={inventory}
           handleAddInventory={handleAddInventory}
           outlets={outlets}
           handleAddOutlet={handleAddOutlet}
@@ -496,11 +534,7 @@ export default function SuratSerahTerimaApp() {
         />
       )}
 
-      {/* --- TAMBAHAN UNTUK MERENDER HALAMAN DATA PRINTER --- */}
-      {view === "perangkat_printer" && (
-        <DataPrinter />
-      )}
-
+      {view === "perangkat_printer" && <DataPrinter />}
     </div>
   );
 }

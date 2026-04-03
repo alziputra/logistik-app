@@ -17,6 +17,7 @@ export default function DataPrinter() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("Semua");
   const [koneksiError, setKoneksiError] = useState(false);
+  const [isSaving, setIsSaving] = useState(false); // [BARU] State untuk efek loading saat simpan
 
   const [outletsList, setOutletsList] = useState([]);
   const [inventoryList, setInventoryList] = useState([]);
@@ -36,53 +37,53 @@ export default function DataPrinter() {
   // ==========================================
   // READ DATA
   // ==========================================
-  const fetchData = async () => {
-    setIsLoading(true);
-    setKoneksiError(false);
-    try {
-      const querySnapshot = await getDocs(collection(db, baseRefPath, "printers"));
-      if (querySnapshot.empty) {
-        setPrinterData(dummyData);
-      } else {
-        const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        setPrinterData(data);
-      }
-    } catch (error) {
-      console.error("Error fetching Firebase:", error);
-      setKoneksiError(true);
-      setPrinterData(dummyData);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchDropdownData = async () => {
-    try {
-      const outSnap = await getDocs(collection(db, baseRefPath, "outlets"));
-      setOutletsList(outSnap.docs.map(d => ({ id: d.id, ...d.data() })));
-
-      const invSnap = await getDocs(collection(db, baseRefPath, "inventory"));
-      setInventoryList(invSnap.docs.map(d => ({ id: d.id, ...d.data() })));
-
-      const trxSnap = await getDocs(collection(db, baseRefPath, "transactions"));
-      let extractedSNs = [];
-      trxSnap.docs.forEach(doc => {
-        const data = doc.data();
-        if (data.items && Array.isArray(data.items)) {
-          data.items.forEach(item => { if (item.sn) extractedSNs.push(item.sn); });
-        }
-        if (data.sn) extractedSNs.push(data.sn);
-      });
-      setSnList([...new Set(extractedSNs)]);
-    } catch (error) {
-      console.error("Error fetching dropdown data:", error);
-    }
-  };
-
   useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+      setKoneksiError(false);
+      try {
+        const querySnapshot = await getDocs(collection(db, baseRefPath, "printers"));
+        if (querySnapshot.empty) {
+          setPrinterData(dummyData);
+        } else {
+          const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          setPrinterData(data);
+        }
+      } catch (error) {
+        console.error("Error fetching Firebase:", error);
+        setKoneksiError(true);
+        setPrinterData(dummyData);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const fetchDropdownData = async () => {
+      try {
+        const outSnap = await getDocs(collection(db, baseRefPath, "outlets"));
+        setOutletsList(outSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+
+        const invSnap = await getDocs(collection(db, baseRefPath, "inventory"));
+        setInventoryList(invSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+
+        const trxSnap = await getDocs(collection(db, baseRefPath, "transactions"));
+        let extractedSNs = [];
+        trxSnap.docs.forEach(doc => {
+          const data = doc.data();
+          if (data.items && Array.isArray(data.items)) {
+            data.items.forEach(item => { if (item.sn) extractedSNs.push(item.sn); });
+          }
+          if (data.sn) extractedSNs.push(data.sn);
+        });
+        setSnList([...new Set(extractedSNs)]);
+      } catch (error) {
+        console.error("Error fetching dropdown data:", error);
+      }
+    };
+
     fetchData();
     fetchDropdownData();
-  }, [appId]);
+  }, [appId, baseRefPath]);
 
   // ---> PERUBAHAN 2: Helper agar tampilan di tabel lebih ringkas dan enak dibaca (Misal: "Okt 2024")
   const formatBulanTahun = (dateString) => {
@@ -139,17 +140,39 @@ export default function DataPrinter() {
     if (!isOutletValid) return alert("Gagal: Nama Outlet tidak ditemukan di Master Data.");
     if (!isProdukValid) return alert("Gagal: Produk Hardware tidak ditemukan di Master Data.");
 
+    setIsSaving(true); // Aktifkan mode loading
+    
     try {
       if (editingId) {
+        // [UPDATE] Jika Edit Data
         await updateDoc(doc(db, baseRefPath, "printers", editingId), formData);
+        
+        // Update state lokal untuk merefleksikan perubahan secara instan
+        setPrinterData((prevData) => 
+          prevData.map((item) => 
+            item.id === editingId ? { id: editingId, ...formData } : item
+          )
+        );
+        alert("✅ Perubahan data printer berhasil disimpan!");
       } else {
-        await addDoc(collection(db, baseRefPath, "printers"), formData);
+        // [CREATE] Jika Tambah Data Baru
+        const docRef = await addDoc(collection(db, baseRefPath, "printers"), formData);
+        
+        // Buat objek data baru dengan ID dari Firebase
+        const newPrinter = { id: docRef.id, ...formData };
+        
+        // Tambahkan ke state lokal di urutan paling atas
+        setPrinterData((prevData) => [newPrinter, ...prevData]);
+        alert("✅ Data Printer baru berhasil ditambahkan!");
       }
+      
       setIsModalOpen(false);
-      fetchData(); 
       resetForm();
     } catch (error) {
-      alert("Gagal menyimpan data.");
+      console.error("Ini error aslinya:", error);
+      alert("❌ Gagal menyimpan data.");
+    } finally {
+      setIsSaving(false); // Matikan mode loading
     }
   };
 
@@ -158,8 +181,11 @@ export default function DataPrinter() {
     if (window.confirm("Apakah Anda yakin ingin menghapus data printer ini?")) {
       try {
         await deleteDoc(doc(db, baseRefPath, "printers", id));
-        fetchData();
+        // Setelah penghapusan, update state untuk responsif tanpa perlu fetch ulang
+        setPrinterData(prev => prev.filter(p => p.id !== id));
+        alert("🗑️ Data printer berhasil dihapus.");
       } catch (error) {
+        console.error("Ini error aslinya:", error);
         alert("Gagal menghapus data.");
       }
     }
@@ -253,7 +279,7 @@ export default function DataPrinter() {
                 <tr><td colSpan="7" className="p-8 text-center text-gray-500">Tidak ada data printer.</td></tr>
               ) : (
                 filteredData.map((printer) => (
-                  <tr key={printer.id} className="hover:bg-gray-50/80 transition-colors">
+                  <tr key={printer.id} className="hover:bg-gray-50/80 transition-colors animate-in fade-in duration-300">
                     <td className="p-4"><p className="font-semibold text-gray-800">{printer.outlet}</p><p className="text-xs text-gray-500">ID: {printer.idOutlet}</p></td>
                     <td className="p-4"><p className="font-medium text-gray-800">{printer.produk}</p><p className="text-xs text-gray-500 font-mono mt-0.5">SN: {printer.sn}</p></td>
                     <td className="p-4 font-medium text-gray-700">{printer.penyedia}</td>
@@ -287,7 +313,7 @@ export default function DataPrinter() {
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
               <h3 className="font-bold text-lg text-gray-800">{editingId ? "Edit Data Printer" : "Tambah Printer Baru"}</h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+              <button onClick={() => setIsModalOpen(false)} disabled={isSaving} className="text-gray-400 hover:text-gray-600 disabled:opacity-50"><X className="w-5 h-5" /></button>
             </div>
             
             <form onSubmit={handleSave} className="p-6">
@@ -301,7 +327,8 @@ export default function DataPrinter() {
                     list="outlets-suggestions"
                     value={formData.outlet} 
                     onChange={handleOutletChange} 
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
+                    disabled={isSaving}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100" 
                     placeholder="Ketik untuk mencari outlet..." 
                   />
                   <datalist id="outlets-suggestions">
@@ -324,7 +351,8 @@ export default function DataPrinter() {
                     list="produk-suggestions"
                     value={formData.produk} 
                     onChange={handleProdukChange} 
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
+                    disabled={isSaving}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100" 
                     placeholder="Ketik untuk mencari produk..." 
                   />
                   <datalist id="produk-suggestions">
@@ -342,7 +370,8 @@ export default function DataPrinter() {
                     list="sn-suggestions"
                     value={formData.sn} 
                     onChange={(e) => setFormData({...formData, sn: e.target.value})} 
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
+                    disabled={isSaving}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100" 
                     placeholder="Ketik atau pilih SN..." 
                   />
                   <datalist id="sn-suggestions">
@@ -354,7 +383,7 @@ export default function DataPrinter() {
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Penyedia</label>
-                  <input required type="text" value={formData.penyedia} onChange={(e) => setFormData({...formData, penyedia: e.target.value})} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Otomatis terisi jika ada..." />
+                  <input required type="text" value={formData.penyedia} onChange={(e) => setFormData({...formData, penyedia: e.target.value})} disabled={isSaving} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100" placeholder="Otomatis terisi jika ada..." />
                 </div>
 
                 {/* ---> PERUBAHAN 6: Mengganti input text Masa Sewa menjadi dua input Date <--- */}
@@ -364,7 +393,8 @@ export default function DataPrinter() {
                     type="date" 
                     value={formData.tanggalMulai} 
                     onChange={(e) => setFormData({...formData, tanggalMulai: e.target.value})} 
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
+                    disabled={isSaving}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100" 
                   />
                 </div>
                 <div>
@@ -373,13 +403,14 @@ export default function DataPrinter() {
                     type="date" 
                     value={formData.tanggalSelesai} 
                     onChange={(e) => setFormData({...formData, tanggalSelesai: e.target.value})} 
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
+                    disabled={isSaving}
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100" 
                   />
                 </div>
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                  <select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                  <select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} disabled={isSaving} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white disabled:bg-gray-100">
                     <option value="Inventaris">Inventaris</option>
                     <option value="Sewa Berjalan">Sewa Berjalan</option>
                     <option value="Sewa Habis">Sewa Habis</option>
@@ -387,7 +418,7 @@ export default function DataPrinter() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Kondisi</label>
-                  <select value={formData.kondisi} onChange={(e) => setFormData({...formData, kondisi: e.target.value})} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white">
+                  <select value={formData.kondisi} onChange={(e) => setFormData({...formData, kondisi: e.target.value})} disabled={isSaving} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white disabled:bg-gray-100">
                     <option value="BAIK">BAIK</option>
                     <option value="KURANG BAIK">KURANG BAIK</option>
                     <option value="RUSAK">RUSAK</option>
@@ -395,13 +426,14 @@ export default function DataPrinter() {
                 </div>
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Deskripsi Tambahan</label>
-                  <input type="text" value={formData.deskripsi} onChange={(e) => setFormData({...formData, deskripsi: e.target.value})} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                  <input type="text" value={formData.deskripsi} onChange={(e) => setFormData({...formData, deskripsi: e.target.value})} disabled={isSaving} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100" />
                 </div>
               </div>
               
               <div className="flex justify-end gap-3 pt-4 border-t">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-5 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium transition-colors">Batal</button>
-                <button type="submit" className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium shadow-sm transition-colors">
+                <button type="button" onClick={() => setIsModalOpen(false)} disabled={isSaving} className="px-5 py-2 text-gray-600 hover:bg-gray-100 rounded-lg font-medium transition-colors disabled:opacity-50">Batal</button>
+                <button type="submit" disabled={isSaving} className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2 disabled:bg-blue-400">
+                  {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
                   {editingId ? "Simpan Perubahan" : "Simpan Printer"}
                 </button>
               </div>

@@ -3,10 +3,10 @@
 import { useState } from "react";
 import {
   Package, LayoutDashboard, Menu, X, LogOut, ChevronDown, Box, Building2, Database, 
-  ArrowRightLeft, History, FileText, Server, Monitor, Printer
+  ArrowRightLeft, History, FileText, Server, Monitor, Printer, Bell
 } from "lucide-react";
 
-const Navbar = ({ view, setView, startNewDocument, handleLogout }) => {
+const Navbar = ({ view, setView, startNewDocument, handleLogout, notifCount = 0 }) => {
   const [isOpen, setIsOpen] = useState(false);
   
   // State untuk mengontrol dropdown
@@ -35,9 +35,20 @@ const Navbar = ({ view, setView, startNewDocument, handleLogout }) => {
           <Package className="w-6 h-6 text-blue-600" />
           <span className="font-bold text-lg text-gray-900 tracking-tight">LogistikKu</span>
         </div>
-        <button onClick={() => setIsOpen(true)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-          <Menu className="w-6 h-6" />
-        </button>
+        {/* [BARU] Lonceng versi Mobile & Menu Hamburger */}
+        <div className="flex items-center gap-3">
+          <button onClick={() => setView("dashboard")} className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+            <Bell className="w-6 h-6" />
+            {notifCount > 0 && (
+              <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                {notifCount}
+              </span>
+            )}
+          </button>
+          <button onClick={() => setIsOpen(true)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+            <Menu className="w-6 h-6" />
+          </button>
+        </div>
       </div>
 
       {isOpen && <div className="md:hidden fixed inset-0 bg-black/50 z-40 print:hidden transition-opacity" onClick={closeMenu} />}
@@ -50,6 +61,20 @@ const Navbar = ({ view, setView, startNewDocument, handleLogout }) => {
             </div>
             <span className="font-bold text-lg md:text-xl text-gray-900 tracking-tight">LogistikKu</span>
           </div>
+          {/* [BARU] Lonceng versi Desktop */}
+          <button 
+            onClick={() => handleNavClick("dashboard")}
+            title="Lihat Peringatan di Dashboard"
+            className="hidden md:flex relative p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
+          >
+            <Bell className="w-5 h-5" />
+            {notifCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm animate-pulse">
+                {notifCount}
+              </span>
+            )}
+          </button>
+
           <button onClick={closeMenu} className="md:hidden p-2 text-gray-500 hover:bg-red-50 hover:text-red-500 rounded-lg transition-colors">
             <X className="w-5 h-5" />
           </button>

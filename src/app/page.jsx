@@ -43,10 +43,11 @@ export default function SuratSerahTerimaApp() {
     type: "success",
   });
 
-  const [inventory, setInventory] = useState([]);
-  const [transactions, setTransactions] = useState([]);
+  const [inventory, setInventory] = useState([]); // State untuk menyimpan data inventory (Master Data)
+  const [outlets, setOutlets] = useState([]); // State untuk menyimpan data outlet
+  const [transactions, setTransactions] = useState([]); // State untuk menyimpan data transaksi (riwayat)
 
-  // ✅ FIX: pakai factory function
+  // Form Data untuk surat serah terima
   const [formData, setFormData] = useState(() => createInitialFormData());
   const [items, setItems] = useState(() => [createInitialItem()]);
 
@@ -60,10 +61,10 @@ export default function SuratSerahTerimaApp() {
   useEffect(() => {
     if (!auth) return;
     
-    // Dengarkan perubahan status login
+    // Pasang listener untuk memantau status login user
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      setAuthLoading(false); // Selesai memuat
+      setAuthLoading(false); // Pastikan loading selesai setelah status login diketahui
     });
 
     return () => unsubscribe();
@@ -72,7 +73,7 @@ export default function SuratSerahTerimaApp() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      setView("dashboard"); // Reset tampilan saat login lagi nanti
+      setView("dashboard"); // Kembali ke dashboard (atau bisa juga ke login) setelah logout
     } catch (error) {
       showNotif("Gagal logout", "error");
     }
@@ -82,7 +83,7 @@ export default function SuratSerahTerimaApp() {
   // FITUR AUTO LOGOUT (IDLE TIMEOUT 15 MENIT)
   // ==============================
   useEffect(() => {
-    // Jika belum login, tidak perlu menjalankan timer
+    // Jika belum ada user yang login, tidak perlu pasang timer
     if (!user) return;
 
     let timeoutId;
@@ -91,31 +92,31 @@ export default function SuratSerahTerimaApp() {
     const IDLE_TIME = 10 * 60 * 1000; // 10 menit
 
     const resetTimer = () => {
-      // Hapus timer lama
+      // Bersihkan timer yang sudah ada
       if (timeoutId) clearTimeout(timeoutId);
       
-      // Buat timer baru
+      // Pasang timer baru
       timeoutId = setTimeout(() => {
-        handleLogout(); // Lakukan logout
+        handleLogout(); // Logout otomatis setelah idle
         showNotif("Sesi telah habis karena tidak ada aktivitas. Silakan login kembali.", "error");
       }, IDLE_TIME);
     };
 
-    // Daftar aktivitas yang akan me-reset timer (gerak mouse, klik, ketik, sentuh layar HP)
+    //
     const events = ["mousemove", "mousedown", "keypress", "touchstart", "scroll"];
     
-    // Pasang sensor (event listener) ke seluruh halaman
+    // Pasang event listener untuk berbagai aktivitas user
     events.forEach((event) => window.addEventListener(event, resetTimer));
 
     // Jalankan timer untuk pertama kalinya saat login
     resetTimer();
 
-    // BERSIHKAN sensor saat komponen ditutup atau user logout (agar tidak memberatkan memori)
+    // Bersihkan event listener dan timer saat komponen unmount atau saat user logout
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
       events.forEach((event) => window.removeEventListener(event, resetTimer));
     };
-  }, [user]); // Effect ini akan berjalan ulang setiap kali status 'user' berubah
+  }, [user]); // Pasang efek ini setiap kali status user berubah (login/logout)
 
   // ==============================
   // FIRESTORE (Data Fetching)
@@ -123,35 +124,35 @@ export default function SuratSerahTerimaApp() {
   useEffect(() => {
     if (!user || !db) return;
 
-    // Tambahkan fallback appId di sini juga untuk berjaga-jaga
     const safeAppId = appId || "logistikku_app_01";
 
+    // 1. Fetch Inventory
     const invRef = collection(db, "artifacts", safeAppId, "public", "data", "inventory");
-    const unsubInv = onSnapshot(
-      invRef,
-      (snap) => {
-        setInventory(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-      },
-      console.error
-    );
+    const unsubInv = onSnapshot(invRef, (snap) => {
+      setInventory(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    }, console.error);
 
+    // 2. Fetch Transactions
     const trxRef = collection(db, "artifacts", safeAppId, "public", "data", "transactions");
-    const unsubTrx = onSnapshot(
-      trxRef,
-      (snap) => {
-        const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        setTransactions(
-          data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-        );
-      },
-      console.error
-    );
+    const unsubTrx = onSnapshot(trxRef, (snap) => {
+      const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setTransactions(data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+    }, console.error);
+
+    // 3. Fetch Outlets / Instansi (TAMBAHKAN BLOK INI)
+    const outRef = collection(db, "artifacts", safeAppId, "public", "data", "outlets");
+    const unsubOut = onSnapshot(outRef, (snap) => {
+      // Urutkan berdasarkan nama outlet abjad A-Z
+      const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setOutlets(data.sort((a, b) => a.nama.localeCompare(b.nama)));
+    }, console.error);
 
     return () => {
       unsubInv();
       unsubTrx();
+      unsubOut(); // <--- JANGAN LUPA DIBERSIHKAN
     };
-  }, [user, appId]); // Tambahkan appId sebagai dependency
+  }, [user, appId]);
 
   // ==============================
   // HELPERS
@@ -346,6 +347,64 @@ export default function SuratSerahTerimaApp() {
   };
 
   // ==============================
+  // ADD OUTLET (MASTER)
+  // ==============================
+  const handleAddOutlet = async (e) => {
+    e.preventDefault();
+    if (!db) return;
+    
+    const form = new FormData(e.target);
+    const namaOutlet = form.get("nama");
+    
+    const newOutlet = {
+      kode: form.get("kode") || "-",
+      nama: namaOutlet,
+      created_at: new Date().toISOString(),
+    };
+
+    const isDuplicate = outlets.some((o) => o.nama.toLowerCase() === namaOutlet.toLowerCase());
+    if (isDuplicate) return showNotif(`Gagal: "${namaOutlet}" sudah ada di Master Outlet!`, "error");
+
+    try {
+      const safeAppId = appId || "logistikku_app_01";
+      const outRef = collection(db, "artifacts", safeAppId, "public", "data", "outlets");
+      await addDoc(outRef, newOutlet);
+      showNotif("Master outlet berhasil ditambahkan!");
+      e.target.reset();
+    } catch (error) {
+      console.error(error);
+      showNotif("Gagal menambah outlet.", "error");
+    }
+  };
+
+  // FUNGSI RAHASIA UNTUK BULK IMPORT 1 KLIK
+  const handleBulkImportOutlets = async (dataArray) => {
+    if (!db) return;
+    try {
+      showNotif("Sedang mengimpor data massal... Mohon tunggu.", "success");
+      const safeAppId = appId || "logistikku_app_01";
+      const outRef = collection(db, "artifacts", safeAppId, "public", "data", "outlets");
+      
+      let count = 0;
+      for (const item of dataArray) {
+        // Cek duplikat agar tidak dobel jika diklik 2 kali
+        if (!outlets.some(o => o.nama === item.nama)) {
+          await addDoc(outRef, {
+            kode: item.kode,
+            nama: item.nama,
+            created_at: new Date().toISOString()
+          });
+          count++;
+        }
+      }
+      showNotif(`Berhasil mengimpor ${count} data outlet baru!`, "success");
+    } catch (error) {
+      console.error(error);
+      showNotif("Gagal mengimpor data massal.", "error");
+    }
+  };
+
+  // ==============================
   // RENDER
   // ==============================
   // Mencegah layar berkedip saat mengecek status login
@@ -400,7 +459,13 @@ export default function SuratSerahTerimaApp() {
       )}
 
       {view === "admin" && (
-        <AdminView inventory={inventory} handleAddInventory={handleAddInventory} />
+        <AdminView 
+          inventory={inventory} 
+          handleAddInventory={handleAddInventory}
+          outlets={outlets} // <--- Pass data outlets
+          handleAddOutlet={handleAddOutlet} // <--- Pass fungsi tambah outlet
+          handleBulkImportOutlets={handleBulkImportOutlets} // <--- Pass fungsi bulk import
+        />
       )}
 
       {view === "form" && (

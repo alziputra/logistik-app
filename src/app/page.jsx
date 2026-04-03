@@ -173,11 +173,11 @@ export default function SuratSerahTerimaApp() {
     return `${String(total).padStart(3, "0")}/00108.00/${String(bulan).padStart(2, "0")}/${tahun}`;
   };
 
-  const startNewDocument = () => {
-    // ✅ FIX
+  const startNewDocument = (jenis = "Barang Keluar") => { // <--- Terima parameter jenis transaksi
     setFormData({
       ...createInitialFormData(),
       nomorSurat: generateNomorSurat(),
+      jenisTransaksi: jenis, // <--- Set jenis transaksi sesuai parameter yang diterima
     });
 
     setItems([createInitialItem()]);
@@ -447,8 +447,9 @@ export default function SuratSerahTerimaApp() {
         handleLogout={handleLogout} 
       />
 
-      {view === "dashboard" && (
+      {(view === "dashboard" || view === "riwayat") && (
         <DashboardView
+          view={view} // Kirim view agar DashboardView tahu tab mana yang harus dirender
           transactions={transactions}
           setFormData={setFormData}
           setItems={setItems}

@@ -2,13 +2,16 @@
 
 import { useState } from "react";
 import {
-  Package, LayoutDashboard, Plus, Menu, X, LogOut, ChevronDown, Box, Building2, Database
+  Package, LayoutDashboard, Menu, X, LogOut, ChevronDown, Box, Building2, Database, 
+  ArrowRightLeft, History, FileText
 } from "lucide-react";
 
 const Navbar = ({ view, setView, startNewDocument, handleLogout }) => {
   const [isOpen, setIsOpen] = useState(false);
-  // Biarkan dropdown otomatis terbuka jika user sedang berada di halaman Master
+  
+  // State untuk mengontrol dropdown
   const [isMasterOpen, setIsMasterOpen] = useState(view.startsWith("master_"));
+  const [isTransaksiOpen, setIsTransaksiOpen] = useState(view === "riwayat" || view === "form");
 
   const closeMenu = () => setIsOpen(false);
 
@@ -17,8 +20,9 @@ const Navbar = ({ view, setView, startNewDocument, handleLogout }) => {
     closeMenu();
   };
 
+  // Menjalankan fungsi Buat Surat Baru secara default
   const handleStartNew = () => {
-    startNewDocument();
+    startNewDocument(); // Otomatis akan tersetting default (Barang Keluar) dari page.jsx
     closeMenu();
   };
 
@@ -49,38 +53,54 @@ const Navbar = ({ view, setView, startNewDocument, handleLogout }) => {
           </button>
         </div>
 
-        <div className="p-4 shrink-0 mt-2">
-          <button onClick={handleStartNew} className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all shadow-sm active:scale-95">
-            <Plus className="w-5 h-5" /> Buat Surat Baru
-          </button>
-        </div>
-
-        <nav className="flex-1 px-4 space-y-2 overflow-y-auto mt-2 custom-scrollbar">
+        <nav className="flex-1 px-4 space-y-2 overflow-y-auto mt-6 custom-scrollbar">
+          
+          {/* MENU DASHBOARD */}
           <button onClick={() => handleNavClick("dashboard")} className={`w-full px-4 py-3 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "dashboard" ? "bg-blue-50 text-blue-700" : "text-gray-600 hover:bg-gray-50"}`}>
-            <LayoutDashboard className="w-5 h-5" /> Dashboard
+            <LayoutDashboard className="w-5 h-5" /> Dashboard Informasi
           </button>
 
+          {/* MENU DROPDOWN: TRANSAKSI */}
           <div className="space-y-1">
+            <button onClick={() => setIsTransaksiOpen(!isTransaksiOpen)} className={`w-full px-4 py-3 rounded-xl font-medium text-sm flex items-center justify-between transition-colors ${view === "riwayat" || view === "form" ? "bg-blue-50 text-blue-700" : "text-gray-600 hover:bg-gray-50"}`}>
+              <div className="flex items-center gap-3">
+                <ArrowRightLeft className="w-5 h-5" /> Transaksi
+              </div>
+              <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${isTransaksiOpen ? "rotate-180" : ""}`} />
+            </button>
+            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isTransaksiOpen ? "max-h-48 opacity-100" : "max-h-0 opacity-0"}`}>
+              <div className="pl-4 pr-2 py-1 space-y-1 border-l-2 border-gray-100 ml-6 mt-1">
+                <button onClick={() => handleNavClick("riwayat")} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "riwayat" ? "bg-blue-100 text-blue-700" : "text-gray-500 hover:text-blue-700 hover:bg-blue-50"}`}>
+                  <History className="w-4 h-4" /> Riwayat Transaksi
+                </button>
+                {/* MENU DISIMPLIFIKASI MENJADI SATU */}
+                <button onClick={handleStartNew} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "form" ? "bg-indigo-50 text-indigo-700" : "text-gray-500 hover:text-indigo-700 hover:bg-indigo-50"}`}>
+                  <FileText className="w-4 h-4" /> Buat Surat Baru
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* MENU DROPDOWN: DATA MASTER */}
+          <div className="space-y-1 mt-2">
             <button onClick={() => setIsMasterOpen(!isMasterOpen)} className={`w-full px-4 py-3 rounded-xl font-medium text-sm flex items-center justify-between transition-colors ${view.startsWith("master_") ? "bg-blue-50 text-blue-700" : "text-gray-600 hover:bg-gray-50"}`}>
               <div className="flex items-center gap-3">
                 <Database className="w-5 h-5" /> Data Master
               </div>
               <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${isMasterOpen ? "rotate-180" : ""}`} />
             </button>
-
             <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isMasterOpen ? "max-h-40 opacity-100" : "max-h-0 opacity-0"}`}>
               <div className="pl-4 pr-2 py-1 space-y-1 border-l-2 border-gray-100 ml-6 mt-1">
-                {/* MENU MASTER BARANG */}
                 <button onClick={() => handleNavClick("master_barang")} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "master_barang" ? "bg-blue-100 text-blue-700" : "text-gray-500 hover:text-blue-700 hover:bg-blue-50"}`}>
                   <Box className="w-4 h-4" /> Master Barang
                 </button>
-                {/* MENU MASTER INSTANSI */}
                 <button onClick={() => handleNavClick("master_outlet")} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "master_outlet" ? "bg-purple-100 text-purple-700" : "text-gray-500 hover:text-purple-700 hover:bg-purple-50"}`}>
                   <Building2 className="w-4 h-4" /> Master Instansi
                 </button>
               </div>
             </div>
           </div>
+
         </nav>
 
         <div className="p-4 border-t border-gray-100 shrink-0">

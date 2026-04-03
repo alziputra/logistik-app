@@ -1,8 +1,7 @@
 "use client";
 import { FileText, ArrowLeft, Plus, Trash2 } from "lucide-react";
-import { DATABASE_LOKASI } from "../constants";
 
-const FormView = ({ formData, handleInputChange, items, handleItemChange, addItem, removeItem, setView, inventory }) => (
+const FormView = ({ formData, handleInputChange, items, handleItemChange, addItem, removeItem, setView, inventory, outlets }) => (
   <div className="max-w-6xl mx-auto bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-100 print:hidden mt-6">
     <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
       <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -95,9 +94,13 @@ const FormView = ({ formData, handleInputChange, items, handleItemChange, addIte
     </div>
 
     <datalist id="db-barang">{inventory.map((i) => <option key={i.id} value={i.nama} />)}</datalist>
-    <datalist id="db-instansi">{DATABASE_LOKASI.map((lokasi, idx) => <option key={idx} value={lokasi} />)}</datalist>
+    {/* PERBAIKAN: Gunakan data 'outlets' dari Firebase untuk autocomplete instansi */}
+    <datalist id="db-instansi">
+      {outlets && outlets.map((out) => (
+        <option key={out.id} value={out.nama} />
+      ))}
+    </datalist>
   
-
     <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
       <table className="w-full text-left border-collapse">
         <thead>

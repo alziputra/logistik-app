@@ -458,13 +458,13 @@ export default function SuratSerahTerimaApp() {
         />
       )}
 
-      {view === "admin" && (
+      {(view === "master_barang" || view === "master_outlet") && (
         <AdminView 
+          activeMenu={view} // Kirimkan view yang sedang aktif agar AdminView tahu tab mana yang harus dirender
           inventory={inventory} 
           handleAddInventory={handleAddInventory}
-          outlets={outlets} // <--- Pass data outlets
-          handleAddOutlet={handleAddOutlet} // <--- Pass fungsi tambah outlet
-          handleBulkImportOutlets={handleBulkImportOutlets} // <--- Pass fungsi bulk import
+          outlets={outlets}
+          handleAddOutlet={handleAddOutlet}
         />
       )}
 
@@ -478,6 +478,7 @@ export default function SuratSerahTerimaApp() {
           removeItem={removeItem}
           setView={setView}
           inventory={inventory}
+          outlets={outlets}
         />
       )}
 

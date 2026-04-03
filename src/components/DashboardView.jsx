@@ -3,15 +3,15 @@
 import { useState } from "react";
 import { 
   History, Plus, ArrowLeft, Search, Download, FileText, 
-  User, Activity, BarChart3, Package, AlertTriangle, Clock 
+  User, Activity, BarChart3, Package, AlertTriangle, Clock, Printer 
 } from "lucide-react";
 
-// Menerima prop 'inventory' dan 'notifSewa'
-const DashboardView = ({ view, transactions, setFormData, setItems, setActiveTransaction, setView, user, inventory = [], notifSewa = [] }) => {
+// Menerima prop tambahan 'printers = []' untuk menghitung statistik status
+const DashboardView = ({ view, transactions, setFormData, setItems, setActiveTransaction, setView, user, inventory = [], notifSewa = [], printers = [] }) => {
   const [searchQuery, setSearchQuery] = useState("");
 
   // ==============================
-  // KALKULASI STATISTIK
+  // KALKULASI STATISTIK TRANSAKSI
   // ==============================
   const stats = { masuk: 0, keluar: 0, total: transactions.length };
   transactions.forEach((trx) => {
@@ -24,13 +24,23 @@ const DashboardView = ({ view, transactions, setFormData, setItems, setActiveTra
   });
 
   // ==============================
+  // KALKULASI STATISTIK PRINTER
+  // ==============================
+  const printerStats = { inventaris: 0, berjalan: 0, habis: 0 };
+  printers.forEach((p) => {
+    if (p.status === "Inventaris") printerStats.inventaris++;
+    else if (p.status === "Sewa Berjalan") printerStats.berjalan++;
+    else if (p.status === "Sewa Habis") printerStats.habis++;
+  });
+
+  // ==============================
   // PERSIAPAN DATA GRAFIK BARANG
   // ==============================
   const chartData = [...inventory].sort((a, b) => Number(b.stok) - Number(a.stok));
   const maxStok = chartData.length > 0 ? Math.max(...chartData.map((i) => Number(i.stok))) : 1;
 
   // ==============================
-  // LOGIKA PENCARIAN
+  // LOGIKA PENCARIAN TRANSAKSI
   // ==============================
   const filteredTransactions = transactions.filter((trx) => {
     const query = searchQuery.toLowerCase();
@@ -71,7 +81,7 @@ const DashboardView = ({ view, transactions, setFormData, setItems, setActiveTra
       <div className="max-w-7xl mx-auto p-4 sm:p-6 animate-in fade-in duration-300">
         
         {/* HEADER */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-3">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-800 tracking-tight">Dashboard Logistik</h2>
           {user && (
             <div className="flex items-center gap-2.5 bg-white px-3 py-1.5 rounded-full shadow-sm border border-gray-200">
@@ -86,8 +96,9 @@ const DashboardView = ({ view, transactions, setFormData, setItems, setActiveTra
           )}
         </div>
         
-        {/* CARD STATISTIK */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5">
+        {/* ROW 1: CARD STATISTIK TRANSAKSI */}
+        <h3 className="text-xs font-bold text-gray-400 mb-3 uppercase tracking-wider pl-1">Ringkasan Transaksi</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-3">
             <div className="bg-blue-100 p-3 rounded-xl"><History className="w-5 h-5 text-blue-600" /></div>
             <div><p className="text-xs text-gray-500 font-medium">Total Transaksi</p><p className="text-xl font-bold text-gray-800">{stats.total}</p></div>
@@ -102,9 +113,26 @@ const DashboardView = ({ view, transactions, setFormData, setItems, setActiveTra
           </div>
         </div>
 
+        {/* ROW 2: CARD STATISTIK PRINTER */}
+        <h3 className="text-xs font-bold text-gray-400 mb-3 uppercase tracking-wider pl-1">Status Perangkat Printer</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div onClick={() => setView("perangkat_printer")} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-3 cursor-pointer hover:border-green-300 hover:shadow-md transition-all group">
+            <div className="bg-green-100 p-3 rounded-xl group-hover:bg-green-200 transition-colors"><Printer className="w-5 h-5 text-green-600" /></div>
+            <div><p className="text-xs text-gray-500 font-medium">Sewa Berjalan</p><p className="text-xl font-bold text-gray-800">{printerStats.berjalan}</p></div>
+          </div>
+          <div onClick={() => setView("perangkat_printer")} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-3 cursor-pointer hover:border-red-300 hover:shadow-md transition-all group">
+            <div className="bg-red-100 p-3 rounded-xl group-hover:bg-red-200 transition-colors"><AlertTriangle className="w-5 h-5 text-red-600" /></div>
+            <div><p className="text-xs text-gray-500 font-medium">Sewa Habis</p><p className="text-xl font-bold text-gray-800">{printerStats.habis}</p></div>
+          </div>
+          <div onClick={() => setView("perangkat_printer")} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-3 cursor-pointer hover:border-blue-300 hover:shadow-md transition-all group">
+            <div className="bg-blue-100 p-3 rounded-xl group-hover:bg-blue-200 transition-colors"><Package className="w-5 h-5 text-blue-600" /></div>
+            <div><p className="text-xs text-gray-500 font-medium">Inventaris Gudang</p><p className="text-xl font-bold text-gray-800">{printerStats.inventaris}</p></div>
+          </div>
+        </div>
+
         {/* AREA NOTIFIKASI MASA SEWA */}
         {notifSewa && notifSewa.length > 0 && (
-          <div className="bg-red-50/80 rounded-xl shadow-sm border border-red-100 overflow-hidden mb-5 animate-in slide-in-from-bottom-4 duration-500">
+          <div className="bg-red-50/80 rounded-xl shadow-sm border border-red-100 overflow-hidden mb-6 animate-in slide-in-from-bottom-4 duration-500">
             <div className="px-5 py-3 border-b border-red-100/50 flex justify-between items-center gap-3">
               <div className="flex items-center gap-2.5">
                 <div className="bg-red-100 p-1.5 rounded-full animate-pulse">

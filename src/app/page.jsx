@@ -496,7 +496,8 @@ export default function SuratSerahTerimaApp() {
           setActiveTransaction={setActiveTransaction}
           setView={setView}
           user={user}
-          notifSewa={notifSewa} // [BARU] Mengirim daftar notifikasi ke Dashboard
+          notifSewa={notifSewa}
+          printers={printers} // [PERBAIKAN] Menggunakan nama state yang benar, yaitu `printers`
         />
       )}
 

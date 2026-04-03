@@ -6,8 +6,9 @@ import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "firebase
 
 import { db } from "../lib/firebase"; 
 
+// --- DATA CONTOH ---
 const dummyData = [
-  { id: "dummy-1", idOutlet: "12458", outlet: "CP CIBINONG", produk: "EPSON L3250 ECO TANK", sn: "X8JX104470", penyedia: "PEGADAIAN", masaSewa: "Not Listed", status: "Inventaris", kondisi: "BAIK", deskripsi: "Data Contoh Firebase Kosong" },
+  { id: "dummy-1", idOutlet: "12458", outlet: "CP CIBINONG", produk: "EPSON L3250 ECO TANK", sn: "X8JX104470", penyedia: "PEGADAIAN", tanggalMulai: "", tanggalSelesai: "", status: "Inventaris", kondisi: "BAIK", deskripsi: "Data Contoh Firebase Kosong" },
 ];
 
 export default function DataPrinter() {
@@ -23,23 +24,22 @@ export default function DataPrinter() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  
+  // ---> PERUBAHAN 1: Memisahkan masaSewa menjadi tanggalMulai dan tanggalSelesai di state
   const [formData, setFormData] = useState({
-    idOutlet: "", outlet: "", produk: "", sn: "", penyedia: "", masaSewa: "", status: "Inventaris", kondisi: "BAIK", deskripsi: ""
+    idOutlet: "", outlet: "", produk: "", sn: "", penyedia: "", tanggalMulai: "", tanggalSelesai: "", status: "Inventaris", kondisi: "BAIK", deskripsi: ""
   });
 
   const appId = process.env.NEXT_PUBLIC_APP_ID || "logistikku_app_01";
-  
-  // ---> PERUBAHAN UTAMA: Menentukan jalur (path) yang seragam dengan page.jsx
   const baseRefPath = `artifacts/${appId}/public/data`;
 
   // ==========================================
-  // 1. READ: Mengambil Data Printer Utama
+  // READ DATA
   // ==========================================
   const fetchData = async () => {
     setIsLoading(true);
     setKoneksiError(false);
     try {
-      // Mengambil dari /artifacts/logistikku_app_01/public/data/printers
       const querySnapshot = await getDocs(collection(db, baseRefPath, "printers"));
       if (querySnapshot.empty) {
         setPrinterData(dummyData);
@@ -56,9 +56,6 @@ export default function DataPrinter() {
     }
   };
 
-  // ==========================================
-  // 2. READ: Mengambil Data Master
-  // ==========================================
   const fetchDropdownData = async () => {
     try {
       const outSnap = await getDocs(collection(db, baseRefPath, "outlets"));
@@ -77,7 +74,6 @@ export default function DataPrinter() {
         if (data.sn) extractedSNs.push(data.sn);
       });
       setSnList([...new Set(extractedSNs)]);
-
     } catch (error) {
       console.error("Error fetching dropdown data:", error);
     }
@@ -88,8 +84,9 @@ export default function DataPrinter() {
     fetchDropdownData();
   }, [appId]);
 
+  // ---> PERUBAHAN 2: Helper agar tampilan di tabel lebih ringkas dan enak dibaca (Misal: "Okt 2024")
   const formatBulanTahun = (dateString) => {
-    if (!dateString) return "";
+    if (!dateString) return "-";
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString('id-ID', { month: 'short', year: 'numeric' });
@@ -98,6 +95,9 @@ export default function DataPrinter() {
     }
   };
 
+  // ==========================================
+  // HANDLERS FOR FORM OTOMATISASI
+  // ==========================================
   const handleOutletChange = (e) => {
     const selectedNama = e.target.value;
     const selectedOutlet = outletsList.find(o => o.nama === selectedNama);
@@ -114,44 +114,32 @@ export default function DataPrinter() {
     
     let updatedForm = { ...formData, produk: selectedProduk };
 
+    // ---> PERUBAHAN 3: Memasukkan tanggal mentah (YYYY-MM-DD) langsung ke input tipe 'date'
     if (itemMaster) {
       updatedForm.penyedia = itemMaster.vendor_nama || "";
-      if (itemMaster.tanggal_mulai || itemMaster.tanggal_selesai) {
-        const mulai = formatBulanTahun(itemMaster.tanggal_mulai);
-        const selesai = formatBulanTahun(itemMaster.tanggal_selesai);
-        updatedForm.masaSewa = `${mulai} - ${selesai}`;
-      } else {
-        updatedForm.masaSewa = "Not Listed";
-      }
+      updatedForm.tanggalMulai = itemMaster.tanggal_mulai || "";
+      updatedForm.tanggalSelesai = itemMaster.tanggal_selesai || "";
     } else {
       updatedForm.penyedia = "";
-      updatedForm.masaSewa = "";
+      updatedForm.tanggalMulai = "";
+      updatedForm.tanggalSelesai = "";
     }
 
     setFormData(updatedForm);
   };
 
+  // CRUD Actions
   const handleSave = async (e) => {
     e.preventDefault();
-    
-    if (editingId && editingId.startsWith("dummy-")) {
-      alert("Ini adalah data contoh. Tambahkan data baru terlebih dahulu untuk menyimpannya ke Firebase.");
-      setIsModalOpen(false);
-      return;
-    }
+    if (editingId && editingId.startsWith("dummy-")) return alert("Ini data contoh.");
 
     const isOutletValid = outletsList.some(o => o.nama === formData.outlet);
     const isProdukValid = inventoryList.some(i => i.nama === formData.produk);
 
-    if (!isOutletValid) {
-      return alert("Gagal: Nama Outlet tidak ditemukan di Master Data. Silakan pilih dari daftar yang muncul!");
-    }
-    if (!isProdukValid) {
-      return alert("Gagal: Produk Hardware tidak ditemukan di Master Data. Silakan pilih dari daftar yang muncul!");
-    }
+    if (!isOutletValid) return alert("Gagal: Nama Outlet tidak ditemukan di Master Data.");
+    if (!isProdukValid) return alert("Gagal: Produk Hardware tidak ditemukan di Master Data.");
 
     try {
-      // ---> PERUBAHAN: Menyimpan ke /artifacts/logistikku_app_01/public/data/printers
       if (editingId) {
         await updateDoc(doc(db, baseRefPath, "printers", editingId), formData);
       } else {
@@ -161,7 +149,6 @@ export default function DataPrinter() {
       fetchData(); 
       resetForm();
     } catch (error) {
-      console.error(error);
       alert("Gagal menyimpan data.");
     }
   };
@@ -170,7 +157,6 @@ export default function DataPrinter() {
     if (id.startsWith("dummy-")) return alert("Data contoh tidak dapat dihapus.");
     if (window.confirm("Apakah Anda yakin ingin menghapus data printer ini?")) {
       try {
-        // ---> PERUBAHAN: Menghapus dari /artifacts/logistikku_app_01/public/data/printers
         await deleteDoc(doc(db, baseRefPath, "printers", id));
         fetchData();
       } catch (error) {
@@ -181,7 +167,12 @@ export default function DataPrinter() {
 
   const openModalForAdd = () => { resetForm(); setIsModalOpen(true); };
   const openModalForEdit = (printer) => { setEditingId(printer.id); setFormData({ ...printer }); setIsModalOpen(true); };
-  const resetForm = () => { setEditingId(null); setFormData({ idOutlet: "", outlet: "", produk: "", sn: "", penyedia: "", masaSewa: "", status: "Inventaris", kondisi: "BAIK", deskripsi: "" }); };
+  
+  // ---> PERUBAHAN 4: Reset state tanggal baru
+  const resetForm = () => { 
+    setEditingId(null); 
+    setFormData({ idOutlet: "", outlet: "", produk: "", sn: "", penyedia: "", tanggalMulai: "", tanggalSelesai: "", status: "Inventaris", kondisi: "BAIK", deskripsi: "" }); 
+  };
 
   const filteredData = printerData.filter((item) => {
     const matchesSearch = item.produk?.toLowerCase().includes(searchQuery.toLowerCase()) || item.sn?.toLowerCase().includes(searchQuery.toLowerCase()) || item.outlet?.toLowerCase().includes(searchQuery.toLowerCase());
@@ -266,7 +257,14 @@ export default function DataPrinter() {
                     <td className="p-4"><p className="font-semibold text-gray-800">{printer.outlet}</p><p className="text-xs text-gray-500">ID: {printer.idOutlet}</p></td>
                     <td className="p-4"><p className="font-medium text-gray-800">{printer.produk}</p><p className="text-xs text-gray-500 font-mono mt-0.5">SN: {printer.sn}</p></td>
                     <td className="p-4 font-medium text-gray-700">{printer.penyedia}</td>
-                    <td className="p-4 text-gray-600 text-xs">{printer.masaSewa}</td>
+                    
+                    {/* ---> PERUBAHAN 5: Render tanggal secara dinamis. Jika kosong tampilkan "-" */}
+                    <td className="p-4 text-gray-600 text-xs">
+                      {printer.tanggalMulai || printer.tanggalSelesai 
+                        ? `${formatBulanTahun(printer.tanggalMulai)} - ${formatBulanTahun(printer.tanggalSelesai)}`
+                        : <span className="italic text-gray-400">Tidak ada data</span>}
+                    </td>
+
                     <td className="p-4 text-center"><span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusBadge(printer.status)}`}>{printer.status}</span></td>
                     <td className="p-4 text-center"><span className={`px-2.5 py-1 rounded-md text-[11px] font-bold ${printer.kondisi === "BAIK" ? "bg-green-50 text-green-600" : "bg-orange-50 text-orange-600"}`}>{printer.kondisi}</span></td>
                     <td className="p-4 text-right">
@@ -354,13 +352,29 @@ export default function DataPrinter() {
                   </datalist>
                 </div>
 
-                <div>
+                <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Penyedia</label>
                   <input required type="text" value={formData.penyedia} onChange={(e) => setFormData({...formData, penyedia: e.target.value})} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Otomatis terisi jika ada..." />
                 </div>
+
+                {/* ---> PERUBAHAN 6: Mengganti input text Masa Sewa menjadi dua input Date <--- */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Masa Sewa</label>
-                  <input type="text" value={formData.masaSewa} onChange={(e) => setFormData({...formData, masaSewa: e.target.value})} placeholder="Misal: Okt 2024 - Okt 2026" className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tgl Mulai Sewa</label>
+                  <input 
+                    type="date" 
+                    value={formData.tanggalMulai} 
+                    onChange={(e) => setFormData({...formData, tanggalMulai: e.target.value})} 
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Tgl Selesai Sewa</label>
+                  <input 
+                    type="date" 
+                    value={formData.tanggalSelesai} 
+                    onChange={(e) => setFormData({...formData, tanggalSelesai: e.target.value})} 
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" 
+                  />
                 </div>
                 
                 <div>

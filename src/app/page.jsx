@@ -449,8 +449,9 @@ export default function SuratSerahTerimaApp() {
 
       {(view === "dashboard" || view === "riwayat") && (
         <DashboardView
-          view={view} // Kirim view agar DashboardView tahu tab mana yang harus dirender
+          view={view}
           transactions={transactions}
+          inventory={inventory}
           setFormData={setFormData}
           setItems={setItems}
           setActiveTransaction={setActiveTransaction}

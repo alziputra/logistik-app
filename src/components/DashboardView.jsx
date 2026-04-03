@@ -1,13 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { History, Plus, ArrowLeft, Search, Download, FileText, User, Activity } from "lucide-react";
+import { 
+  History, Plus, ArrowLeft, Search, Download, FileText, 
+  User, Activity, BarChart3, Package 
+} from "lucide-react";
 
-// MENERIMA PROP 'view' UNTUK MENENTUKAN APA YANG HARUS DITAMPILKAN
-const DashboardView = ({ view, transactions, setFormData, setItems, setActiveTransaction, setView, user }) => {
+// Menerima prop 'inventory'
+const DashboardView = ({ view, transactions, setFormData, setItems, setActiveTransaction, setView, user, inventory = [] }) => {
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Kalkulasi Statistik
+  // ==============================
+  // KALKULASI STATISTIK
+  // ==============================
   const stats = { masuk: 0, keluar: 0, total: transactions.length };
   transactions.forEach((trx) => {
     const d = new Date(trx.tanggal);
@@ -18,7 +23,18 @@ const DashboardView = ({ view, transactions, setFormData, setItems, setActiveTra
     }
   });
 
-  // Logika Pencarian
+  // ==============================
+  // PERSIAPAN DATA GRAFIK BARANG
+  // ==============================
+  // PERBAIKAN: Gunakan Number() untuk memastikan stok dibaca sebagai angka, bukan teks
+  const chartData = [...inventory].sort((a, b) => Number(b.stok) - Number(a.stok));
+  
+  // Mencari nilai stok tertinggi untuk menghitung persentase tinggi balok grafik
+  const maxStok = chartData.length > 0 ? Math.max(...chartData.map((i) => Number(i.stok))) : 1;
+
+  // ==============================
+  // LOGIKA PENCARIAN
+  // ==============================
   const filteredTransactions = transactions.filter((trx) => {
     const query = searchQuery.toLowerCase();
     const matchSurat = trx.nomorSurat?.toLowerCase().includes(query);
@@ -32,7 +48,6 @@ const DashboardView = ({ view, transactions, setFormData, setItems, setActiveTra
     return matchSurat || matchPihak || matchJenis || matchBarang;
   });
 
-  // Ekspor Excel
   const exportToExcel = () => {
     const headers = ["Tanggal", "No. Surat", "Jenis Transaksi", "Pengirim (Nama)", "Pengirim (Instansi)", "Penerima (Nama)", "Penerima (Instansi)", "Daftar Barang & Qty"];
     const rows = filteredTransactions.map(trx => {
@@ -85,6 +100,67 @@ const DashboardView = ({ view, transactions, setFormData, setItems, setActiveTra
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
             <div className="bg-orange-100 p-4 rounded-full"><ArrowLeft className="w-6 h-6 text-orange-600 transform rotate-180" /></div>
             <div><p className="text-sm text-gray-500">Keluar (Bulan Ini)</p><p className="text-2xl font-bold">{stats.keluar}</p></div>
+          </div>
+        </div>
+
+        {/* ======================= */}
+        {/* GRAFIK STOK BARANG */}
+        {/* ======================= */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+          <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50 flex items-center gap-3">
+            <div className="bg-purple-100 p-2.5 rounded-xl">
+              <BarChart3 className="w-5 h-5 text-purple-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-lg text-gray-800">Visualisasi Stok Barang</h3>
+              <p className="text-sm text-gray-500">Grafik keseluruhan ketersediaan barang di gudang saat ini</p>
+            </div>
+          </div>
+          
+          <div className="p-6">
+            {chartData.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+                <Package className="w-12 h-12 text-gray-300 mb-3" />
+                <p>Belum ada data stok barang.</p>
+              </div>
+            ) : (
+              // Kontainer utama grafik
+              <div className="flex items-end gap-3 h-72 overflow-x-auto custom-scrollbar pb-2 pt-8 px-2">
+                {chartData.map((item) => {
+                  const stokValue = Number(item.stok);
+                  const heightPct = maxStok > 0 ? (stokValue / maxStok) * 100 : 0;
+                  
+                  return (
+                    // PERBAIKAN: Menambahkan 'h-full' agar wadah mengambil tinggi maksimal
+                    <div key={item.id} className="flex flex-col items-center shrink-0 w-24 group h-full">
+                      
+                      {/* Area khusus untuk batang grafik, menggunakan flex-1 agar memenuhi ruang */}
+                      <div className="w-full flex-1 flex flex-col justify-end relative">
+                        {/* Batang Grafik */}
+                        <div 
+                          className="w-full bg-purple-500 hover:bg-purple-400 rounded-t-md transition-all relative flex flex-col justify-end shadow-sm cursor-pointer"
+                          style={{ height: `${heightPct}%`, minHeight: '4px' }}
+                          title={`${item.nama} \nStok: ${stokValue} ${item.satuan || ''}`}
+                        >
+                          {/* Label Angka Stok di atas batang */}
+                          <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-bold text-gray-700 bg-white px-1.5 rounded border border-gray-100">
+                            {stokValue}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Label Nama Barang dengan area tinggi tetap (h-10) di bawah */}
+                      <div className="h-10 mt-3 w-full flex justify-center items-start">
+                        <span className="text-[11px] text-gray-600 text-center line-clamp-2 leading-tight px-1 font-medium" title={item.nama}>
+                          {item.nama}
+                        </span>
+                      </div>
+
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import {
   Package, LayoutDashboard, Menu, X, LogOut, ChevronDown, Box, Building2, Database, 
-  ArrowRightLeft, History, FileText
+  ArrowRightLeft, History, FileText, Server, Monitor, Printer
 } from "lucide-react";
 
 const Navbar = ({ view, setView, startNewDocument, handleLogout }) => {
@@ -12,6 +12,8 @@ const Navbar = ({ view, setView, startNewDocument, handleLogout }) => {
   // State untuk mengontrol dropdown
   const [isMasterOpen, setIsMasterOpen] = useState(view.startsWith("master_"));
   const [isTransaksiOpen, setIsTransaksiOpen] = useState(view === "riwayat" || view === "form");
+  // Tambahan state untuk dropdown Data Perangkat
+  const [isPerangkatOpen, setIsPerangkatOpen] = useState(view.startsWith("perangkat_"));
 
   const closeMenu = () => setIsOpen(false);
 
@@ -53,7 +55,7 @@ const Navbar = ({ view, setView, startNewDocument, handleLogout }) => {
           </button>
         </div>
 
-        <nav className="flex-1 px-4 space-y-2 overflow-y-auto mt-6 custom-scrollbar">
+        <nav className="flex-1 px-4 space-y-2 overflow-y-auto mt-6 custom-scrollbar pb-6">
           
           {/* MENU DASHBOARD */}
           <button onClick={() => handleNavClick("dashboard")} className={`w-full px-4 py-3 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "dashboard" ? "bg-blue-50 text-blue-700" : "text-gray-600 hover:bg-gray-50"}`}>
@@ -73,7 +75,6 @@ const Navbar = ({ view, setView, startNewDocument, handleLogout }) => {
                 <button onClick={() => handleNavClick("riwayat")} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "riwayat" ? "bg-blue-100 text-blue-700" : "text-gray-500 hover:text-blue-700 hover:bg-blue-50"}`}>
                   <History className="w-4 h-4" /> Riwayat Transaksi
                 </button>
-                {/* MENU DISIMPLIFIKASI MENJADI SATU */}
                 <button onClick={handleStartNew} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "form" ? "bg-indigo-50 text-indigo-700" : "text-gray-500 hover:text-indigo-700 hover:bg-indigo-50"}`}>
                   <FileText className="w-4 h-4" /> Buat Surat Baru
                 </button>
@@ -101,9 +102,29 @@ const Navbar = ({ view, setView, startNewDocument, handleLogout }) => {
             </div>
           </div>
 
+          {/* MENU DROPDOWN: DATA PERANGKAT */}
+          <div className="space-y-1 mt-2">
+            <button onClick={() => setIsPerangkatOpen(!isPerangkatOpen)} className={`w-full px-4 py-3 rounded-xl font-medium text-sm flex items-center justify-between transition-colors ${view.startsWith("perangkat_") ? "bg-blue-50 text-blue-700" : "text-gray-600 hover:bg-gray-50"}`}>
+              <div className="flex items-center gap-3">
+                <Server className="w-5 h-5" /> Data Perangkat
+              </div>
+              <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${isPerangkatOpen ? "rotate-180" : ""}`} />
+            </button>
+            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isPerangkatOpen ? "max-h-40 opacity-100" : "max-h-0 opacity-0"}`}>
+              <div className="pl-4 pr-2 py-1 space-y-1 border-l-2 border-gray-100 ml-6 mt-1">
+                <button onClick={() => handleNavClick("perangkat_komputer")} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "perangkat_komputer" ? "bg-blue-100 text-blue-700" : "text-gray-500 hover:text-blue-700 hover:bg-blue-50"}`}>
+                  <Monitor className="w-4 h-4" /> Data Komputer
+                </button>
+                <button onClick={() => handleNavClick("perangkat_printer")} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "perangkat_printer" ? "bg-green-100 text-green-700" : "text-gray-500 hover:text-green-700 hover:bg-green-50"}`}>
+                  <Printer className="w-4 h-4" /> Data Printer
+                </button>
+              </div>
+            </div>
+          </div>
+
         </nav>
 
-        <div className="p-4 border-t border-gray-100 shrink-0">
+        <div className="p-4 border-t border-gray-100 shrink-0 mt-auto">
           <button onClick={handleLogout} className="w-full py-2.5 px-4 mb-4 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-colors">
             <LogOut className="w-4 h-4" /> Keluar Sistem
           </button>

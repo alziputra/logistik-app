@@ -32,6 +32,8 @@ import AdminView from "../components/AdminView";
 import FormView from "../components/FormView";
 import PreviewView from "../components/PreviewView";
 import LoginView from "../components/LoginView";
+// --- TAMBAHAN IMPORT KOMPONEN BARU ---
+import DataPrinter from "../components/DataPrinter"; // (Catatan: Pastikan path ini sesuai dengan lokasi Anda menyimpan DataPrinter.jsx)
 
 export default function SuratSerahTerimaApp() {
   const [user, setUser] = useState(null);
@@ -439,7 +441,7 @@ export default function SuratSerahTerimaApp() {
         </div>
       )}
 
-      {/*  Menambahkan handleLogout ke Navbar */}
+      {/* Menambahkan handleLogout ke Navbar */}
       <Navbar 
         view={view} 
         setView={setView} 
@@ -493,6 +495,12 @@ export default function SuratSerahTerimaApp() {
           handleSaveTransaction={handleSaveTransaction}
         />
       )}
+
+      {/* --- TAMBAHAN UNTUK MERENDER HALAMAN DATA PRINTER --- */}
+      {view === "perangkat_printer" && (
+        <DataPrinter />
+      )}
+
     </div>
   );
 }

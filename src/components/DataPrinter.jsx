@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Printer, Filter, Download, Plus, Edit, Trash2, X, Loader2, AlertCircle } from "lucide-react";
+import { Search, Printer, Filter, Download, Plus, Edit, Trash2, X, Loader2, AlertCircle, CheckCircle, XCircle } from "lucide-react";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
 
 import { db } from "../lib/firebase"; 
@@ -17,7 +17,16 @@ export default function DataPrinter() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("Semua");
   const [koneksiError, setKoneksiError] = useState(false);
-  const [isSaving, setIsSaving] = useState(false); // [BARU] State untuk efek loading saat simpan
+  const [isSaving, setIsSaving] = useState(false);
+
+  const [notif, setNotif] = useState({ show: false, message: "", type: "" });
+
+  const showNotif = (message, type = "success") => {
+    setNotif({ show: true, message, type });
+    setTimeout(() => {
+      setNotif({ show: false, message: "", type: "" });
+    }, 3000);
+  };
 
   const [outletsList, setOutletsList] = useState([]);
   const [inventoryList, setInventoryList] = useState([]);
@@ -26,7 +35,6 @@ export default function DataPrinter() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   
-  // ---> PERUBAHAN 1: Memisahkan masaSewa menjadi tanggalMulai dan tanggalSelesai di state
   const [formData, setFormData] = useState({
     idOutlet: "", outlet: "", produk: "", sn: "", penyedia: "", tanggalMulai: "", tanggalSelesai: "", status: "Inventaris", kondisi: "BAIK", deskripsi: ""
   });
@@ -34,9 +42,6 @@ export default function DataPrinter() {
   const appId = process.env.NEXT_PUBLIC_APP_ID || "logistikku_app_01";
   const baseRefPath = `artifacts/${appId}/public/data`;
 
-  // ==========================================
-  // READ DATA
-  // ==========================================
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
@@ -85,7 +90,6 @@ export default function DataPrinter() {
     fetchDropdownData();
   }, [appId, baseRefPath]);
 
-  // ---> PERUBAHAN 2: Helper agar tampilan di tabel lebih ringkas dan enak dibaca (Misal: "Okt 2024")
   const formatBulanTahun = (dateString) => {
     if (!dateString) return "-";
     try {
@@ -97,8 +101,16 @@ export default function DataPrinter() {
   };
 
   // ==========================================
-  // HANDLERS FOR FORM OTOMATISASI
+  // [BARU] FUNGSI KALKULASI STATUS OTOMATIS
   // ==========================================
+  const calculateAutoStatus = (startDate, endDate) => {
+    if (!startDate || !endDate) return "Inventaris";
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset jam agar akurat
+    const end = new Date(endDate);
+    return end >= today ? "Sewa Berjalan" : "Sewa Habis";
+  };
+
   const handleOutletChange = (e) => {
     const selectedNama = e.target.value;
     const selectedOutlet = outletsList.find(o => o.nama === selectedNama);
@@ -109,84 +121,86 @@ export default function DataPrinter() {
     });
   };
 
+  // ==========================================
+  // [UPDATE] HANDLER PRODUK & TANGGAL
+  // ==========================================
   const handleProdukChange = (e) => {
     const selectedProduk = e.target.value;
     const itemMaster = inventoryList.find(inv => inv.nama === selectedProduk);
     
     let updatedForm = { ...formData, produk: selectedProduk };
 
-    // ---> PERUBAHAN 3: Memasukkan tanggal mentah (YYYY-MM-DD) langsung ke input tipe 'date'
     if (itemMaster) {
       updatedForm.penyedia = itemMaster.vendor_nama || "";
       updatedForm.tanggalMulai = itemMaster.tanggal_mulai || "";
       updatedForm.tanggalSelesai = itemMaster.tanggal_selesai || "";
+      // Kalkulasi status berdasarkan data dari inventory
+      updatedForm.status = calculateAutoStatus(itemMaster.tanggal_mulai, itemMaster.tanggal_selesai);
     } else {
       updatedForm.penyedia = "";
       updatedForm.tanggalMulai = "";
       updatedForm.tanggalSelesai = "";
+      updatedForm.status = "Inventaris";
     }
 
     setFormData(updatedForm);
   };
 
-  // CRUD Actions
+  // Jika user mengubah tanggal secara manual di form, status juga di-update
+  const handleDateChange = (field, value) => {
+    const updatedForm = { ...formData, [field]: value };
+    updatedForm.status = calculateAutoStatus(updatedForm.tanggalMulai, updatedForm.tanggalSelesai);
+    setFormData(updatedForm);
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
-    if (editingId && editingId.startsWith("dummy-")) return alert("Ini data contoh.");
+    if (editingId && editingId.startsWith("dummy-")) return showNotif("Ini data contoh.", "error");
 
     const isOutletValid = outletsList.some(o => o.nama === formData.outlet);
     const isProdukValid = inventoryList.some(i => i.nama === formData.produk);
 
-    if (!isOutletValid) return alert("Gagal: Nama Outlet tidak ditemukan di Master Data.");
-    if (!isProdukValid) return alert("Gagal: Produk Hardware tidak ditemukan di Master Data.");
+    if (!isOutletValid) return showNotif("Nama Outlet tidak ditemukan di Master Data.", "error");
+    if (!isProdukValid) return showNotif("Produk Hardware tidak ditemukan di Master Data.", "error");
 
-    setIsSaving(true); // Aktifkan mode loading
+    setIsSaving(true);
     
     try {
       if (editingId) {
-        // [UPDATE] Jika Edit Data
         await updateDoc(doc(db, baseRefPath, "printers", editingId), formData);
-        
-        // Update state lokal untuk merefleksikan perubahan secara instan
         setPrinterData((prevData) => 
           prevData.map((item) => 
             item.id === editingId ? { id: editingId, ...formData } : item
           )
         );
-        alert("✅ Perubahan data printer berhasil disimpan!");
+        showNotif("Perubahan data printer berhasil disimpan!", "success");
       } else {
-        // [CREATE] Jika Tambah Data Baru
         const docRef = await addDoc(collection(db, baseRefPath, "printers"), formData);
-        
-        // Buat objek data baru dengan ID dari Firebase
         const newPrinter = { id: docRef.id, ...formData };
-        
-        // Tambahkan ke state lokal di urutan paling atas
         setPrinterData((prevData) => [newPrinter, ...prevData]);
-        alert("✅ Data Printer baru berhasil ditambahkan!");
+        showNotif("Data Printer baru berhasil ditambahkan!", "success");
       }
       
       setIsModalOpen(false);
       resetForm();
     } catch (error) {
       console.error("Ini error aslinya:", error);
-      alert("❌ Gagal menyimpan data.");
+      showNotif("Gagal menyimpan data ke server.", "error");
     } finally {
-      setIsSaving(false); // Matikan mode loading
+      setIsSaving(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (id.startsWith("dummy-")) return alert("Data contoh tidak dapat dihapus.");
+    if (id.startsWith("dummy-")) return showNotif("Data contoh tidak dapat dihapus.", "error");
     if (window.confirm("Apakah Anda yakin ingin menghapus data printer ini?")) {
       try {
         await deleteDoc(doc(db, baseRefPath, "printers", id));
-        // Setelah penghapusan, update state untuk responsif tanpa perlu fetch ulang
         setPrinterData(prev => prev.filter(p => p.id !== id));
-        alert("🗑️ Data printer berhasil dihapus.");
+        showNotif("Data printer berhasil dihapus.", "success");
       } catch (error) {
         console.error("Ini error aslinya:", error);
-        alert("Gagal menghapus data.");
+        showNotif("Gagal menghapus data.", "error");
       }
     }
   };
@@ -194,7 +208,6 @@ export default function DataPrinter() {
   const openModalForAdd = () => { resetForm(); setIsModalOpen(true); };
   const openModalForEdit = (printer) => { setEditingId(printer.id); setFormData({ ...printer }); setIsModalOpen(true); };
   
-  // ---> PERUBAHAN 4: Reset state tanggal baru
   const resetForm = () => { 
     setEditingId(null); 
     setFormData({ idOutlet: "", outlet: "", produk: "", sn: "", penyedia: "", tanggalMulai: "", tanggalSelesai: "", status: "Inventaris", kondisi: "BAIK", deskripsi: "" }); 
@@ -216,7 +229,7 @@ export default function DataPrinter() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-6 animate-in fade-in duration-300">
+    <div className="max-w-7xl mx-auto p-6 animate-in fade-in duration-300 relative">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -283,14 +296,11 @@ export default function DataPrinter() {
                     <td className="p-4"><p className="font-semibold text-gray-800">{printer.outlet}</p><p className="text-xs text-gray-500">ID: {printer.idOutlet}</p></td>
                     <td className="p-4"><p className="font-medium text-gray-800">{printer.produk}</p><p className="text-xs text-gray-500 font-mono mt-0.5">SN: {printer.sn}</p></td>
                     <td className="p-4 font-medium text-gray-700">{printer.penyedia}</td>
-                    
-                    {/* ---> PERUBAHAN 5: Render tanggal secara dinamis. Jika kosong tampilkan "-" */}
                     <td className="p-4 text-gray-600 text-xs">
                       {printer.tanggalMulai || printer.tanggalSelesai 
                         ? `${formatBulanTahun(printer.tanggalMulai)} - ${formatBulanTahun(printer.tanggalSelesai)}`
                         : <span className="italic text-gray-400">Tidak ada data</span>}
                     </td>
-
                     <td className="p-4 text-center"><span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusBadge(printer.status)}`}>{printer.status}</span></td>
                     <td className="p-4 text-center"><span className={`px-2.5 py-1 rounded-md text-[11px] font-bold ${printer.kondisi === "BAIK" ? "bg-green-50 text-green-600" : "bg-orange-50 text-orange-600"}`}>{printer.kondisi}</span></td>
                     <td className="p-4 text-right">
@@ -318,104 +328,56 @@ export default function DataPrinter() {
             
             <form onSubmit={handleSave} className="p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Nama Outlet</label>
-                  <input 
-                    required 
-                    type="text" 
-                    list="outlets-suggestions"
-                    value={formData.outlet} 
-                    onChange={handleOutletChange} 
-                    disabled={isSaving}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100" 
-                    placeholder="Ketik untuk mencari outlet..." 
-                  />
+                  <input required type="text" list="outlets-suggestions" value={formData.outlet} onChange={handleOutletChange} disabled={isSaving} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100" placeholder="Ketik untuk mencari outlet..." />
                   <datalist id="outlets-suggestions">
-                    {outletsList.map(o => (
-                      <option key={o.id} value={o.nama} />
-                    ))}
+                    {outletsList.map(o => <option key={o.id} value={o.nama} />)}
                   </datalist>
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">ID Outlet (Kode)</label>
                   <input required type="text" readOnly value={formData.idOutlet} className="w-full px-3 py-2 border rounded-lg bg-gray-100 text-gray-500 outline-none cursor-not-allowed" placeholder="Otomatis terisi..." />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Produk Hardware</label>
-                  <input 
-                    required 
-                    type="text" 
-                    list="produk-suggestions"
-                    value={formData.produk} 
-                    onChange={handleProdukChange} 
-                    disabled={isSaving}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100" 
-                    placeholder="Ketik untuk mencari produk..." 
-                  />
+                  <input required type="text" list="produk-suggestions" value={formData.produk} onChange={handleProdukChange} disabled={isSaving} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100" placeholder="Ketik untuk mencari produk..." />
                   <datalist id="produk-suggestions">
-                    {inventoryList.map(inv => (
-                      <option key={inv.id} value={inv.nama} />
-                    ))}
+                    {inventoryList.map(inv => <option key={inv.id} value={inv.nama} />)}
                   </datalist>
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Serial Number (SN)</label>
-                  <input 
-                    required 
-                    type="text" 
-                    list="sn-suggestions"
-                    value={formData.sn} 
-                    onChange={(e) => setFormData({...formData, sn: e.target.value})} 
-                    disabled={isSaving}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100" 
-                    placeholder="Ketik atau pilih SN..." 
-                  />
+                  <input required type="text" list="sn-suggestions" value={formData.sn} onChange={(e) => setFormData({...formData, sn: e.target.value})} disabled={isSaving} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100" placeholder="Ketik atau pilih SN..." />
                   <datalist id="sn-suggestions">
-                    {snList.map((sn, idx) => (
-                      <option key={idx} value={sn} />
-                    ))}
+                    {snList.map((sn, idx) => <option key={idx} value={sn} />)}
                   </datalist>
                 </div>
-
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">Penyedia</label>
                   <input required type="text" value={formData.penyedia} onChange={(e) => setFormData({...formData, penyedia: e.target.value})} disabled={isSaving} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100" placeholder="Otomatis terisi jika ada..." />
                 </div>
-
-                {/* ---> PERUBAHAN 6: Mengganti input text Masa Sewa menjadi dua input Date <--- */}
+                
+                {/* [UPDATE] onChange memanggil handleDateChange agar status ikut berubah */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Tgl Mulai Sewa</label>
-                  <input 
-                    type="date" 
-                    value={formData.tanggalMulai} 
-                    onChange={(e) => setFormData({...formData, tanggalMulai: e.target.value})} 
-                    disabled={isSaving}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100" 
-                  />
+                  <input type="date" value={formData.tanggalMulai} onChange={(e) => handleDateChange("tanggalMulai", e.target.value)} disabled={isSaving} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Tgl Selesai Sewa</label>
-                  <input 
-                    type="date" 
-                    value={formData.tanggalSelesai} 
-                    onChange={(e) => setFormData({...formData, tanggalSelesai: e.target.value})} 
-                    disabled={isSaving}
-                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100" 
-                  />
+                  <input type="date" value={formData.tanggalSelesai} onChange={(e) => handleDateChange("tanggalSelesai", e.target.value)} disabled={isSaving} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100" />
                 </div>
                 
+                {/* [UPDATE] Select tetap ada, tetapi otomatis ter-update oleh state */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                  <select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} disabled={isSaving} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white disabled:bg-gray-100">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Status (Otomatis)</label>
+                  <select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} disabled={isSaving} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white disabled:bg-gray-100 font-medium">
                     <option value="Inventaris">Inventaris</option>
                     <option value="Sewa Berjalan">Sewa Berjalan</option>
                     <option value="Sewa Habis">Sewa Habis</option>
                   </select>
                 </div>
+                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Kondisi</label>
                   <select value={formData.kondisi} onChange={(e) => setFormData({...formData, kondisi: e.target.value})} disabled={isSaving} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white disabled:bg-gray-100">
@@ -441,6 +403,18 @@ export default function DataPrinter() {
           </div>
         </div>
       )}
+
+      {/* UI CUSTOM NOTIFIKASI (TOAST) */}
+      {notif.show && (
+        <div className={`fixed bottom-6 right-6 z-[60] flex items-center gap-3 px-5 py-3 rounded-xl shadow-xl font-medium text-sm text-white animate-in slide-in-from-bottom-8 duration-300 ${notif.type === "success" ? "bg-green-600" : "bg-red-600"}`}>
+          {notif.type === "success" ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+          {notif.message}
+          <button onClick={() => setNotif({ show: false, message: "", type: "" })} className="ml-2 hover:bg-white/20 p-1 rounded-md transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
     </div>
   );
 }

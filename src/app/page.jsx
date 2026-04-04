@@ -112,7 +112,8 @@ export default function SuratSerahTerimaApp() {
     if (!user) return;
 
     let timeoutId;
-    const IDLE_TIME = 10 * 60 * 1000; // 10 menit
+    const IDLE_TIME = 5 * 1000; // 5 detik untuk testing
+    // const IDLE_TIME = 10 * 60 * 1000; // 10 menit
 
     const handleIdleLogout = async () => {
       try {

@@ -11,15 +11,18 @@ const DashboardView = ({ view, transactions, setFormData, setItems, setActiveTra
   const [searchQuery, setSearchQuery] = useState("");
 
   // ==============================
-  // KALKULASI STATISTIK TRANSAKSI
+  // KALKULASI STATISTIK TRANSAKSI (SEMUA WAKTU)
   // ==============================
   const stats = { masuk: 0, keluar: 0, total: transactions.length };
+  
   transactions.forEach((trx) => {
-    const d = new Date(trx.tanggal);
-    const today = new Date();
-    if (d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear()) {
-      if (trx.jenisTransaksi === "Barang Masuk") stats.masuk++;
-      else stats.keluar++;
+    // Normalisasi teks agar kebal terhadap salah ketik (huruf besar/kecil/spasi)
+    const jenis = String(trx.jenisTransaksi).trim().toLowerCase();
+    
+    if (jenis === "barang masuk") {
+      stats.masuk++;
+    } else if (jenis === "barang keluar") {
+      stats.keluar++;
     }
   });
 

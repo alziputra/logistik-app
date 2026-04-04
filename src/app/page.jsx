@@ -26,8 +26,8 @@ import AdminView from "../components/AdminView";
 import FormView from "../components/FormView";
 import PreviewView from "../components/PreviewView";
 import LoginView from "../components/LoginView";
-// --- IMPORT KOMPONEN BARU ---
-import DataPrinter from "../components/DataPrinter"; 
+import DataPrinter from "../components/DataPrinter";
+import DataKomputer from "../components/DataKomputer"; 
 
 export default function SuratSerahTerimaApp() {
   const [user, setUser] = useState(null);
@@ -537,6 +537,7 @@ export default function SuratSerahTerimaApp() {
       )}
 
       {view === "perangkat_printer" && <DataPrinter />}
+      {view === "perangkat_komputer" && <DataKomputer />}
     </div>
   );
 }

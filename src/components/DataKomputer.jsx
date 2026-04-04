@@ -1,16 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Monitor, Filter, Download, Plus, Edit, Trash2, X, Loader2, AlertCircle, CheckCircle, XCircle, Cpu, Network, HardDrive } from "lucide-react";
+import { Search, Monitor, Filter, Download, Plus, Edit, Trash2, X, Loader2, AlertCircle, CheckCircle, XCircle, Cpu, Network, HardDrive, AlertTriangle } from "lucide-react";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
 
 import { db } from "../lib/firebase"; 
-
-// --- DATA CONTOH (Sesuai yang Anda berikan) ---
-const dummyData = [
-  { id: "dummy-1", idOutlet: "12531", outlet: "UPC GAMPRIT", ipAddress: "10.81.240.10", produk: "Vostro 3471", sn: "HLLJB03", penyedia: "EPS", tanggalMulai: "2022-04-11", tanggalSelesai: "2026-02-24", status: "Sewa Habis", kondisi: "BAIK", deskripsi: "", macAddress: "e4:54:e8:b9:ce:70", ram: "16 GB", storage: "984GB", cpu: "Intel(R) Core(TM) i5-9400 CPU @ 2.90GHz", os: "Ubuntu Pegadaian V.22 Build 2024.11.01" },
-  { id: "dummy-2", idOutlet: "12374", outlet: "CP BOGOR", ipAddress: "10.81.83.19", produk: "OptiPlex SFF 7020", sn: "FHFH874", penyedia: "EPS", tanggalMulai: "2025-11-14", tanggalSelesai: "2027-05-14", status: "Sewa Berjalan", kondisi: "BAIK", deskripsi: "", macAddress: "ac:b4:80:34:a3:4c", ram: "7 GB", storage: "503GB", cpu: "Intel(R) Core(TM) i5-14500", os: "Ubuntu 22.04 Build 2025.09.12" },
-];
 
 export default function DataKomputer() {
   const [computerData, setComputerData] = useState([]);
@@ -49,7 +43,7 @@ export default function DataKomputer() {
       try {
         const querySnapshot = await getDocs(collection(db, baseRefPath, "computers"));
         if (querySnapshot.empty) {
-          setComputerData(dummyData);
+          setComputerData([]);
         } else {
           const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           setComputerData(data);
@@ -57,7 +51,7 @@ export default function DataKomputer() {
       } catch (error) {
         console.error("Error fetching Firebase:", error);
         setKoneksiError(true);
-        setComputerData(dummyData);
+        setComputerData([]);
       } finally {
         setIsLoading(false);
       }
@@ -68,7 +62,6 @@ export default function DataKomputer() {
         const outSnap = await getDocs(collection(db, baseRefPath, "outlets"));
         setOutletsList(outSnap.docs.map(d => ({ id: d.id, ...d.data() })));
         
-        // Asumsi data master inventory juga mencakup jenis PC
         const invSnap = await getDocs(collection(db, baseRefPath, "inventory"));
         setInventoryList(invSnap.docs.map(d => ({ id: d.id, ...d.data() })));
       } catch (error) {
@@ -88,6 +81,15 @@ export default function DataKomputer() {
     } catch (e) {
       return dateString;
     }
+  };
+
+  // [BARU] Fungsi hitung sisa bulan untuk pewarnaan baris
+  const hitungSisaBulan = (tanggalSelesai) => {
+    if (!tanggalSelesai) return null;
+    const hariIni = new Date();
+    const tglSelesai = new Date(tanggalSelesai);
+    if (isNaN(tglSelesai)) return null;
+    return (tglSelesai.getFullYear() - hariIni.getFullYear()) * 12 + (tglSelesai.getMonth() - hariIni.getMonth());
   };
 
   const calculateAutoStatus = (startDate, endDate) => {
@@ -135,8 +137,6 @@ export default function DataKomputer() {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    if (editingId && editingId.startsWith("dummy-")) return showNotif("Ini data contoh.", "error");
-
     setIsSaving(true);
     try {
       if (editingId) {
@@ -152,7 +152,6 @@ export default function DataKomputer() {
       setIsModalOpen(false);
       resetForm();
     } catch (error) {
-      console.error("Ini error aslinya:", error);
       showNotif("Gagal menyimpan data ke server.", "error");
     } finally {
       setIsSaving(false);
@@ -160,14 +159,12 @@ export default function DataKomputer() {
   };
 
   const handleDelete = async (id) => {
-    if (id.startsWith("dummy-")) return showNotif("Data contoh tidak dapat dihapus.", "error");
     if (window.confirm("Apakah Anda yakin ingin menghapus data komputer ini?")) {
       try {
         await deleteDoc(doc(db, baseRefPath, "computers", id));
         setComputerData(prev => prev.filter(p => p.id !== id));
         showNotif("Data komputer berhasil dihapus.", "success");
       } catch (error) {
-        console.error(error);
         showNotif("Gagal menghapus data.", "error");
       }
     }
@@ -224,7 +221,7 @@ export default function DataKomputer() {
           <AlertCircle className="w-5 h-5 mt-0.5 shrink-0" />
           <div>
             <p className="font-bold text-sm">Koneksi Database Bermasalah</p>
-            <p className="text-xs mt-1">Saat ini Anda melihat <strong>data contoh statis</strong>.</p>
+            <p className="text-xs mt-1">Gagal terhubung ke server.</p>
           </div>
         </div>
       )}
@@ -250,7 +247,6 @@ export default function DataKomputer() {
         </div>
 
         <div className="overflow-x-auto">
-          {/* Lebar minimum diperbesar karena data spesifikasi memakan tempat */}
           <table className="w-full text-left min-w-[1400px]">
             <thead>
               <tr className="text-xs uppercase text-gray-500 border-b border-gray-100 bg-white tracking-wider">
@@ -269,53 +265,67 @@ export default function DataKomputer() {
               ) : filteredData.length === 0 ? (
                 <tr><td colSpan="7" className="p-8 text-center text-gray-500">Tidak ada data komputer.</td></tr>
               ) : (
-                filteredData.map((comp) => (
-                  <tr key={comp.id} className="hover:bg-gray-50/80 transition-colors animate-in fade-in duration-300">
-                    <td className="p-4">
-                      <p className="font-semibold text-gray-800">{comp.outlet}</p>
-                      <p className="text-xs text-gray-500">ID: {comp.idOutlet}</p>
-                    </td>
-                    <td className="p-4">
-                      <p className="font-bold text-gray-800">{comp.produk}</p>
-                      <p className="text-xs text-gray-500 font-mono mt-0.5">SN: {comp.sn}</p>
-                    </td>
-                    <td className="p-4">
-                      <p className="text-sm font-medium text-blue-600 flex items-center gap-1"><Network className="w-3 h-3"/> {comp.ipAddress || "-"}</p>
-                      <p className="text-xs text-gray-500 font-mono mt-1">MAC: {comp.macAddress || "-"}</p>
-                    </td>
-                    <td className="p-4">
-                      <p className="text-xs font-semibold text-gray-800 flex items-center gap-1 mb-1 truncate" title={comp.cpu}><Cpu className="w-3 h-3 text-gray-400 shrink-0"/> {comp.cpu || "-"}</p>
-                      <div className="flex gap-2 text-[11px] text-gray-600 mb-1">
-                        <span className="bg-gray-100 px-1.5 py-0.5 rounded font-medium">RAM: {comp.ram || "-"}</span>
-                        <span className="bg-gray-100 px-1.5 py-0.5 rounded font-medium flex items-center gap-1"><HardDrive className="w-3 h-3"/> {comp.storage || "-"}</span>
-                      </div>
-                      <p className="text-[11px] text-gray-500 truncate" title={comp.os}>{comp.os || "OS Tidak Diketahui"}</p>
-                    </td>
-                    <td className="p-4">
-                      <p className="font-medium text-gray-700 text-xs mb-1">{comp.penyedia}</p>
-                      <p className="text-gray-500 text-[11px]">
-                        {comp.tanggalMulai || comp.tanggalSelesai ? `${formatBulanTahun(comp.tanggalMulai)} - ${formatBulanTahun(comp.tanggalSelesai)}` : "-"}
-                      </p>
-                    </td>
-                    <td className="p-4 text-center">
-                      <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold border block w-max mx-auto mb-1 ${getStatusBadge(comp.status)}`}>{comp.status}</span>
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${comp.kondisi === "BAIK" ? "text-green-600" : "text-orange-600"}`}>{comp.kondisi}</span>
-                    </td>
-                    <td className="p-4 text-right">
-                      <div className="flex justify-end gap-2">
-                        <button onClick={() => openModalForEdit(comp)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Edit className="w-4 h-4" /></button>
-                        <button onClick={() => handleDelete(comp.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                filteredData.map((comp) => {
+                  // [BARU] Logika penentuan warna baris
+                  const sisaBulan = hitungSisaBulan(comp.tanggalSelesai);
+                  const isExpiringSoon = comp.status === "Sewa Berjalan" && sisaBulan !== null && sisaBulan <= 3 && sisaBulan >= 0;
+                  const isExpired = comp.status === "Sewa Habis";
+
+                  let rowClass = "hover:bg-gray-50/80 transition-colors animate-in fade-in duration-300";
+                  if (isExpired) rowClass = "bg-red-50/40 hover:bg-red-100/50 transition-colors animate-in fade-in duration-300";
+                  else if (isExpiringSoon) rowClass = "bg-orange-50/50 hover:bg-orange-100/50 transition-colors animate-in fade-in duration-300";
+
+                  return (
+                    <tr key={comp.id} className={rowClass}>
+                      <td className="p-4">
+                        <p className="font-semibold text-gray-800">{comp.outlet}</p>
+                        <p className="text-xs text-gray-500">ID: {comp.idOutlet}</p>
+                      </td>
+                      <td className="p-4">
+                        <p className="font-bold text-gray-800">{comp.produk}</p>
+                        <p className="text-xs text-gray-500 font-mono mt-0.5">SN: {comp.sn}</p>
+                      </td>
+                      <td className="p-4">
+                        <p className="text-sm font-medium text-blue-600 flex items-center gap-1"><Network className="w-3 h-3"/> {comp.ipAddress || "-"}</p>
+                        <p className="text-xs text-gray-500 font-mono mt-1">MAC: {comp.macAddress || "-"}</p>
+                      </td>
+                      <td className="p-4">
+                        <p className="text-xs font-semibold text-gray-800 flex items-center gap-1 mb-1 truncate" title={comp.cpu}><Cpu className="w-3 h-3 text-gray-400 shrink-0"/> {comp.cpu || "-"}</p>
+                        <div className="flex gap-2 text-[11px] text-gray-600 mb-1">
+                          <span className="bg-gray-100 px-1.5 py-0.5 rounded font-medium border border-gray-200/50">RAM: {comp.ram || "-"}</span>
+                          <span className="bg-gray-100 px-1.5 py-0.5 rounded font-medium flex items-center gap-1 border border-gray-200/50"><HardDrive className="w-3 h-3"/> {comp.storage || "-"}</span>
+                        </div>
+                        <p className="text-[11px] text-gray-500 truncate" title={comp.os}>{comp.os || "OS Tidak Diketahui"}</p>
+                      </td>
+                      <td className="p-4">
+                        <p className="font-medium text-gray-700 text-xs mb-1">{comp.penyedia}</p>
+                        <div className={`text-[11px] flex items-center gap-1.5 ${isExpiringSoon || isExpired ? 'text-gray-800 font-medium' : 'text-gray-500'}`}>
+                          {comp.tanggalMulai || comp.tanggalSelesai ? `${formatBulanTahun(comp.tanggalMulai)} - ${formatBulanTahun(comp.tanggalSelesai)}` : "-"}
+                          {isExpiringSoon && <AlertTriangle className="w-3 h-3 text-orange-500 shrink-0" title="Segera Habis" />}
+                        </div>
+                        {/* Label Sisa Bulan Muncul Jika Akan Habis */}
+                        {isExpiringSoon && <p className="text-[10px] text-orange-600 font-bold mt-1 bg-orange-100/50 w-max px-1.5 py-0.5 rounded">Sisa {sisaBulan} bln</p>}
+                      </td>
+                      <td className="p-4 text-center">
+                        <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold border block w-max mx-auto mb-1 ${getStatusBadge(comp.status)}`}>{comp.status}</span>
+                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${comp.kondisi === "BAIK" ? "text-green-600" : "text-orange-600"}`}>{comp.kondisi}</span>
+                      </td>
+                      <td className="p-4 text-right">
+                        <div className="flex justify-end gap-2">
+                          <button onClick={() => openModalForEdit(comp)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Edit className="w-4 h-4" /></button>
+                          <button onClick={() => handleDelete(comp.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
               )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* MODAL FORM YANG LEBIH LEBAR KARENA DATA BANYAK */}
+      {/* MODAL FORM... (tetap sama seperti sebelumnya) */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto pt-20 pb-10">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden animate-in zoom-in-95 duration-200">

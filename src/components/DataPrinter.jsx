@@ -1,15 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Printer, Filter, Download, Plus, Edit, Trash2, X, Loader2, AlertCircle, CheckCircle, XCircle } from "lucide-react";
+import { Search, Printer, Filter, Download, Plus, Edit, Trash2, X, Loader2, AlertCircle, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
 
 import { db } from "../lib/firebase"; 
-
-// --- DATA CONTOH ---
-const dummyData = [
-  { id: "dummy-1", idOutlet: "12458", outlet: "CP CIBINONG", produk: "EPSON L3250 ECO TANK", sn: "X8JX104470", penyedia: "PEGADAIAN", tanggalMulai: "", tanggalSelesai: "", status: "Inventaris", kondisi: "BAIK", deskripsi: "Data Contoh Firebase Kosong" },
-];
 
 export default function DataPrinter() {
   const [printerData, setPrinterData] = useState([]);
@@ -49,7 +44,7 @@ export default function DataPrinter() {
       try {
         const querySnapshot = await getDocs(collection(db, baseRefPath, "printers"));
         if (querySnapshot.empty) {
-          setPrinterData(dummyData);
+          setPrinterData([]);
         } else {
           const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           setPrinterData(data);
@@ -57,7 +52,7 @@ export default function DataPrinter() {
       } catch (error) {
         console.error("Error fetching Firebase:", error);
         setKoneksiError(true);
-        setPrinterData(dummyData);
+        setPrinterData([]);
       } finally {
         setIsLoading(false);
       }
@@ -100,9 +95,15 @@ export default function DataPrinter() {
     }
   };
 
-  // ==========================================
-  // [BARU] FUNGSI KALKULASI STATUS OTOMATIS
-  // ==========================================
+  // [BARU] Fungsi hitung sisa bulan untuk pewarnaan baris
+  const hitungSisaBulan = (tanggalSelesai) => {
+    if (!tanggalSelesai) return null;
+    const hariIni = new Date();
+    const tglSelesai = new Date(tanggalSelesai);
+    if (isNaN(tglSelesai)) return null;
+    return (tglSelesai.getFullYear() - hariIni.getFullYear()) * 12 + (tglSelesai.getMonth() - hariIni.getMonth());
+  };
+
   const calculateAutoStatus = (startDate, endDate) => {
     if (!startDate || !endDate) return "Inventaris";
     const today = new Date();
@@ -121,20 +122,15 @@ export default function DataPrinter() {
     });
   };
 
-  // ==========================================
-  // [UPDATE] HANDLER PRODUK & TANGGAL
-  // ==========================================
   const handleProdukChange = (e) => {
     const selectedProduk = e.target.value;
     const itemMaster = inventoryList.find(inv => inv.nama === selectedProduk);
-    
     let updatedForm = { ...formData, produk: selectedProduk };
 
     if (itemMaster) {
       updatedForm.penyedia = itemMaster.vendor_nama || "";
       updatedForm.tanggalMulai = itemMaster.tanggal_mulai || "";
       updatedForm.tanggalSelesai = itemMaster.tanggal_selesai || "";
-      // Kalkulasi status berdasarkan data dari inventory
       updatedForm.status = calculateAutoStatus(itemMaster.tanggal_mulai, itemMaster.tanggal_selesai);
     } else {
       updatedForm.penyedia = "";
@@ -142,11 +138,9 @@ export default function DataPrinter() {
       updatedForm.tanggalSelesai = "";
       updatedForm.status = "Inventaris";
     }
-
     setFormData(updatedForm);
   };
 
-  // Jika user mengubah tanggal secara manual di form, status juga di-update
   const handleDateChange = (field, value) => {
     const updatedForm = { ...formData, [field]: value };
     updatedForm.status = calculateAutoStatus(updatedForm.tanggalMulai, updatedForm.tanggalSelesai);
@@ -155,8 +149,6 @@ export default function DataPrinter() {
 
   const handleSave = async (e) => {
     e.preventDefault();
-    if (editingId && editingId.startsWith("dummy-")) return showNotif("Ini data contoh.", "error");
-
     const isOutletValid = outletsList.some(o => o.nama === formData.outlet);
     const isProdukValid = inventoryList.some(i => i.nama === formData.produk);
 
@@ -164,27 +156,20 @@ export default function DataPrinter() {
     if (!isProdukValid) return showNotif("Produk Hardware tidak ditemukan di Master Data.", "error");
 
     setIsSaving(true);
-    
     try {
       if (editingId) {
         await updateDoc(doc(db, baseRefPath, "printers", editingId), formData);
-        setPrinterData((prevData) => 
-          prevData.map((item) => 
-            item.id === editingId ? { id: editingId, ...formData } : item
-          )
-        );
+        setPrinterData((prev) => prev.map((item) => item.id === editingId ? { id: editingId, ...formData } : item));
         showNotif("Perubahan data printer berhasil disimpan!", "success");
       } else {
         const docRef = await addDoc(collection(db, baseRefPath, "printers"), formData);
         const newPrinter = { id: docRef.id, ...formData };
-        setPrinterData((prevData) => [newPrinter, ...prevData]);
+        setPrinterData((prev) => [newPrinter, ...prev]);
         showNotif("Data Printer baru berhasil ditambahkan!", "success");
       }
-      
       setIsModalOpen(false);
       resetForm();
     } catch (error) {
-      console.error("Ini error aslinya:", error);
       showNotif("Gagal menyimpan data ke server.", "error");
     } finally {
       setIsSaving(false);
@@ -192,14 +177,12 @@ export default function DataPrinter() {
   };
 
   const handleDelete = async (id) => {
-    if (id.startsWith("dummy-")) return showNotif("Data contoh tidak dapat dihapus.", "error");
     if (window.confirm("Apakah Anda yakin ingin menghapus data printer ini?")) {
       try {
         await deleteDoc(doc(db, baseRefPath, "printers", id));
         setPrinterData(prev => prev.filter(p => p.id !== id));
         showNotif("Data printer berhasil dihapus.", "success");
       } catch (error) {
-        console.error("Ini error aslinya:", error);
         showNotif("Gagal menghapus data.", "error");
       }
     }
@@ -247,7 +230,7 @@ export default function DataPrinter() {
           <AlertCircle className="w-5 h-5 mt-0.5 shrink-0" />
           <div>
             <p className="font-bold text-sm">Koneksi Database Bermasalah</p>
-            <p className="text-xs mt-1">Saat ini Anda melihat <strong>data contoh statis</strong>.</p>
+            <p className="text-xs mt-1">Gagal terhubung ke server.</p>
           </div>
         </div>
       )}
@@ -291,33 +274,49 @@ export default function DataPrinter() {
               ) : filteredData.length === 0 ? (
                 <tr><td colSpan="7" className="p-8 text-center text-gray-500">Tidak ada data printer.</td></tr>
               ) : (
-                filteredData.map((printer) => (
-                  <tr key={printer.id} className="hover:bg-gray-50/80 transition-colors animate-in fade-in duration-300">
-                    <td className="p-4"><p className="font-semibold text-gray-800">{printer.outlet}</p><p className="text-xs text-gray-500">ID: {printer.idOutlet}</p></td>
-                    <td className="p-4"><p className="font-medium text-gray-800">{printer.produk}</p><p className="text-xs text-gray-500 font-mono mt-0.5">SN: {printer.sn}</p></td>
-                    <td className="p-4 font-medium text-gray-700">{printer.penyedia}</td>
-                    <td className="p-4 text-gray-600 text-xs">
-                      {printer.tanggalMulai || printer.tanggalSelesai 
-                        ? `${formatBulanTahun(printer.tanggalMulai)} - ${formatBulanTahun(printer.tanggalSelesai)}`
-                        : <span className="italic text-gray-400">Tidak ada data</span>}
-                    </td>
-                    <td className="p-4 text-center"><span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusBadge(printer.status)}`}>{printer.status}</span></td>
-                    <td className="p-4 text-center"><span className={`px-2.5 py-1 rounded-md text-[11px] font-bold ${printer.kondisi === "BAIK" ? "bg-green-50 text-green-600" : "bg-orange-50 text-orange-600"}`}>{printer.kondisi}</span></td>
-                    <td className="p-4 text-right">
-                      <div className="flex justify-end gap-2">
-                        <button onClick={() => openModalForEdit(printer)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Edit className="w-4 h-4" /></button>
-                        <button onClick={() => handleDelete(printer.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                filteredData.map((printer) => {
+                  // [BARU] Logika penentuan warna baris
+                  const sisaBulan = hitungSisaBulan(printer.tanggalSelesai);
+                  const isExpiringSoon = printer.status === "Sewa Berjalan" && sisaBulan !== null && sisaBulan <= 3 && sisaBulan >= 0;
+                  const isExpired = printer.status === "Sewa Habis";
+
+                  let rowClass = "hover:bg-gray-50/80 transition-colors animate-in fade-in duration-300";
+                  if (isExpired) rowClass = "bg-red-50/40 hover:bg-red-100/50 transition-colors animate-in fade-in duration-300";
+                  else if (isExpiringSoon) rowClass = "bg-orange-50/50 hover:bg-orange-100/50 transition-colors animate-in fade-in duration-300";
+
+                  return (
+                    <tr key={printer.id} className={rowClass}>
+                      <td className="p-4"><p className="font-semibold text-gray-800">{printer.outlet}</p><p className="text-xs text-gray-500">ID: {printer.idOutlet}</p></td>
+                      <td className="p-4"><p className="font-medium text-gray-800">{printer.produk}</p><p className="text-xs text-gray-500 font-mono mt-0.5">SN: {printer.sn}</p></td>
+                      <td className="p-4 font-medium text-gray-700">{printer.penyedia}</td>
+                      <td className="p-4 text-xs">
+                        <div className={`flex items-center gap-1.5 ${isExpiringSoon || isExpired ? 'text-gray-800' : 'text-gray-600'}`}>
+                          {printer.tanggalMulai || printer.tanggalSelesai 
+                            ? `${formatBulanTahun(printer.tanggalMulai)} - ${formatBulanTahun(printer.tanggalSelesai)}`
+                            : <span className="italic text-gray-400">Tidak ada data</span>}
+                          {isExpiringSoon && <AlertTriangle className="w-3.5 h-3.5 text-orange-500" title="Segera Habis" />}
+                        </div>
+                        {/* Label Sisa Bulan Muncul Jika Akan Habis */}
+                        {isExpiringSoon && <p className="text-[10px] text-orange-600 font-bold mt-1 bg-orange-100/50 w-max px-1.5 py-0.5 rounded">Sisa {sisaBulan} bln</p>}
+                      </td>
+                      <td className="p-4 text-center"><span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusBadge(printer.status)}`}>{printer.status}</span></td>
+                      <td className="p-4 text-center"><span className={`px-2.5 py-1 rounded-md text-[11px] font-bold ${printer.kondisi === "BAIK" ? "bg-green-50 text-green-600" : "bg-orange-50 text-orange-600"}`}>{printer.kondisi}</span></td>
+                      <td className="p-4 text-right">
+                        <div className="flex justify-end gap-2">
+                          <button onClick={() => openModalForEdit(printer)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Edit className="w-4 h-4" /></button>
+                          <button onClick={() => handleDelete(printer.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })
               )}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* MODAL FORM */}
+      {/* MODAL FORM... (tetap sama seperti sebelumnya) */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
@@ -358,7 +357,6 @@ export default function DataPrinter() {
                   <input required type="text" value={formData.penyedia} onChange={(e) => setFormData({...formData, penyedia: e.target.value})} disabled={isSaving} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100" placeholder="Otomatis terisi jika ada..." />
                 </div>
                 
-                {/* [UPDATE] onChange memanggil handleDateChange agar status ikut berubah */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Tgl Mulai Sewa</label>
                   <input type="date" value={formData.tanggalMulai} onChange={(e) => handleDateChange("tanggalMulai", e.target.value)} disabled={isSaving} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100" />
@@ -368,7 +366,6 @@ export default function DataPrinter() {
                   <input type="date" value={formData.tanggalSelesai} onChange={(e) => handleDateChange("tanggalSelesai", e.target.value)} disabled={isSaving} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none disabled:bg-gray-100" />
                 </div>
                 
-                {/* [UPDATE] Select tetap ada, tetapi otomatis ter-update oleh state */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Status (Otomatis)</label>
                   <select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} disabled={isSaving} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white disabled:bg-gray-100 font-medium">
@@ -414,7 +411,6 @@ export default function DataPrinter() {
           </button>
         </div>
       )}
-
     </div>
   );
 }

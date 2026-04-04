@@ -1,36 +1,120 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# 📦 LogistikKu — Sistem Manajemen Logistik & Inventaris
 
-## Getting Started
+![Next.js](https://img.shields.io/badge/Next.js-black?style=for-the-badge&logo=next.js&logoColor=white)  
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)  
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)  
+![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
 
-First, run the development server:
+**LogistikKu** adalah aplikasi web berbasis dashboard untuk memantau, mencatat, dan mengelola aset logistik secara efisien.  
+Aplikasi ini tidak hanya melacak arus barang masuk/keluar, tetapi juga menyediakan fitur pemantauan masa sewa perangkat (_hardware_) secara real-time.
 
-```bash
+---
+
+## 📸 Tampilan Aplikasi
+
+![Dashboard LogistikKu](./public/dashboard.png)
+
+---
+
+## ✨ Fitur Utama
+
+- 📊 **Dashboard Interaktif**  
+    Ringkasan transaksi barang masuk dan keluar pada bulan berjalan.
+- 🖨️ **Manajemen Masa Sewa Perangkat**  
+    Monitoring status perangkat (Sewa Berjalan, Sewa Habis, Inventaris).
+- ⚠️ **Notifikasi Otomatis**  
+    Peringatan untuk perangkat dengan masa sewa < 3 bulan.
+- 📦 **Visualisasi Stok**  
+    Grafik dinamis untuk memantau ketersediaan barang.
+- 📝 **Log Aktivitas**  
+    Menampilkan aktivitas transaksi terbaru secara real-time.
+- 📑 **Export Laporan**  
+    Unduh data transaksi dalam format Excel/CSV.
+
+---
+
+## 🚀 Getting Started
+
+Proyek ini menggunakan:
+
+- [Next.js](https://nextjs.org/)
+- Firebase (Authentication & Database)
+
+---
+
+## 📋 Persyaratan
+
+Pastikan Anda telah menginstal:
+
+- Node.js ≥ 18.x
+- Package Manager (npm / yarn / pnpm / bun)
+- Akun Firebase
+
+---
+
+## ⚙️ Instalasi
+
+Clone repository dan install dependencies:
+
+git clone https://github.com/alziputra/logistik-app.git  
+cd logistik-app  
+npm install
+
+---
+
+## 🔐 Konfigurasi Environment
+
+Buat file `.env.local` di root project, lalu isi dengan konfigurasi Firebase:
+
+# Firebase Config  
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key  
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com  
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id  
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com  
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id  
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id  
+  
+# App Config  
+NEXT_PUBLIC_APP_ID=logistikku_app_01
+
+> ⚠️ **Penting:**  
+> Jangan pernah commit file `.env.local` ke repository publik.
+
+---
+
+## ▶️ Menjalankan Aplikasi
+
+Jalankan development server:
+
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Buka di browser:  
+👉 [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 📚 Dokumentasi
 
-## Learn More
+Pelajari lebih lanjut teknologi yang digunakan:
 
-To learn more about Next.js, take a look at the following resources:
+- Next.js → [https://nextjs.org/docs](https://nextjs.org/docs)
+- Tailwind CSS → [https://tailwindcss.com/docs](https://tailwindcss.com/docs)
+- Firebase → [https://firebase.google.com/docs](https://firebase.google.com/docs)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## ☁️ Deployment
 
-## Deploy on Vercel
+Deploy dengan mudah menggunakan **Vercel**:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Import repository ke Vercel
+2. Tambahkan environment variables dari `.env.local`
+3. Deploy
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+📖 Detail: [https://nextjs.org/docs/deployment](https://nextjs.org/docs/deployment)
+
+---
+
+## 👨‍💻 Author
+
+Dikembangkan oleh **Alzi Rahmana Putra**

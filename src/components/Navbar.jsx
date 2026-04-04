@@ -140,7 +140,7 @@ const Navbar = ({ view, setView, startNewDocument, handleLogout, notifCount = 0 
                 <button onClick={() => handleNavClick("perangkat_komputer")} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "perangkat_komputer" ? "bg-blue-100 text-blue-700" : "text-gray-500 hover:text-blue-700 hover:bg-blue-50"}`}>
                   <Monitor className="w-4 h-4" /> Data Komputer
                 </button>
-                <button onClick={() => handleNavClick("perangkat_printer")} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "perangkat_printer" ? "bg-green-100 text-green-700" : "text-gray-500 hover:text-green-700 hover:bg-green-50"}`}>
+                <button onClick={() => handleNavClick("perangkat_printer")} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "perangkat_printer" ? "bg-purple-100 text-purple-700" : "text-gray-500 hover:text-purple-700 hover:bg-purple-50"}`}>
                   <Printer className="w-4 h-4" /> Data Printer
                 </button>
               </div>

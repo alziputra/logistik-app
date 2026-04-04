@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Database, Plus, Box, Hash, Scale, Building2, CalendarDays, Clock, Search, MapPin, DownloadCloud } from "lucide-react";
 
 // Menerima prop 'activeMenu' dari Navbar/Page
-export default function AdminView({ activeMenu, inventory, handleAddInventory, outlets, handleAddOutlet, handleBulkImportOutlets }) {
+export default function Barang({ activeMenu, inventory, handleAddInventory, outlets, handleAddOutlet, handleBulkImportOutlets }) {
   
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOutletQuery, setSearchOutletQuery] = useState("");

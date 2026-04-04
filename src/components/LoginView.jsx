@@ -44,7 +44,7 @@ export default function LoginView({ showNotif }) {
       {/* Konten Utama */}
       <div className="relative z-10 w-full sm:max-w-md">
         <div className="text-center mb-10">
-          <div className="inline-flex bg-blue-600 p-3.5 rounded-3xl mb-4 shadow-lg shadow-blue-200">
+          <div className="inline-flex bg-green-600 p-3.5 rounded-3xl mb-4 shadow-lg shadow-blue-200">
             <Package className="w-10 h-10 text-white" />
           </div>
           <h2 className="text-3xl font-extrabold text-gray-950 tracking-tight">
@@ -99,7 +99,7 @@ export default function LoginView({ showNotif }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center items-center gap-2.5 py-3.5 px-4 border border-transparent rounded-xl shadow-lg shadow-blue-500/30 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-70 transition-all active:scale-[0.98]"
+              className="w-full flex justify-center items-center gap-2.5 py-3.5 px-4 border border-transparent rounded-xl shadow-lg shadow-green-500/30 text-sm font-semibold text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-70 transition-all active:scale-[0.98]"
             >
               {loading ? (
                 "Memproses..."

@@ -22,7 +22,7 @@ import { onAuthStateChanged, signOut } from "firebase/auth";
 // ✅ IMPORT COMPONENTS
 import Navbar from "../components/Navbar";
 import DashboardView from "../components/DashboardView";
-import AdminView from "../components/AdminView";
+import Barang from "../components/Barang";
 import FormView from "../components/FormView";
 import PreviewView from "../components/PreviewView";
 import LoginView from "../components/LoginView";
@@ -602,7 +602,7 @@ export default function SuratSerahTerimaApp() {
       )}
 
       {(view === "master_barang" || view === "master_outlet") && (
-        <AdminView
+        <Barang
           activeMenu={view}
           inventory={inventory}
           handleAddInventory={handleAddInventory}

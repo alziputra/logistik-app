@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Search, Monitor, Filter, Plus, Edit, Trash2, X, Loader2, AlertCircle, CheckCircle, XCircle, Cpu, Network, HardDrive, AlertTriangle, QrCode, Printer as PrinterIcon } from "lucide-react";
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
+import { useState, useEffect, useRef } from "react";
+import { Search, Monitor, Filter, Plus, Edit, Trash2, X, Loader2, AlertCircle, CheckCircle, XCircle, Cpu, Network, HardDrive, AlertTriangle, QrCode, Printer as PrinterIcon, ChevronLeft, ChevronRight, FileSpreadsheet, Upload } from "lucide-react";
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, writeBatch } from "firebase/firestore";
 import { QRCodeCanvas } from "qrcode.react"; 
+import Papa from "papaparse";
 
 import { db } from "../lib/firebase"; 
 
@@ -15,12 +16,18 @@ export default function DataKomputer({ userRole }) {
   const [koneksiError, setKoneksiError] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // === LOGIKA PAGINASI (10 Item Per Halaman) ===
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   const [notif, setNotif] = useState({ show: false, message: "", type: "" });
   const [qrModalData, setQrModalData] = useState(null);
 
+  const fileInputRef = useRef(null);
+
   const showNotif = (message, type = "success") => {
     setNotif({ show: true, message, type });
-    setTimeout(() => setNotif({ show: false, message: "", type: "" }), 3000);
+    setTimeout(() => setNotif({ show: false, message: "", type: "" }), 3500);
   };
 
   const [outletsList, setOutletsList] = useState([]);
@@ -171,6 +178,149 @@ export default function DataKomputer({ userRole }) {
     }
   };
 
+  // ==========================================
+  // FITUR: IMPORT MASSAL CSV (CUSTOM TEMPLATE)
+  // ==========================================
+  
+  // Fungsi menterjemahkan "Januari 2025" menjadi format YYYY-MM-DD
+  const parseIndoDateToISO = (dateStr) => {
+    if (!dateStr) return "";
+    const str = dateStr.trim().toLowerCase();
+    const monthMap = {
+      "januari": "01", "jan": "01", "februari": "02", "feb": "02",
+      "maret": "03", "mar": "03", "april": "04", "apr": "04",
+      "mei": "05", "may": "05", "juni": "06", "jun": "06",
+      "juli": "07", "jul": "07", "agustus": "08", "agu": "08", "aug": "08",
+      "september": "09", "sep": "09", "oktober": "10", "okt": "10", "oct": "10",
+      "november": "11", "nov": "11", "desember": "12", "des": "12", "dec": "12"
+    };
+    
+    const parts = str.split(" ");
+    if (parts.length === 2) {
+      const m = monthMap[parts[0]] || "01";
+      const y = parts[1];
+      if (y.length === 4) return `${y}-${m}-01`;
+    }
+    return "";
+  };
+
+  const handleDownloadTemplate = () => {
+    const headers = [
+      "OUTLET ID", "NAMA OUTLET", "IP ADDRESS", "PRODUCT HARDWARE", 
+      "SERIAL NUMBER", "MASA SEWA", "PENYEDIA", "STATUS", 
+      "DESKRIPSI", "MAC", "RAM", "PHYSICAL DISK", "CPU", "OS NAME"
+    ];
+    
+    // Contoh Data
+    const contohData = [
+      "12350,UPC BOJONG RAWALUMBU,10.81.58.23,OptiPlex SFF 7010,8B9BVZ3,April 2024 - April 2026,POJ,Sewa Berjalan,-,cc:96:e5:3f:af:e8,7 GB,503GB,13th Gen Intel(R) Core(TM) i5-13600,Ubuntu Pegadaian",
+      "12458,CP CIBINONG,10.81.167.60,OptiPlex SFF 7010,GMYMS44,Januari 2025 - Januari 2028,EPS,Sewa Berjalan,-,4c:d7:17:9e:23:22,7 GB,503GB,13th Gen Intel(R) Core(TM) i5-13600,Ubuntu Pegadaian V.22 Build 2024.11.01"
+    ];
+    
+    const csvContent = headers.join(",") + "\n" + contohData.join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "Template_Import_Komputer.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsSaving(true);
+    showNotif("Sedang memproses dan mengunggah CSV...", "success");
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async (results) => {
+        try {
+          const dataArray = results.data;
+          if (dataArray.length === 0) throw new Error("File CSV kosong");
+
+          let currentBatch = writeBatch(db);
+          let count = 0;
+          const batchPromises = [];
+          const compRef = collection(db, baseRefPath, "computers");
+
+          dataArray.forEach((row) => {
+            // Cek jika baris kosong
+            if (!row["NAMA OUTLET"] && !row["SERIAL NUMBER"]) return;
+
+            const newDocRef = doc(compRef); // ID Otomatis
+            
+            // Logika Pemecah Masa Sewa ("April 2024 - April 2026")
+            let tglMulai = "";
+            let tglSelesai = "";
+            const rawMasaSewa = row["MASA SEWA"]?.trim() || "";
+            
+            if (rawMasaSewa.includes("-")) {
+              const parts = rawMasaSewa.split("-").map(p => p.trim());
+              tglMulai = parseIndoDateToISO(parts[0]);
+              tglSelesai = parseIndoDateToISO(parts[1]);
+            }
+
+            const pcData = {
+              idOutlet: row["OUTLET ID"]?.trim() || "",
+              outlet: row["NAMA OUTLET"]?.trim() || "",
+              ipAddress: row["IP ADDRESS"]?.trim() || "",
+              produk: row["PRODUCT HARDWARE"]?.trim() || "",
+              sn: row["SERIAL NUMBER"]?.trim() || "",
+              tanggalMulai: tglMulai,
+              tanggalSelesai: tglSelesai,
+              penyedia: row["PENYEDIA"]?.trim() || "",
+              status: row["STATUS"]?.trim() || "Inventaris",
+              deskripsi: row["DESKRIPSI"]?.trim() || "",
+              macAddress: row["MAC"]?.trim() || "",
+              ram: row["RAM"]?.trim() || "",
+              storage: row["PHYSICAL DISK"]?.trim() || "",
+              cpu: row["CPU"]?.trim() || "",
+              os: row["OS NAME"]?.trim() || "",
+              kondisi: "BAIK", // Default jika tidak ada di template
+            };
+
+            currentBatch.set(newDocRef, pcData);
+            count++;
+
+            // Batch maksimal 500
+            if (count === 490) {
+               batchPromises.push(currentBatch.commit());
+               currentBatch = writeBatch(db);
+               count = 0;
+            }
+          });
+
+          if (count > 0) {
+             batchPromises.push(currentBatch.commit());
+          }
+
+          await Promise.all(batchPromises); 
+          
+          showNotif(`Sukses! ${dataArray.length} data komputer berhasil di-import. Memuat ulang...`, "success");
+          
+          setTimeout(() => window.location.reload(), 2000); 
+
+        } catch(err) {
+          console.error(err);
+          showNotif("Gagal import! Pastikan kolom header persis seperti template.", "error");
+        } finally {
+          setIsSaving(false);
+          if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+      },
+      error: (err) => {
+        console.error(err);
+        showNotif("Gagal membaca file CSV.", "error");
+        setIsSaving(false);
+      }
+    });
+  };
+
   const openModalForAdd = () => { resetForm(); setIsModalOpen(true); };
   const openModalForEdit = (comp) => { setEditingId(comp.id); setFormData({ ...comp }); setIsModalOpen(true); };
   
@@ -183,6 +333,9 @@ export default function DataKomputer({ userRole }) {
     }); 
   };
 
+  const handleSearch = (e) => { setSearchQuery(e.target.value); setCurrentPage(1); };
+  const handleFilterStatus = (e) => { setFilterStatus(e.target.value); setCurrentPage(1); };
+
   const filteredData = computerData.filter((item) => {
     const query = searchQuery.toLowerCase();
     const matchesSearch = 
@@ -193,6 +346,10 @@ export default function DataKomputer({ userRole }) {
     const matchesFilter = filterStatus === "Semua" || item.status === filterStatus;
     return matchesSearch && matchesFilter;
   });
+
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
 
   const getStatusBadge = (status) => {
     switch(status) {
@@ -209,14 +366,26 @@ export default function DataKomputer({ userRole }) {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <div>
             <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-              <Monitor className="w-6 h-6 text-blue-600" /> Manajemen Data Komputer / PC
+              <Monitor className="w-6 h-6 text-blue-600" /> Manajemen Data Komputer
             </h2>
             <p className="text-sm text-gray-500 mt-1">Kelola spesifikasi, jaringan, dan masa sewa perangkat komputer outlet.</p>
           </div>
+          
           {userRole === "admin" && (
-            <button onClick={openModalForAdd} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors text-sm">
-              <Plus className="w-4 h-4" /> Tambah PC
-            </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button onClick={handleDownloadTemplate} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg font-medium shadow-sm transition-colors text-sm">
+                <FileSpreadsheet className="w-4 h-4" /> Template CSV
+              </button>
+
+              <button onClick={() => fileInputRef.current?.click()} disabled={isSaving} className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded-lg font-medium shadow-sm transition-colors text-sm disabled:opacity-50">
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />} Import CSV
+              </button>
+              <input type="file" accept=".csv" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
+
+              <button onClick={openModalForAdd} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg font-medium shadow-sm transition-colors text-sm">
+                <Plus className="w-4 h-4" /> Tambah PC
+              </button>
+            </div>
           )}
         </div>
 
@@ -234,11 +403,11 @@ export default function DataKomputer({ userRole }) {
           <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex flex-col md:flex-row gap-4 justify-between items-center">
             <div className="relative w-full md:w-80">
               <Search className="h-4 w-4 text-gray-400 absolute left-3 top-3" />
-              <input type="text" placeholder="Cari IP, model, S/N, atau outlet..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+              <input type="text" placeholder="Cari IP, model, S/N, atau outlet..." value={searchQuery} onChange={handleSearch} className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
             </div>
             <div className="flex gap-3 w-full md:w-auto">
               <div className="relative flex-1 md:flex-none">
-                <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="w-full pl-10 pr-8 py-2 bg-white border border-gray-200 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium text-gray-700">
+                <select value={filterStatus} onChange={handleFilterStatus} className="w-full pl-10 pr-8 py-2 bg-white border border-gray-200 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium text-gray-700">
                   <option value="Semua">Semua Status</option>
                   <option value="Inventaris">Inventaris</option>
                   <option value="Sewa Berjalan">Sewa Berjalan</option>
@@ -265,10 +434,10 @@ export default function DataKomputer({ userRole }) {
               <tbody className="text-sm divide-y divide-gray-50">
                 {isLoading ? (
                   <tr><td colSpan="7" className="p-12 text-center text-blue-500"><Loader2 className="w-8 h-8 animate-spin mx-auto" /><p className="mt-2 text-gray-500">Memuat data...</p></td></tr>
-                ) : filteredData.length === 0 ? (
-                  <tr><td colSpan="7" className="p-8 text-center text-gray-500">Tidak ada data komputer.</td></tr>
+                ) : paginatedData.length === 0 ? (
+                  <tr><td colSpan="7" className="p-8 text-center text-gray-500">Tidak ada data komputer ditemukan.</td></tr>
                 ) : (
-                  filteredData.map((comp) => {
+                  paginatedData.map((comp) => {
                     const sisaBulan = hitungSisaBulan(comp.tanggalSelesai);
                     const isExpiringSoon = comp.status === "Sewa Berjalan" && sisaBulan !== null && sisaBulan <= 3 && sisaBulan >= 0;
                     const isExpired = comp.status === "Sewa Habis";
@@ -307,15 +476,12 @@ export default function DataKomputer({ userRole }) {
                           </div>
                           {isExpiringSoon && <p className="text-[10px] text-orange-600 font-bold mt-1 bg-orange-100/50 w-max px-1.5 py-0.5 rounded">Sisa {sisaBulan} bln</p>}
                         </td>
-
-                        {/* [PERUBAHAN] Kolom Status & Kondisi Digabung Menjadi Tumpuk */}
                         <td className="p-4 text-center">
                           <div className="flex flex-col items-center justify-center gap-1.5">
                             <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold border ${getStatusBadge(comp.status)}`}>{comp.status}</span>
                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${comp.kondisi === "BAIK" ? "text-green-600 bg-green-50 border-green-100" : "text-orange-600 bg-orange-50 border-orange-100"}`}>{comp.kondisi}</span>
                           </div>
                         </td>
-
                         {userRole === "admin" && (
                           <td className="p-4 text-right">
                             <div className="flex justify-end gap-1.5">
@@ -335,9 +501,37 @@ export default function DataKomputer({ userRole }) {
               </tbody>
             </table>
           </div>
+
+          {totalPages > 1 && (
+            <div className="px-6 py-4 border-t border-gray-100 bg-white flex items-center justify-between">
+              <span className="text-sm text-gray-500 hidden sm:inline-block">
+                Menampilkan <span className="font-bold text-gray-900">{startIndex + 1}</span> - <span className="font-bold text-gray-900">{Math.min(startIndex + itemsPerPage, filteredData.length)}</span> dari <span className="font-bold text-gray-900">{filteredData.length}</span> PC
+              </span>
+              <div className="flex gap-2 ml-auto">
+                <button 
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+                  disabled={currentPage === 1}
+                  className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4 text-gray-600" />
+                </button>
+                <span className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg border border-gray-200">
+                  Hal {currentPage} / {totalPages}
+                </span>
+                <button 
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
+                  disabled={currentPage === totalPages}
+                  className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4 text-gray-600" />
+                </button>
+              </div>
+            </div>
+          )}
+
         </div>
 
-        {/* MODAL FORM... */}
+        {/* MODAL FORM TAMBAH/EDIT */}
         {isModalOpen && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 overflow-y-auto pt-20 pb-10">
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl overflow-hidden animate-in zoom-in-95 duration-200">
@@ -464,11 +658,9 @@ export default function DataKomputer({ userRole }) {
         )}
       </div>
 
-      {/* AREA PRINT MODAL QR CODE */}
       {qrModalData && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm print:absolute print:inset-0 print:bg-white print:z-auto">
           <div className="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-sm border border-gray-100 print:border-none print:shadow-none print:p-0 print:w-auto animate-in zoom-in-95 duration-200">
-            
             <div className="flex justify-between items-center mb-6 print:hidden">
               <h3 className="font-bold text-gray-800 flex items-center gap-2">
                 <QrCode className="w-5 h-5 text-indigo-600" /> Cetak Label Aset
@@ -477,7 +669,6 @@ export default function DataKomputer({ userRole }) {
                 <X className="w-5 h-5" />
               </button>
             </div>
-
             <div className="border-2 border-dashed border-gray-300 p-6 rounded-xl flex flex-col items-center text-center print:border-solid print:border-black print:p-4 print:rounded-none">
               <h2 className="font-extrabold text-lg text-gray-900 tracking-wide print:text-black mb-1 uppercase">
                 ASET IT - KANWIL VIII JAKARTA
@@ -500,7 +691,6 @@ export default function DataKomputer({ userRole }) {
                 <p><span className="text-gray-400 font-sans print:text-gray-800">IP:</span> {qrModalData.ipAddress || "-"}</p>
               </div>
             </div>
-
             <div className="mt-6 flex gap-3 print:hidden">
               <button onClick={() => setQrModalData(null)} className="flex-1 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-xl transition-colors">
                 Batal

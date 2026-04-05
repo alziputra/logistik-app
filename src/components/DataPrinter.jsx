@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Search, Printer, Filter, Download, Plus, Edit, Trash2, X, Loader2, AlertCircle, CheckCircle, XCircle, AlertTriangle, QrCode, Printer as PrinterIcon } from "lucide-react";
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "firebase/firestore";
+import { useState, useEffect, useRef } from "react";
+import { Search, Printer, Filter, Plus, Edit, Trash2, X, Loader2, AlertCircle, CheckCircle, XCircle, AlertTriangle, QrCode, Printer as PrinterIcon, ChevronLeft, ChevronRight, FileSpreadsheet, Upload } from "lucide-react";
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, writeBatch } from "firebase/firestore";
 import { QRCodeCanvas } from "qrcode.react";
+import Papa from "papaparse";
 
 import { db } from "../lib/firebase"; 
 
@@ -15,12 +16,18 @@ export default function DataPrinter({ userRole }) {
   const [koneksiError, setKoneksiError] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // === LOGIKA PAGINASI (10 Item Per Halaman) ===
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   const [notif, setNotif] = useState({ show: false, message: "", type: "" });
   const [qrModalData, setQrModalData] = useState(null);
 
+  const fileInputRef = useRef(null);
+
   const showNotif = (message, type = "success") => {
     setNotif({ show: true, message, type });
-    setTimeout(() => setNotif({ show: false, message: "", type: "" }), 3000);
+    setTimeout(() => setNotif({ show: false, message: "", type: "" }), 3500);
   };
 
   const [outletsList, setOutletsList] = useState([]);
@@ -187,6 +194,147 @@ export default function DataPrinter({ userRole }) {
     }
   };
 
+  // ==========================================
+  // FITUR: IMPORT MASSAL CSV UNTUK PRINTER
+  // ==========================================
+  
+  // Fungsi menterjemahkan "April 2024" menjadi format YYYY-MM-DD
+  const parseIndoDateToISO = (dateStr) => {
+    if (!dateStr) return "";
+    const str = dateStr.trim().toLowerCase();
+    const monthMap = {
+      "januari": "01", "jan": "01", "februari": "02", "feb": "02",
+      "maret": "03", "mar": "03", "april": "04", "apr": "04",
+      "mei": "05", "may": "05", "juni": "06", "jun": "06",
+      "juli": "07", "jul": "07", "agustus": "08", "agu": "08", "aug": "08",
+      "september": "09", "sep": "09", "oktober": "10", "okt": "10", "oct": "10",
+      "november": "11", "nov": "11", "desember": "12", "des": "12", "dec": "12"
+    };
+    
+    const parts = str.split(" ");
+    if (parts.length === 2) {
+      const m = monthMap[parts[0]] || "01";
+      const y = parts[1];
+      if (y.length === 4) return `${y}-${m}-01`;
+    }
+    return "";
+  };
+
+  const handleDownloadTemplate = () => {
+    const headers = [
+      "Outlet Id", "Outlet", "Product Hardware", "Serial Number", 
+      "PENYEDIA", "MASA SEWA", "STATUS", "KONDISI", "DESKRIPSI", "TGL CEK"
+    ];
+    
+    const contohData = [
+      "12458,CP CIBINONG,EPSON L4260 ECO TANK,X8SS028432,POJ,April 2024 - April 2026,Sewa Berjalan,KURANG BAIK,Mikro,-",
+      "60830,UPS GALUH MAS,LQ-310 DOT MATRIX,R9JYJ33221,POJ,April 2024 - April 2026,Sewa Berjalan,BAIK,-,-"
+    ];
+    
+    const csvContent = headers.join(",") + "\n" + contohData.join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "Template_Import_Printer.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleFileUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsSaving(true);
+    showNotif("Sedang memproses dan mengunggah CSV...", "success");
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async (results) => {
+        try {
+          const dataArray = results.data;
+          if (dataArray.length === 0) throw new Error("File CSV kosong");
+
+          let currentBatch = writeBatch(db);
+          let count = 0;
+          const batchPromises = [];
+          const printerRef = collection(db, baseRefPath, "printers");
+
+          dataArray.forEach((row) => {
+            // Validasi baris kosong
+            if (!row["Outlet"] && !row["Serial Number"]) return;
+
+            const newDocRef = doc(printerRef); 
+            
+            // Logika Pemecah Masa Sewa ("April 2024 - April 2026")
+            let tglMulai = "";
+            let tglSelesai = "";
+            const rawMasaSewa = row["MASA SEWA"]?.trim() || "";
+            
+            if (rawMasaSewa.includes("-")) {
+              const parts = rawMasaSewa.split("-").map(p => p.trim());
+              tglMulai = parseIndoDateToISO(parts[0]);
+              tglSelesai = parseIndoDateToISO(parts[1]);
+            }
+
+            // Gabungkan TGL CEK ke dalam DESKRIPSI jika ada isinya
+            let deskripsiFinal = row["DESKRIPSI"]?.trim() || "";
+            if (row["TGL CEK"] && row["TGL CEK"].trim() !== "" && row["TGL CEK"].trim() !== "-") {
+              deskripsiFinal += deskripsiFinal ? ` | Tgl Cek: ${row["TGL CEK"]}` : `Tgl Cek: ${row["TGL CEK"]}`;
+            }
+
+            const printerData = {
+              idOutlet: row["Outlet Id"]?.trim() || "",
+              outlet: row["Outlet"]?.trim() || "",
+              produk: row["Product Hardware"]?.trim() || "",
+              sn: row["Serial Number"]?.trim() || "",
+              tanggalMulai: tglMulai,
+              tanggalSelesai: tglSelesai,
+              penyedia: row["PENYEDIA"]?.trim() || "",
+              status: row["STATUS"]?.trim() || "Inventaris",
+              kondisi: row["KONDISI"]?.trim() || "BAIK",
+              deskripsi: deskripsiFinal,
+            };
+
+            currentBatch.set(newDocRef, printerData);
+            count++;
+
+            // Batch maksimal 500
+            if (count === 490) {
+               batchPromises.push(currentBatch.commit());
+               currentBatch = writeBatch(db);
+               count = 0;
+            }
+          });
+
+          if (count > 0) {
+             batchPromises.push(currentBatch.commit());
+          }
+
+          await Promise.all(batchPromises); 
+          
+          showNotif(`Sukses! ${dataArray.length} data printer berhasil di-import. Memuat ulang...`, "success");
+          
+          setTimeout(() => window.location.reload(), 2000); 
+
+        } catch(err) {
+          console.error(err);
+          showNotif("Gagal import! Pastikan kolom header persis seperti template.", "error");
+        } finally {
+          setIsSaving(false);
+          if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+      },
+      error: (err) => {
+        console.error(err);
+        showNotif("Gagal membaca file CSV.", "error");
+        setIsSaving(false);
+      }
+    });
+  };
+
   const openModalForAdd = () => { resetForm(); setIsModalOpen(true); };
   const openModalForEdit = (printer) => { setEditingId(printer.id); setFormData({ ...printer }); setIsModalOpen(true); };
   
@@ -195,11 +343,26 @@ export default function DataPrinter({ userRole }) {
     setFormData({ idOutlet: "", outlet: "", produk: "", sn: "", penyedia: "", tanggalMulai: "", tanggalSelesai: "", status: "Inventaris", kondisi: "BAIK", deskripsi: "" }); 
   };
 
+  // Reset page saat mencari/filter
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
+    setCurrentPage(1);
+  };
+  const handleFilterStatus = (e) => {
+    setFilterStatus(e.target.value);
+    setCurrentPage(1);
+  };
+
   const filteredData = printerData.filter((item) => {
     const matchesSearch = item.produk?.toLowerCase().includes(searchQuery.toLowerCase()) || item.sn?.toLowerCase().includes(searchQuery.toLowerCase()) || item.outlet?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter = filterStatus === "Semua" || item.status === filterStatus;
     return matchesSearch && matchesFilter;
   });
+
+  // Potong data untuk paginasi
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
 
   const getStatusBadge = (status) => {
     switch(status) {
@@ -220,10 +383,22 @@ export default function DataPrinter({ userRole }) {
             </h2>
             <p className="text-sm text-gray-500 mt-1">Pantau status inventaris dan masa sewa perangkat printer</p>
           </div>
+          
           {userRole === "admin" && (
-          <button onClick={openModalForAdd} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors text-sm">
-            <Plus className="w-4 h-4" /> Tambah Printer
-          </button>
+            <div className="flex flex-wrap items-center gap-2">
+              <button onClick={handleDownloadTemplate} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg font-medium shadow-sm transition-colors text-sm">
+                <FileSpreadsheet className="w-4 h-4" /> Template CSV
+              </button>
+
+              <button onClick={() => fileInputRef.current?.click()} disabled={isSaving} className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded-lg font-medium shadow-sm transition-colors text-sm disabled:opacity-50">
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />} Import CSV
+              </button>
+              <input type="file" accept=".csv" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
+
+              <button onClick={openModalForAdd} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg font-medium shadow-sm transition-colors text-sm">
+                <Plus className="w-4 h-4" /> Tambah Printer
+              </button>
+            </div>
           )}
         </div>
 
@@ -241,11 +416,11 @@ export default function DataPrinter({ userRole }) {
           <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex flex-col md:flex-row gap-4 justify-between items-center">
             <div className="relative w-full md:w-80">
               <Search className="h-4 w-4 text-gray-400 absolute left-3 top-3" />
-              <input type="text" placeholder="Cari model, S/N, atau outlet..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
+              <input type="text" placeholder="Cari model, S/N, atau outlet..." value={searchQuery} onChange={handleSearch} className="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm" />
             </div>
             <div className="flex gap-3 w-full md:w-auto">
               <div className="relative flex-1 md:flex-none">
-                <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="w-full pl-10 pr-8 py-2 bg-white border border-gray-200 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium text-gray-700">
+                <select value={filterStatus} onChange={handleFilterStatus} className="w-full pl-10 pr-8 py-2 bg-white border border-gray-200 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium text-gray-700">
                   <option value="Semua">Semua Status</option>
                   <option value="Inventaris">Inventaris</option>
                   <option value="Sewa Berjalan">Sewa Berjalan</option>
@@ -271,10 +446,10 @@ export default function DataPrinter({ userRole }) {
               <tbody className="text-sm divide-y divide-gray-50">
                 {isLoading ? (
                   <tr><td colSpan="6" className="p-12 text-center text-blue-500"><Loader2 className="w-8 h-8 animate-spin mx-auto" /><p className="mt-2 text-gray-500">Memuat data...</p></td></tr>
-                ) : filteredData.length === 0 ? (
-                  <tr><td colSpan="6" className="p-8 text-center text-gray-500">Tidak ada data printer.</td></tr>
+                ) : paginatedData.length === 0 ? (
+                  <tr><td colSpan="6" className="p-8 text-center text-gray-500">Tidak ada data printer ditemukan.</td></tr>
                 ) : (
-                  filteredData.map((printer) => {
+                  paginatedData.map((printer) => {
                     const sisaBulan = hitungSisaBulan(printer.tanggalSelesai);
                     const isExpiringSoon = printer.status === "Sewa Berjalan" && sisaBulan !== null && sisaBulan <= 3 && sisaBulan >= 0;
                     const isExpired = printer.status === "Sewa Habis";
@@ -298,7 +473,6 @@ export default function DataPrinter({ userRole }) {
                           {isExpiringSoon && <p className="text-[10px] text-orange-600 font-bold mt-1 bg-orange-100/50 w-max px-1.5 py-0.5 rounded">Sisa {sisaBulan} bln</p>}
                         </td>
                         
-                        {/* [PERUBAHAN] Kolom Status & Kondisi Digabung Menjadi Tumpuk */}
                         <td className="p-4 text-center">
                           <div className="flex flex-col items-center justify-center gap-1.5">
                             <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold border ${getStatusBadge(printer.status)}`}>{printer.status}</span>
@@ -325,8 +499,38 @@ export default function DataPrinter({ userRole }) {
               </tbody>
             </table>
           </div>
+
+          {/* KONTROL PAGINASI (5 ITEM PER HALAMAN) */}
+          {totalPages > 1 && (
+            <div className="px-6 py-4 border-t border-gray-100 bg-white flex items-center justify-between">
+              <span className="text-sm text-gray-500 hidden sm:inline-block">
+                Menampilkan <span className="font-bold text-gray-900">{startIndex + 1}</span> - <span className="font-bold text-gray-900">{Math.min(startIndex + itemsPerPage, filteredData.length)}</span> dari <span className="font-bold text-gray-900">{filteredData.length}</span> printer
+              </span>
+              <div className="flex gap-2 ml-auto">
+                <button 
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))} 
+                  disabled={currentPage === 1}
+                  className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4 text-gray-600" />
+                </button>
+                <span className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg border border-gray-200">
+                  Hal {currentPage} / {totalPages}
+                </span>
+                <button 
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))} 
+                  disabled={currentPage === totalPages}
+                  className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="w-4 h-4 text-gray-600" />
+                </button>
+              </div>
+            </div>
+          )}
+
         </div>
 
+        {/* MODAL FORM TAMBAH/EDIT */}
         {isModalOpen && (
           <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">

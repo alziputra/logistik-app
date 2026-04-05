@@ -13,7 +13,14 @@ Aplikasi ini tidak hanya melacak arus barang masuk/keluar, tetapi juga menyediak
 ## 📸 Tampilan Aplikasi
 
 ![Dashboard LogistikKu](./public/dashboard.png)
+Atau ingin melihat langsung versi live?  
+👉 Kunjungi: https://logistik-app-sigma.vercel.app/
 
+### 🔐 Demo Akun
+Gunakan akun berikut untuk mencoba aplikasi:
+
+- **Email:** user@logistik.co.id  
+- **Password:** user12345
 ---
 
 ## ✨ Fitur Utama

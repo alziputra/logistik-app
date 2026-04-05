@@ -32,6 +32,7 @@ import DataPrinter from "../components/DataPrinter";
 import DataKomputer from "../components/DataKomputer";
 import KelolaUser from "../components/KelolaUser";
 import RiwayatTransaksi from "../components/RiwayatTransaksi";
+import LogAktivitas from "../components/LogAktivitas"; // [PERBAIKAN] Pastikan ini di-import
 
 export default function SuratSerahTerimaApp() {
   const [user, setUser] = useState(null);
@@ -59,6 +60,7 @@ export default function SuratSerahTerimaApp() {
   const [activeTransaction, setActiveTransaction] = useState(null);
 
   const [usersList, setUsersList] = useState([]);
+  const [activityLogs, setActivityLogs] = useState([]); // [PERBAIKAN] State untuk log aktivitas
 
   const appId = process.env.NEXT_PUBLIC_APP_ID;
 
@@ -158,13 +160,7 @@ export default function SuratSerahTerimaApp() {
       }, IDLE_TIME);
     };
 
-    const events = [
-      "mousemove",
-      "mousedown",
-      "keypress",
-      "touchstart",
-      "scroll",
-    ];
+    const events = ["mousemove", "mousedown", "keypress", "touchstart", "scroll"];
     events.forEach((event) => window.addEventListener(event, resetTimer));
     resetTimer();
 
@@ -182,130 +178,88 @@ export default function SuratSerahTerimaApp() {
 
     const safeAppId = appId || "logistikku_app_01";
 
-    const invRef = collection(
-      db,
-      "artifacts",
-      safeAppId,
-      "public",
-      "data",
-      "inventory",
-    );
-    const unsubInv = onSnapshot(
-      invRef,
-      (snap) => setInventory(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
-      console.error,
-    );
+    const invRef = collection(db, "artifacts", safeAppId, "public", "data", "inventory");
+    const unsubInv = onSnapshot(invRef, (snap) => setInventory(snap.docs.map((d) => ({ id: d.id, ...d.data() }))), console.error);
 
-    const trxRef = collection(
-      db,
-      "artifacts",
-      safeAppId,
-      "public",
-      "data",
-      "transactions",
-    );
-    const unsubTrx = onSnapshot(
-      trxRef,
-      (snap) => {
-        const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        setTransactions(
-          data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
-        );
-      },
-      console.error,
-    );
+    const trxRef = collection(db, "artifacts", safeAppId, "public", "data", "transactions");
+    const unsubTrx = onSnapshot(trxRef, (snap) => {
+      const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setTransactions(data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+    }, console.error);
 
-    const outRef = collection(
-      db,
-      "artifacts",
-      safeAppId,
-      "public",
-      "data",
-      "outlets",
-    );
-    const unsubOut = onSnapshot(
-      outRef,
-      (snap) => {
-        const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        setOutlets(data.sort((a, b) => a.nama.localeCompare(b.nama)));
-      },
-      console.error,
-    );
+    const outRef = collection(db, "artifacts", safeAppId, "public", "data", "outlets");
+    const unsubOut = onSnapshot(outRef, (snap) => {
+      const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setOutlets(data.sort((a, b) => a.nama.localeCompare(b.nama)));
+    }, console.error);
 
-    const printerRef = collection(
-      db,
-      "artifacts",
-      safeAppId,
-      "public",
-      "data",
-      "printers",
-    );
-    const unsubPrinter = onSnapshot(
-      printerRef,
-      (snap) => {
-        const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        setPrinters(data);
-        const peringatan = [];
-        data.forEach((printer) => {
-          if (printer.tanggalSelesai && printer.status === "Sewa Berjalan") {
-            const sisa = hitungSisaBulan(printer.tanggalSelesai);
-            if (sisa !== null && sisa <= 3 && sisa >= 0)
-              peringatan.push({ ...printer, sisaBulan: sisa });
-          }
-        });
-        peringatan.sort((a, b) => a.sisaBulan - b.sisaBulan);
-        setNotifSewa(peringatan);
-      },
-      console.error,
-    );
+    const printerRef = collection(db, "artifacts", safeAppId, "public", "data", "printers");
+    const unsubPrinter = onSnapshot(printerRef, (snap) => {
+      const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setPrinters(data);
+      const peringatan = [];
+      data.forEach((printer) => {
+        if (printer.tanggalSelesai && printer.status === "Sewa Berjalan") {
+          const sisa = hitungSisaBulan(printer.tanggalSelesai);
+          if (sisa !== null && sisa <= 3 && sisa >= 0) peringatan.push({ ...printer, sisaBulan: sisa });
+        }
+      });
+      peringatan.sort((a, b) => a.sisaBulan - b.sisaBulan);
+      setNotifSewa(peringatan);
+    }, console.error);
 
-    const computerRef = collection(
-      db,
-      "artifacts",
-      safeAppId,
-      "public",
-      "data",
-      "computers",
-    );
-    const unsubComputer = onSnapshot(
-      computerRef,
-      (snap) => {
-        const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        setComputers(data);
-        const peringatanPC = [];
-        data.forEach((comp) => {
-          if (comp.tanggalSelesai && comp.status === "Sewa Berjalan") {
-            const sisa = hitungSisaBulan(comp.tanggalSelesai);
-            if (sisa !== null && sisa <= 3 && sisa >= 0)
-              peringatanPC.push({ ...comp, sisaBulan: sisa });
-          }
-        });
-        peringatanPC.sort((a, b) => a.sisaBulan - b.sisaBulan);
-        setNotifSewaKomputer(peringatanPC);
-      },
-      console.error,
-    );
+    const computerRef = collection(db, "artifacts", safeAppId, "public", "data", "computers");
+    const unsubComputer = onSnapshot(computerRef, (snap) => {
+      const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setComputers(data);
+      const peringatanPC = [];
+      data.forEach((comp) => {
+        if (comp.tanggalSelesai && comp.status === "Sewa Berjalan") {
+          const sisa = hitungSisaBulan(comp.tanggalSelesai);
+          if (sisa !== null && sisa <= 3 && sisa >= 0) peringatanPC.push({ ...comp, sisaBulan: sisa });
+        }
+      });
+      peringatanPC.sort((a, b) => a.sisaBulan - b.sisaBulan);
+      setNotifSewaKomputer(peringatanPC);
+    }, console.error);
 
-    // Fetch Daftar Semua User (Untuk menu admin)
+    // Fetch Daftar Semua User
     const usersRef = collection(db, "users");
-    const unsubUsers = onSnapshot(
-      usersRef,
-      (snap) => {
-        const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-        setUsersList(data);
-      },
-      console.error,
-    );
+    const unsubUsers = onSnapshot(usersRef, (snap) => {
+      const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setUsersList(data);
+    }, console.error);
+
+    // [PERBAIKAN] Fetch Log Aktivitas
+    const logsRef = collection(db, "artifacts", safeAppId, "public", "data", "activity_logs");
+    const unsubLogs = onSnapshot(logsRef, (snap) => {
+      const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      setActivityLogs(data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)));
+    }, console.error);
 
     return () => {
-      unsubInv();
-      unsubTrx();
-      unsubOut();
-      unsubPrinter();
-      unsubComputer();
-      unsubUsers();
+      unsubInv(); unsubTrx(); unsubOut(); unsubPrinter(); unsubComputer(); unsubUsers(); unsubLogs();
     };
   }, [user, appId]);
+
+  // ==============================
+  // PENCATATAN LOG AKTIVITAS (AUDIT TRAIL) [PERBAIKAN]
+  // ==============================
+  const logActivity = async (aksi, modul, keterangan) => {
+    if (!user || !db) return;
+    try {
+      const safeAppId = appId || "logistikku_app_01";
+      await addDoc(collection(db, "artifacts", safeAppId, "public", "data", "activity_logs"), {
+        user_email: user.email,
+        aksi: aksi, // "BUAT", "TAMBAH", "EDIT", "HAPUS"
+        modul: modul, // "TRANSAKSI", "MASTER BARANG", "MASTER INSTANSI"
+        keterangan: keterangan,
+        timestamp: new Date().toISOString()
+      });
+    } catch (e) {
+      console.error("Gagal mencatat log:", e);
+    }
+  };
 
   const generateNomorSurat = () => {
     const total = transactions.length + 1;
@@ -354,20 +308,16 @@ export default function SuratSerahTerimaApp() {
     if (!user || !db) return showNotif("Database tidak tersedia", "error");
     try {
       const safeAppId = appId || "logistikku_app_01";
-      const trxRef = collection(
-        db,
-        "artifacts",
-        safeAppId,
-        "public",
-        "data",
-        "transactions",
-      );
+      const trxRef = collection(db, "artifacts", safeAppId, "public", "data", "transactions");
       const newTrx = {
         ...formData,
         items,
         createdAt: new Date().toISOString(),
       };
       await addDoc(trxRef, newTrx);
+
+      // [PERBAIKAN] Panggil logActivity setelah berhasil simpan
+      await logActivity("BUAT", "TRANSAKSI", `Surat ${formData.jenisTransaksi} No: ${newTrx.nomorSurat}`);
 
       const aggregatedItems = {};
       for (const item of items) {
@@ -382,34 +332,14 @@ export default function SuratSerahTerimaApp() {
 
       for (const key in aggregatedItems) {
         const item = aggregatedItems[key];
-        const invItem = inventory.find(
-          (i) => i.nama.toLowerCase() === item.nama.toLowerCase(),
-        );
-        const diff =
-          formData.jenisTransaksi === "Barang Keluar"
-            ? -Number(item.kuantitas)
-            : Number(item.kuantitas);
+        const invItem = inventory.find((i) => i.nama.toLowerCase() === item.nama.toLowerCase());
+        const diff = formData.jenisTransaksi === "Barang Keluar" ? -Number(item.kuantitas) : Number(item.kuantitas);
 
         if (invItem) {
-          const itemRef = doc(
-            db,
-            "artifacts",
-            safeAppId,
-            "public",
-            "data",
-            "inventory",
-            invItem.id,
-          );
+          const itemRef = doc(db, "artifacts", safeAppId, "public", "data", "inventory", invItem.id);
           await updateDoc(itemRef, { stok: increment(diff) });
         } else {
-          const invRef = collection(
-            db,
-            "artifacts",
-            safeAppId,
-            "public",
-            "data",
-            "inventory",
-          );
+          const invRef = collection(db, "artifacts", safeAppId, "public", "data", "inventory");
           await addDoc(invRef, {
             nama: item.nama,
             stok: diff,
@@ -447,20 +377,16 @@ export default function SuratSerahTerimaApp() {
       created_at: new Date().toISOString(),
     };
 
-    if (
-      inventory.some((i) => i.nama.toLowerCase() === namaBarang.toLowerCase())
-    ) {
-      return showNotif(
-        `Gagal: "${namaBarang}" sudah ada di Master Barang!`,
-        "error",
-      );
+    if (inventory.some((i) => i.nama.toLowerCase() === namaBarang.toLowerCase())) {
+      return showNotif(`Gagal: "${namaBarang}" sudah ada di Master Barang!`, "error");
     }
     try {
       const safeAppId = appId || "logistikku_app_01";
-      await addDoc(
-        collection(db, "artifacts", safeAppId, "public", "data", "inventory"),
-        newInv,
-      );
+      await addDoc(collection(db, "artifacts", safeAppId, "public", "data", "inventory"), newInv);
+      
+      // Panggil logActivity
+      await logActivity("TAMBAH", "MASTER BARANG", `Menambahkan barang baru: ${namaBarang} (${newInv.stok} ${newInv.satuan})`);
+      
       showNotif("Master barang berhasil ditambahkan!");
       e.target.reset();
     } catch (error) {
@@ -479,20 +405,16 @@ export default function SuratSerahTerimaApp() {
       created_at: new Date().toISOString(),
     };
 
-    if (
-      outlets.some((o) => o.nama.toLowerCase() === namaOutlet.toLowerCase())
-    ) {
-      return showNotif(
-        `Gagal: "${namaOutlet}" sudah ada di Master Outlet!`,
-        "error",
-      );
+    if (outlets.some((o) => o.nama.toLowerCase() === namaOutlet.toLowerCase())) {
+      return showNotif(`Gagal: "${namaOutlet}" sudah ada di Master Outlet!`, "error");
     }
     try {
       const safeAppId = appId || "logistikku_app_01";
-      await addDoc(
-        collection(db, "artifacts", safeAppId, "public", "data", "outlets"),
-        newOutlet,
-      );
+      await addDoc(collection(db, "artifacts", safeAppId, "public", "data", "outlets"), newOutlet);
+      
+      // [PERBAIKAN] Panggil logActivity
+      await logActivity("TAMBAH", "MASTER INSTANSI", `Menambahkan instansi baru: ${namaOutlet}`);
+      
       showNotif("Master outlet berhasil ditambahkan!");
       e.target.reset();
     } catch (error) {
@@ -508,6 +430,7 @@ export default function SuratSerahTerimaApp() {
     try {
       const userRef = doc(db, "users", userId);
       await updateDoc(userRef, { role: newRole });
+      await logActivity("EDIT", "MANAJEMEN AKSES", `Mengubah role pengguna menjadi ${newRole}`);
     } catch (error) {
       console.error("Gagal update role:", error);
       throw error;
@@ -578,7 +501,6 @@ export default function SuratSerahTerimaApp() {
         />
       )}
 
-      {/* [BARU] Panggil Riwayat Transaksi secara terpisah */}
       {view === "riwayat" && (
         <RiwayatTransaksi
           transactions={transactions}
@@ -631,7 +553,13 @@ export default function SuratSerahTerimaApp() {
         <KelolaUser usersList={usersList} handleUpdateRole={handleUpdateRole} />
       )}
 
-      {["kelola_user"].includes(view) && userRole !== "admin" && (
+      {/* [PERBAIKAN] Tampilkan Log Aktivitas */}
+      {view === "log_aktivitas" && userRole === "admin" && (
+        <LogAktivitas logs={activityLogs} />
+      )}
+
+      {/* Update array halaman terlindungi */}
+      {["kelola_user", "log_aktivitas"].includes(view) && userRole !== "admin" && (
         <div className="flex flex-col items-center justify-center py-20 text-gray-500">
           <div className="text-4xl mb-4">🔒</div>
           <h2 className="text-xl font-bold text-gray-800">Akses Ditolak</h2>

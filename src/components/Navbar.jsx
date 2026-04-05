@@ -3,7 +3,7 @@
 import { useState } from "react";
 import {
   Package, LayoutDashboard, Menu, X, LogOut, ChevronDown, Box, Building2, Database, 
-  ArrowRightLeft, History, FileText, Server, Monitor, Printer, Bell, Shield
+  ArrowRightLeft, History, FileText, Server, Monitor, Printer, Bell, Shield, Activity
 } from "lucide-react";
 
 const Navbar = ({ view, setView, startNewDocument, handleLogout, notifCount = 0, userRole }) => {
@@ -151,10 +151,15 @@ const Navbar = ({ view, setView, startNewDocument, handleLogout, notifCount = 0,
           {/* ================================================= */}
           {/* MENU MANAJEMEN USER (HANYA ADMIN)                 */}
           {/* ================================================= */}
+          {/* MENU MANAJEMEN USER (HANYA ADMIN) */}
           {userRole === "admin" && (
-            <div className="pt-4 mt-2 border-t border-gray-100">
+            <div className="pt-4 mt-2 border-t border-gray-100 space-y-1">
               <button onClick={() => handleNavClick("kelola_user")} className={`w-full px-4 py-3 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "kelola_user" ? "bg-red-50 text-red-700" : "text-gray-600 hover:bg-gray-50"}`}>
                 <Shield className="w-5 h-5" /> Manajemen Akses
+              </button>
+              {/* TOMBOL LOG AKTIVITAS BARU */}
+              <button onClick={() => handleNavClick("log_aktivitas")} className={`w-full px-4 py-3 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "log_aktivitas" ? "bg-orange-50 text-orange-700" : "text-gray-600 hover:bg-gray-50"}`}>
+                <Activity className="w-5 h-5" /> Log Aktivitas
               </button>
             </div>
           )}

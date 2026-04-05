@@ -6,7 +6,7 @@ import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "firebase
 
 import { db } from "../lib/firebase"; 
 
-export default function DataKomputer() {
+export default function DataKomputer({ userRole }) {
   const [computerData, setComputerData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -211,9 +211,11 @@ export default function DataKomputer() {
           </h2>
           <p className="text-sm text-gray-500 mt-1">Kelola spesifikasi, jaringan, dan masa sewa perangkat komputer outlet.</p>
         </div>
+        {userRole === "admin" && (
         <button onClick={openModalForAdd} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors text-sm">
           <Plus className="w-4 h-4" /> Tambah PC
         </button>
+        )}
       </div>
 
       {koneksiError && (
@@ -310,12 +312,14 @@ export default function DataKomputer() {
                         <span className={`px-2.5 py-1 rounded-md text-[11px] font-bold border block w-max mx-auto mb-1 ${getStatusBadge(comp.status)}`}>{comp.status}</span>
                         <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${comp.kondisi === "BAIK" ? "text-green-600" : "text-orange-600"}`}>{comp.kondisi}</span>
                       </td>
+                      {userRole === "admin" && (
                       <td className="p-4 text-right">
                         <div className="flex justify-end gap-2">
                           <button onClick={() => openModalForEdit(comp)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Edit className="w-4 h-4" /></button>
                           <button onClick={() => handleDelete(comp.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
                         </div>
                       </td>
+                      )}                    
                     </tr>
                   )
                 })

@@ -6,7 +6,7 @@ import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "firebase
 
 import { db } from "../lib/firebase"; 
 
-export default function DataPrinter() {
+export default function DataPrinter({ userRole }) {
   const [printerData, setPrinterData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -220,9 +220,11 @@ export default function DataPrinter() {
           </h2>
           <p className="text-sm text-gray-500 mt-1">Pantau status inventaris dan masa sewa perangkat printer</p>
         </div>
+        {userRole === "admin" && (
         <button onClick={openModalForAdd} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors text-sm">
           <Plus className="w-4 h-4" /> Tambah Printer
         </button>
+        )}
       </div>
 
       {koneksiError && (
@@ -301,12 +303,14 @@ export default function DataPrinter() {
                       </td>
                       <td className="p-4 text-center"><span className={`px-3 py-1 rounded-full text-xs font-bold border ${getStatusBadge(printer.status)}`}>{printer.status}</span></td>
                       <td className="p-4 text-center"><span className={`px-2.5 py-1 rounded-md text-[11px] font-bold ${printer.kondisi === "BAIK" ? "bg-green-50 text-green-600" : "bg-orange-50 text-orange-600"}`}>{printer.kondisi}</span></td>
+                      {userRole === "admin" && (
                       <td className="p-4 text-right">
                         <div className="flex justify-end gap-2">
                           <button onClick={() => openModalForEdit(printer)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"><Edit className="w-4 h-4" /></button>
                           <button onClick={() => handleDelete(printer.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
                         </div>
                       </td>
+                      )}
                     </tr>
                   )
                 })

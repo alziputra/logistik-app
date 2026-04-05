@@ -214,7 +214,7 @@ export default function SuratSerahTerimaApp() {
       setNotifSewaKomputer(peringatanPC);
     }, console.error);
 
-    // [BARU] 6. Fetch Daftar Semua User (Untuk menu admin)
+    // Fetch Daftar Semua User (Untuk menu admin)
     const usersRef = collection(db, "users");
     const unsubUsers = onSnapshot(usersRef, (snap) => {
       const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
@@ -222,7 +222,7 @@ export default function SuratSerahTerimaApp() {
     }, console.error);
 
     return () => {
-      unsubInv(); unsubTrx(); unsubOut(); unsubPrinter(); unsubComputer(); unsubUsers(); // [BARU] Bersihkan listener user
+      unsubInv(); unsubTrx(); unsubOut(); unsubPrinter(); unsubComputer(); unsubUsers(); 
     };
   }, [user, appId]);
 
@@ -354,7 +354,7 @@ export default function SuratSerahTerimaApp() {
   };
 
   // ==============================
-  // UPDATE ROLE PENGGUNA (Hanya Admin) [BARU]
+  // UPDATE ROLE PENGGUNA (Hanya Admin)
   // ==============================
   const handleUpdateRole = async (userId, newRole) => {
     if (userRole !== "admin") return;
@@ -423,13 +423,14 @@ export default function SuratSerahTerimaApp() {
         />
       )}
 
-      {(view === "master_barang" || view === "master_outlet") && userRole === "admin" && (
+      {(view === "master_barang" || view === "master_outlet") && (
         <Barang
           activeMenu={view}
           inventory={inventory}
           handleAddInventory={handleAddInventory}
           outlets={outlets}
           handleAddOutlet={handleAddOutlet}
+          userRole={userRole} 
         />
       )}
 
@@ -457,10 +458,9 @@ export default function SuratSerahTerimaApp() {
         />
       )}
 
-      {view === "perangkat_printer" && userRole === "admin" && <DataPrinter />}
-      {view === "perangkat_komputer" && userRole === "admin" && <DataKomputer />}
+      {view === "perangkat_printer" && <DataPrinter userRole={userRole} />}
+      {view === "perangkat_komputer" && <DataKomputer userRole={userRole} />}
       
-      {/* [BARU] Menampilkan halaman Manajemen Akses */}
       {view === "kelola_user" && userRole === "admin" && (
         <KelolaUser 
           usersList={usersList} 
@@ -468,8 +468,7 @@ export default function SuratSerahTerimaApp() {
         />
       )}
       
-      {/* Update array halaman terlindungi */}
-      {["master_barang", "master_outlet", "perangkat_printer", "perangkat_komputer", "kelola_user"].includes(view) && userRole !== "admin" && (
+      {["kelola_user"].includes(view) && userRole !== "admin" && (
         <div className="flex flex-col items-center justify-center py-20 text-gray-500">
           <div className="text-4xl mb-4">🔒</div>
           <h2 className="text-xl font-bold text-gray-800">Akses Ditolak</h2>

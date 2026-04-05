@@ -12,7 +12,6 @@ const Navbar = ({ view, setView, startNewDocument, handleLogout, notifCount = 0,
   // State untuk mengontrol dropdown
   const [isMasterOpen, setIsMasterOpen] = useState(view.startsWith("master_"));
   const [isTransaksiOpen, setIsTransaksiOpen] = useState(view === "riwayat" || view === "form");
-  // Tambahan state untuk dropdown Data Perangkat
   const [isPerangkatOpen, setIsPerangkatOpen] = useState(view.startsWith("perangkat_"));
 
   const closeMenu = () => setIsOpen(false);
@@ -35,7 +34,6 @@ const Navbar = ({ view, setView, startNewDocument, handleLogout, notifCount = 0,
           <Package className="w-6 h-6 text-blue-600" />
           <span className="font-bold text-lg text-gray-900 tracking-tight">LogistikKu</span>
         </div>
-        {/* [BARU] Lonceng versi Mobile & Menu Hamburger */}
         <div className="flex items-center gap-3">
           <button onClick={() => setView("dashboard")} className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
             <Bell className="w-6 h-6" />
@@ -61,7 +59,6 @@ const Navbar = ({ view, setView, startNewDocument, handleLogout, notifCount = 0,
             </div>
             <span className="font-bold text-lg md:text-xl text-gray-900 tracking-tight">LogistikKu</span>
           </div>
-          {/* [BARU] Lonceng versi Desktop */}
           <button 
             onClick={() => handleNavClick("dashboard")}
             title="Lihat Peringatan di Dashboard"
@@ -108,56 +105,58 @@ const Navbar = ({ view, setView, startNewDocument, handleLogout, notifCount = 0,
           </div>
 
           {/* ================================================= */}
-          {/* BAGIAN INI HANYA MUNCUL JIKA USER ADALAH ADMIN */}
+          {/* MENU DROPDOWN: DATA MASTER (Kini Semua Bisa Akses) */}
+          {/* ================================================= */}
+          <div className="space-y-1 mt-2">
+            <button onClick={() => setIsMasterOpen(!isMasterOpen)} className={`w-full px-4 py-3 rounded-xl font-medium text-sm flex items-center justify-between transition-colors ${view.startsWith("master_") ? "bg-blue-50 text-blue-700" : "text-gray-600 hover:bg-gray-50"}`}>
+              <div className="flex items-center gap-3">
+                <Database className="w-5 h-5" /> Data Master
+              </div>
+              <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${isMasterOpen ? "rotate-180" : ""}`} />
+            </button>
+            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isMasterOpen ? "max-h-40 opacity-100" : "max-h-0 opacity-0"}`}>
+              <div className="pl-4 pr-2 py-1 space-y-1 border-l-2 border-gray-100 ml-6 mt-1">
+                <button onClick={() => handleNavClick("master_barang")} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "master_barang" ? "bg-blue-100 text-blue-700" : "text-gray-500 hover:text-blue-700 hover:bg-blue-50"}`}>
+                  <Box className="w-4 h-4" /> Master Barang
+                </button>
+                <button onClick={() => handleNavClick("master_outlet")} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "master_outlet" ? "bg-purple-100 text-purple-700" : "text-gray-500 hover:text-purple-700 hover:bg-purple-50"}`}>
+                  <Building2 className="w-4 h-4" /> Master Instansi
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* ================================================= */}
+          {/* MENU DROPDOWN: DATA PERANGKAT (Kini Semua Bisa Akses) */}
+          {/* ================================================= */}
+          <div className="space-y-1 mt-2">
+            <button onClick={() => setIsPerangkatOpen(!isPerangkatOpen)} className={`w-full px-4 py-3 rounded-xl font-medium text-sm flex items-center justify-between transition-colors ${view.startsWith("perangkat_") ? "bg-blue-50 text-blue-700" : "text-gray-600 hover:bg-gray-50"}`}>
+              <div className="flex items-center gap-3">
+                <Server className="w-5 h-5" /> Data Perangkat
+              </div>
+              <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${isPerangkatOpen ? "rotate-180" : ""}`} />
+            </button>
+            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isPerangkatOpen ? "max-h-40 opacity-100" : "max-h-0 opacity-0"}`}>
+              <div className="pl-4 pr-2 py-1 space-y-1 border-l-2 border-gray-100 ml-6 mt-1">
+                <button onClick={() => handleNavClick("perangkat_komputer")} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "perangkat_komputer" ? "bg-blue-100 text-blue-700" : "text-gray-500 hover:text-blue-700 hover:bg-blue-50"}`}>
+                  <Monitor className="w-4 h-4" /> Data Komputer
+                </button>
+                <button onClick={() => handleNavClick("perangkat_printer")} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "perangkat_printer" ? "bg-green-100 text-green-700" : "text-gray-500 hover:text-green-700 hover:bg-green-50"}`}>
+                  <Printer className="w-4 h-4" /> Data Printer
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* ================================================= */}
+          {/* MENU MANAJEMEN USER (HANYA ADMIN)                 */}
           {/* ================================================= */}
           {userRole === "admin" && (
-            <>
-              {/* MENU DROPDOWN: DATA MASTER */}
-              <div className="space-y-1 mt-2">
-                <button onClick={() => setIsMasterOpen(!isMasterOpen)} className={`w-full px-4 py-3 rounded-xl font-medium text-sm flex items-center justify-between transition-colors ${view.startsWith("master_") ? "bg-blue-50 text-blue-700" : "text-gray-600 hover:bg-gray-50"}`}>
-                  <div className="flex items-center gap-3">
-                    <Database className="w-5 h-5" /> Data Master
-                  </div>
-                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${isMasterOpen ? "rotate-180" : ""}`} />
-                </button>
-                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isMasterOpen ? "max-h-40 opacity-100" : "max-h-0 opacity-0"}`}>
-                  <div className="pl-4 pr-2 py-1 space-y-1 border-l-2 border-gray-100 ml-6 mt-1">
-                    <button onClick={() => handleNavClick("master_barang")} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "master_barang" ? "bg-blue-100 text-blue-700" : "text-gray-500 hover:text-blue-700 hover:bg-blue-50"}`}>
-                      <Box className="w-4 h-4" /> Master Barang
-                    </button>
-                    <button onClick={() => handleNavClick("master_outlet")} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "master_outlet" ? "bg-purple-100 text-purple-700" : "text-gray-500 hover:text-purple-700 hover:bg-purple-50"}`}>
-                      <Building2 className="w-4 h-4" /> Master Instansi
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* MENU DROPDOWN: DATA PERANGKAT */}
-              <div className="space-y-1 mt-2">
-                <button onClick={() => setIsPerangkatOpen(!isPerangkatOpen)} className={`w-full px-4 py-3 rounded-xl font-medium text-sm flex items-center justify-between transition-colors ${view.startsWith("perangkat_") ? "bg-blue-50 text-blue-700" : "text-gray-600 hover:bg-gray-50"}`}>
-                  <div className="flex items-center gap-3">
-                    <Server className="w-5 h-5" /> Data Perangkat
-                  </div>
-                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${isPerangkatOpen ? "rotate-180" : ""}`} />
-                </button>
-                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isPerangkatOpen ? "max-h-40 opacity-100" : "max-h-0 opacity-0"}`}>
-                  <div className="pl-4 pr-2 py-1 space-y-1 border-l-2 border-gray-100 ml-6 mt-1">
-                    <button onClick={() => handleNavClick("perangkat_komputer")} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "perangkat_komputer" ? "bg-blue-100 text-blue-700" : "text-gray-500 hover:text-blue-700 hover:bg-blue-50"}`}>
-                      <Monitor className="w-4 h-4" /> Data Komputer
-                    </button>
-                    <button onClick={() => handleNavClick("perangkat_printer")} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "perangkat_printer" ? "bg-green-100 text-green-700" : "text-gray-500 hover:text-green-700 hover:bg-green-50"}`}>
-                      <Printer className="w-4 h-4" /> Data Printer
-                    </button>
-                  </div>
-                </div>
-              </div>
-              {/* MENU MANAJEMEN USER (HANYA ADMIN) */}
-              <div className="pt-4 mt-2 border-t border-gray-100">
-                <button onClick={() => handleNavClick("kelola_user")} className={`w-full px-4 py-3 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "kelola_user" ? "bg-red-50 text-red-700" : "text-gray-600 hover:bg-gray-50"}`}>
-                  <Shield className="w-5 h-5" /> Manajemen Akses
-                </button>
-              </div>
-            </>
+            <div className="pt-4 mt-2 border-t border-gray-100">
+              <button onClick={() => handleNavClick("kelola_user")} className={`w-full px-4 py-3 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "kelola_user" ? "bg-red-50 text-red-700" : "text-gray-600 hover:bg-gray-50"}`}>
+                <Shield className="w-5 h-5" /> Manajemen Akses
+              </button>
+            </div>
           )}
 
         </nav>

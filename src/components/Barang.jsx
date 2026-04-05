@@ -3,12 +3,11 @@
 import { useState } from "react";
 import { Database, Plus, Box, Hash, Scale, Building2, CalendarDays, Clock, Search, MapPin, DownloadCloud } from "lucide-react";
 
-// Menerima prop 'activeMenu' dari Navbar/Page
-export default function Barang({ activeMenu, inventory, handleAddInventory, outlets, handleAddOutlet, handleBulkImportOutlets }) {
+export default function Barang({ activeMenu, inventory, handleAddInventory, outlets, handleAddOutlet, handleBulkImportOutlets, userRole }) {
   
   const [searchQuery, setSearchQuery] = useState("");
   const [searchOutletQuery, setSearchOutletQuery] = useState("");
-  const [calculatedStatus, setCalculatedStatus] = useState("Inventaris"); // [BARU] State untuk menyimpan status otomatis
+  const [calculatedStatus, setCalculatedStatus] = useState("Inventaris");
 
   const formatDate = (dateString) => {
     if (!dateString) return "-";
@@ -22,7 +21,6 @@ export default function Barang({ activeMenu, inventory, handleAddInventory, outl
     const start = form.tanggal_mulai?.value;
     const end = form.tanggal_selesai?.value;
 
-    // 1. Kalkulasi Masa Sewa (Bulan)
     if (start && end) {
       const d1 = new Date(start);
       const d2 = new Date(end);
@@ -34,10 +32,9 @@ export default function Barang({ activeMenu, inventory, handleAddInventory, outl
       }
     }
 
-    // 2. [BARU] Kalkulasi Status Otomatis berdasarkan Tanggal
     if (start && end) {
       const today = new Date();
-      today.setHours(0, 0, 0, 0); // Reset jam agar perbandingan akurat
+      today.setHours(0, 0, 0, 0); 
       const endDate = new Date(end);
       
       if (endDate >= today) {
@@ -50,7 +47,6 @@ export default function Barang({ activeMenu, inventory, handleAddInventory, outl
     }
   };
 
-  // [BARU] Helper untuk menentukan status (Fallback jika data lama belum di-update)
   const getStatusInfo = (inv) => {
     if (inv.status) return inv.status;
     if (!inv.tanggal_mulai || !inv.tanggal_selesai) return "Inventaris";
@@ -60,7 +56,6 @@ export default function Barang({ activeMenu, inventory, handleAddInventory, outl
     return end >= today ? "Sewa Berjalan" : "Sewa Habis";
   };
 
-  // [BARU] Helper untuk warna badge status
   const getStatusBadge = (status) => {
     switch(status) {
       case "Inventaris": return "bg-blue-100 text-blue-700 border-blue-200";
@@ -76,7 +71,7 @@ export default function Barang({ activeMenu, inventory, handleAddInventory, outl
     return inv.nama?.toLowerCase().includes(q) || 
            inv.vendor_nama?.toLowerCase().includes(q) || 
            inv.no_spk?.toLowerCase().includes(q) ||
-           statusInfo.includes(q); // Bisa mencari berdasarkan status juga
+           statusInfo.includes(q); 
   });
 
   const filteredOutlets = (outlets || []).filter((out) => {
@@ -88,76 +83,80 @@ export default function Barang({ activeMenu, inventory, handleAddInventory, outl
     <div className="max-w-7xl mx-auto p-6 flex flex-col gap-6">
 
       {/* ========================================================================= */}
-      {/* VIEW: MASTER BARANG (Hanya muncul jika di-klik dari Navbar) */}
+      {/* VIEW: MASTER BARANG */}
       {/* ========================================================================= */}
       {activeMenu === "master_barang" && (
         <div className="flex flex-col gap-8 animate-in fade-in zoom-in-95 duration-300">
-          <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
-            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
-              <div className="bg-blue-100 p-2.5 rounded-xl">
-                <Database className="w-6 h-6 text-blue-600" />
+          
+          {/* Form Tambah Barang Hanya Muncul Jika Admin */}
+          {userRole === "admin" && (
+            <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+                <div className="bg-blue-100 p-2.5 rounded-xl">
+                  <Database className="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-xl text-gray-800">Tambah Master Barang</h3>
+                </div>
               </div>
-              <div>
-                <h3 className="font-bold text-xl text-gray-800">Tambah Master Barang</h3>
-              </div>
+              
+              <form id="formAdmin" onSubmit={handleAddInventory} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Barang *</label>
+                    <input name="nama" required className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Laptop Lenovo..." />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Stok Awal</label>
+                    <input name="stok" type="number" defaultValue="0" min="0" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Satuan</label>
+                    <select name="satuan" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+                      <option value="Pcs">Pcs</option><option value="Unit">Unit</option><option value="Box">Box</option><option value="Set">Set</option>
+                    </select>
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Vendor (Jika Ada)</label>
+                    <input name="vendor_nama" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="PT Era Permata..." />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">No. SPK</label>
+                    <input name="no_spk" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="2363/..." />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">No. PKS</label>
+                    <input name="no_pks" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="2364/..." />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Tgl Mulai Sewa</label>
+                    <input name="tanggal_mulai" type="date" onChange={calculateFormLogic} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Tgl Selesai Sewa</label>
+                    <input name="tanggal_selesai" type="date" onChange={calculateFormLogic} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none" />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Status Barang</label>
+                    <input type="hidden" name="status" value={calculatedStatus} />
+                    <input type="text" readOnly value={calculatedStatus} className="w-full px-4 py-2.5 bg-gray-100 border border-gray-200 rounded-xl text-gray-500 font-medium outline-none cursor-not-allowed" />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Masa Sewa (Bulan)</label>
+                    <input name="masa_sewa_bulan" type="number" min="0" className="w-full px-4 py-2.5 bg-gray-100 border border-gray-200 rounded-xl text-gray-500 font-medium outline-none cursor-not-allowed" placeholder="Otomatis..." readOnly />
+                  </div>
+
+                  <div className="md:col-span-4 flex justify-end mt-2">
+                    <button type="submit" className="w-full sm:w-auto px-8 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap">
+                      <Plus className="w-5 h-5" /> Simpan Data Barang
+                    </button>
+                  </div>
+                </div>
+              </form>
             </div>
-            <form id="formAdmin" onSubmit={handleAddInventory} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Barang *</label>
-                  <input name="nama" required className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Laptop Lenovo..." />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Stok Awal</label>
-                  <input name="stok" type="number" defaultValue="0" min="0" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Satuan</label>
-                  <select name="satuan" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none">
-                    <option value="Pcs">Pcs</option><option value="Unit">Unit</option><option value="Box">Box</option><option value="Set">Set</option>
-                  </select>
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Vendor (Jika Ada)</label>
-                  <input name="vendor_nama" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="PT Era Permata..." />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">No. SPK</label>
-                  <input name="no_spk" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="2363/..." />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">No. PKS</label>
-                  <input name="no_pks" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none" placeholder="2364/..." />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Tgl Mulai Sewa</label>
-                  <input name="tanggal_mulai" type="date" onChange={calculateFormLogic} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Tgl Selesai Sewa</label>
-                  <input name="tanggal_selesai" type="date" onChange={calculateFormLogic} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none" />
-                </div>
-                
-                {/* [BARU] Input Status Otomatis & Hidden Input untuk dikirim ke parent */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Status Barang</label>
-                  <input type="hidden" name="status" value={calculatedStatus} />
-                  <input type="text" readOnly value={calculatedStatus} className="w-full px-4 py-2.5 bg-gray-100 border border-gray-200 rounded-xl text-gray-500 font-medium outline-none cursor-not-allowed" />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Masa Sewa (Bulan)</label>
-                  <input name="masa_sewa_bulan" type="number" min="0" className="w-full px-4 py-2.5 bg-gray-100 border border-gray-200 rounded-xl text-gray-500 font-medium outline-none cursor-not-allowed" placeholder="Otomatis..." readOnly />
-                </div>
-
-                <div className="md:col-span-4 flex justify-end mt-2">
-                  <button type="submit" className="w-full sm:w-auto px-8 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap">
-                    <Plus className="w-5 h-5" /> Simpan Data Barang
-                  </button>
-                </div>
-              </div>
-            </form>
-          </div>
+          )}
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col lg:flex-row justify-between items-center gap-4">
@@ -182,13 +181,12 @@ export default function Barang({ activeMenu, inventory, handleAddInventory, outl
                     <th className="pb-4"><CalendarDays className="w-4 h-4 inline mr-2"/> Tgl Mulai</th>
                     <th className="pb-4"><CalendarDays className="w-4 h-4 inline mr-2"/> Tgl Selesai</th>
                     <th className="pb-4 text-center"><Clock className="w-4 h-4 inline mr-2"/> Durasi</th>
-                    {/* [BARU] Header Status */}
                     <th className="pb-4 text-center">Status</th> 
                   </tr>
                 </thead>
                 <tbody className="text-gray-700">
                   {filteredInventory.map((inv, index) => {
-                    const statusVal = getStatusInfo(inv); // Dapatkan status
+                    const statusVal = getStatusInfo(inv);
                     
                     return (
                       <tr key={inv.id} className="border-b border-gray-50 hover:bg-gray-50/80">
@@ -200,8 +198,6 @@ export default function Barang({ activeMenu, inventory, handleAddInventory, outl
                         <td className="py-4 text-sm">{formatDate(inv.tanggal_mulai)}</td>
                         <td className="py-4 text-sm">{formatDate(inv.tanggal_selesai)}</td>
                         <td className="py-4 text-center text-sm">{inv.masa_sewa_bulan ? `${inv.masa_sewa_bulan} Bln` : '-'}</td>
-                        
-                        {/* [BARU] Kolom Render Status Badge */}
                         <td className="py-4 text-center">
                           <span className={`px-3 py-1 rounded-md text-[11px] font-bold border ${getStatusBadge(statusVal)}`}>
                             {statusVal}
@@ -218,36 +214,40 @@ export default function Barang({ activeMenu, inventory, handleAddInventory, outl
       )}
 
       {/* ========================================================================= */}
-      {/* VIEW: MASTER OUTLET / INSTANSI (Hanya muncul jika di-klik dari Navbar) */}
+      {/* VIEW: MASTER OUTLET / INSTANSI */}
       {/* ========================================================================= */}
       {activeMenu === "master_outlet" && (
         <div className="flex flex-col gap-8 animate-in fade-in zoom-in-95 duration-300">
-          <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
-              <div className="flex items-center gap-3">
-                <div className="bg-purple-100 p-2.5 rounded-xl">
-                  <MapPin className="w-6 h-6 text-purple-600" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-xl text-gray-800">Tambah Outlet / Instansi</h3>
+          
+          {/* Form Tambah Outlet Hanya Muncul Jika Admin */}
+          {userRole === "admin" && (
+            <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100">
+              <div className="flex items-center justify-between mb-6 pb-4 border-b border-gray-100">
+                <div className="flex items-center gap-3">
+                  <div className="bg-purple-100 p-2.5 rounded-xl">
+                    <MapPin className="w-6 h-6 text-purple-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-xl text-gray-800">Tambah Outlet / Instansi</h3>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <form onSubmit={handleAddOutlet} className="flex flex-col sm:flex-row gap-4 items-end">
-              <div className="w-full sm:w-1/3">
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Kode Outlet (Opsional)</label>
-                <input name="kode" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 outline-none" placeholder="Misal: 12447" />
-              </div>
-              <div className="w-full sm:w-1/2">
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Outlet / Instansi *</label>
-                <input name="nama" required className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 outline-none" placeholder="UPC TAMAN RAFLESIA..." />
-              </div>
-              <button type="submit" className="w-full sm:w-auto px-8 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap">
-                <Plus className="w-5 h-5" /> Tambah
-              </button>
-            </form>
-          </div>
+              <form onSubmit={handleAddOutlet} className="flex flex-col sm:flex-row gap-4 items-end">
+                <div className="w-full sm:w-1/3">
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Kode Outlet (Opsional)</label>
+                  <input name="kode" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 outline-none" placeholder="Misal: 12447" />
+                </div>
+                <div className="w-full sm:w-1/2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Nama Outlet / Instansi *</label>
+                  <input name="nama" required className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-purple-500 outline-none" placeholder="UPC TAMAN RAFLESIA..." />
+                </div>
+                <button type="submit" className="w-full sm:w-auto px-8 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2.5 rounded-xl transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap">
+                  <Plus className="w-5 h-5" /> Tambah
+                </button>
+              </form>
+            </div>
+          )}
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col lg:flex-row justify-between items-center gap-4">

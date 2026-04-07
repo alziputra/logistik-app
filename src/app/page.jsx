@@ -22,17 +22,45 @@ import {
 import { onAuthStateChanged, signOut } from "firebase/auth";
 
 // ✅ IMPORT COMPONENTS
+// import Navbar from "../components/Navbar";
+// import DashboardView from "../components/DashboardView";
+// import Barang from "../components/Barang";
+// import FormView from "../components/FormView";
+// import PreviewView from "../components/PreviewView";
+// import LoginView from "../components/LoginView";
+// import DataPrinter from "../components/DataPrinter";
+// import DataKomputer from "../components/DataKomputer";
+// import KelolaUser from "../components/KelolaUser";
+// import RiwayatTransaksi from "../components/RiwayatTransaksi";
+// import LogAktivitas from "../components/LogAktivitas";
+
+// IMPORT BAWAAN NEXT.JS UNTUK LAZY LOADING
+import dynamic from 'next/dynamic';
+
+// Komponen yang langsung tampil (TIDAK di-lazy load)
 import Navbar from "../components/Navbar";
-import DashboardView from "../components/DashboardView";
-import Barang from "../components/Barang";
-import FormView from "../components/FormView";
-import PreviewView from "../components/PreviewView";
 import LoginView from "../components/LoginView";
-import DataPrinter from "../components/DataPrinter";
-import DataKomputer from "../components/DataKomputer";
-import KelolaUser from "../components/KelolaUser";
-import RiwayatTransaksi from "../components/RiwayatTransaksi";
-import LogAktivitas from "../components/LogAktivitas";
+
+// KOMPONEN YANG DI-LAZY LOAD (Hanya di-download saat menunya diklik)
+const DashboardView = dynamic(() => import("../components/DashboardView"), { 
+  loading: () => <div className="p-10 text-center text-gray-500 animate-pulse">Memuat Dashboard...</div> 
+});
+const Barang = dynamic(() => import("../components/Barang"), { 
+  loading: () => <div className="p-10 text-center text-gray-500 animate-pulse">Memuat Data Barang...</div> 
+});
+const FormView = dynamic(() => import("../components/FormView"), { 
+  loading: () => <div className="p-10 text-center text-gray-500 animate-pulse">Memuat Form...</div> 
+});
+const PreviewView = dynamic(() => import("../components/PreviewView"));
+const DataPrinter = dynamic(() => import("../components/DataPrinter"), { 
+  loading: () => <div className="p-10 text-center text-gray-500 animate-pulse">Memuat Modul Printer...</div> 
+});
+const DataKomputer = dynamic(() => import("../components/DataKomputer"), { 
+  loading: () => <div className="p-10 text-center text-gray-500 animate-pulse">Memuat Modul Komputer... (QR & CSV)</div> 
+});
+const KelolaUser = dynamic(() => import("../components/KelolaUser"));
+const RiwayatTransaksi = dynamic(() => import("../components/RiwayatTransaksi"));
+const LogAktivitas = dynamic(() => import("../components/LogAktivitas"));
 
 export default function SuratSerahTerimaApp() {
   const [user, setUser] = useState(null);

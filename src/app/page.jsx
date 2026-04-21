@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { CheckCircle } from "lucide-react";
+import { CheckCircle, X } from "lucide-react"; // ✅ Tambah import X untuk tombol close tab
 
 // ✅ IMPORT CONSTANTS
 import { createInitialFormData, createInitialItem } from "../constants";
 
-// ✅ IMPORT FIREBASE (Hapus onSnapshot, Ganti dengan getDocs)
+// ✅ IMPORT FIREBASE
 import { auth, db } from "../lib/firebase";
 import {
   collection,
@@ -21,19 +21,6 @@ import {
 
 import { onAuthStateChanged, signOut } from "firebase/auth";
 
-// ✅ IMPORT COMPONENTS
-// import Navbar from "../components/Navbar";
-// import DashboardView from "../components/DashboardView";
-// import Barang from "../components/Barang";
-// import FormView from "../components/FormView";
-// import PreviewView from "../components/PreviewView";
-// import LoginView from "../components/LoginView";
-// import DataPrinter from "../components/DataPrinter";
-// import DataKomputer from "../components/DataKomputer";
-// import KelolaUser from "../components/KelolaUser";
-// import RiwayatTransaksi from "../components/RiwayatTransaksi";
-// import LogAktivitas from "../components/LogAktivitas";
-
 // IMPORT BAWAAN NEXT.JS UNTUK LAZY LOADING
 import dynamic from 'next/dynamic';
 
@@ -41,11 +28,11 @@ import dynamic from 'next/dynamic';
 import Navbar from "../components/Navbar";
 import LoginView from "../components/LoginView";
 
-// KOMPONEN YANG DI-LAZY LOAD (Hanya di-download saat menunya diklik)
+// KOMPONEN YANG DI-LAZY LOAD
 const DashboardView = dynamic(() => import("../components/DashboardView"), { 
   loading: () => <div className="p-10 text-center text-gray-500 animate-pulse">Memuat Dashboard...</div> 
 });
-const Barang = dynamic(() => import("../components/Barang"), { 
+const Barang = dynamic(() => import("../components/DataMaster"), { 
   loading: () => <div className="p-10 text-center text-gray-500 animate-pulse">Memuat Data Barang...</div> 
 });
 const FormView = dynamic(() => import("../components/FormView"), { 
@@ -66,12 +53,55 @@ export default function SuratSerahTerimaApp() {
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [view, setView] = useState("dashboard");
+  
   const [notification, setNotification] = useState({
     show: false,
     message: "",
     type: "success",
   });
+
+  // ==============================
+  // ✅ LOGIKA SISTEM TAB BROWSER
+  // ==============================
+  const viewTitles = {
+    dashboard: "Dashboard",
+    riwayat: "Riwayat Transaksi",
+    master_barang: "Master Barang",
+    master_outlet: "Master Instansi",
+    form: "Buat Surat",
+    preview: "Preview Surat",
+    perangkat_printer: "Data Printer",
+    perangkat_komputer: "Data PC",
+    kelola_user: "Kelola Akses",
+    log_aktivitas: "Log Aktivitas"
+  };
+
+  const [tabs, setTabs] = useState([{ id: "dashboard", title: "Dashboard" }]);
+  const [activeTab, setActiveTab] = useState("dashboard");
+
+  const handleSetView = (viewId) => {
+    const isTabOpen = tabs.some((tab) => tab.id === viewId);
+    if (!isTabOpen) {
+      setTabs(prev => [...prev, { id: viewId, title: viewTitles[viewId] || viewId }]);
+    }
+    setActiveTab(viewId);
+  };
+
+  const closeTab = (e, tabId) => {
+    e.stopPropagation();
+    const newTabs = tabs.filter((tab) => tab.id !== tabId);
+
+    if (newTabs.length === 0) {
+      setTabs([{ id: "dashboard", title: "Dashboard" }]);
+      setActiveTab("dashboard");
+    } else {
+      if (activeTab === tabId) {
+        setActiveTab(newTabs[newTabs.length - 1].id);
+      }
+      setTabs(newTabs);
+    }
+  };
+  // ==============================
 
   const [inventory, setInventory] = useState([]);
   const [outlets, setOutlets] = useState([]);
@@ -154,7 +184,7 @@ export default function SuratSerahTerimaApp() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      setView("dashboard");
+      handleSetView("dashboard"); // ✅ Update ke handleSetView
     } catch (error) {
       showNotif("Gagal logout", "error");
     }
@@ -171,7 +201,7 @@ export default function SuratSerahTerimaApp() {
     const handleIdleLogout = async () => {
       try {
         await signOut(auth);
-        setView("dashboard");
+        handleSetView("dashboard"); // ✅ Update ke handleSetView
       } catch (error) {
         showNotif("Gagal logout", "error");
       }
@@ -208,21 +238,17 @@ export default function SuratSerahTerimaApp() {
 
     const fetchAllData = async () => {
       try {
-        // 1. Inventory
         const invSnap = await getDocs(collection(db, "artifacts", safeAppId, "public", "data", "inventory"));
         setInventory(invSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
 
-        // 2. Transactions
         const trxSnap = await getDocs(collection(db, "artifacts", safeAppId, "public", "data", "transactions"));
         const trxData = trxSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
         setTransactions(trxData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
 
-        // 3. Outlets
         const outSnap = await getDocs(collection(db, "artifacts", safeAppId, "public", "data", "outlets"));
         const outData = outSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
         setOutlets(outData.sort((a, b) => a.nama.localeCompare(b.nama)));
 
-        // 4. Printers
         const printerSnap = await getDocs(collection(db, "artifacts", safeAppId, "public", "data", "printers"));
         const printerData = printerSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
         setPrinters(printerData);
@@ -236,7 +262,6 @@ export default function SuratSerahTerimaApp() {
         peringatanPrinter.sort((a, b) => a.sisaBulan - b.sisaBulan);
         setNotifSewa(peringatanPrinter);
 
-        // 5. Computers
         const compSnap = await getDocs(collection(db, "artifacts", safeAppId, "public", "data", "computers"));
         const compData = compSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
         setComputers(compData);
@@ -250,11 +275,9 @@ export default function SuratSerahTerimaApp() {
         peringatanPC.sort((a, b) => a.sisaBulan - b.sisaBulan);
         setNotifSewaKomputer(peringatanPC);
 
-        // 6. Users
         const usersSnap = await getDocs(collection(db, "users"));
         setUsersList(usersSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
 
-        // 7. Activity Logs
         const logsSnap = await getDocs(collection(db, "artifacts", safeAppId, "public", "data", "activity_logs"));
         const logsData = logsSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
         setActivityLogs(logsData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)));
@@ -282,8 +305,6 @@ export default function SuratSerahTerimaApp() {
         timestamp: new Date().toISOString()
       };
       const docRef = await addDoc(collection(db, "artifacts", safeAppId, "public", "data", "activity_logs"), newLogData);
-      
-      // Update UI langsung tanpa membebani Firebase
       setActivityLogs(prev => [{ id: docRef.id, ...newLogData }, ...prev]);
     } catch (e) {
       console.error("Gagal mencatat log:", e);
@@ -305,7 +326,7 @@ export default function SuratSerahTerimaApp() {
     });
     setItems([createInitialItem()]);
     setActiveTransaction(null);
-    setView("form");
+    handleSetView("form"); // ✅ Update ke handleSetView
   };
 
   const addItem = () => setItems((prev) => [...prev, createInitialItem()]);
@@ -344,14 +365,11 @@ export default function SuratSerahTerimaApp() {
         createdAt: new Date().toISOString(),
       };
       
-      // 1. Simpan Transaksi
       const docRefTrx = await addDoc(trxRef, newTrx);
-      // Update UI langsung
       setTransactions(prev => [{ id: docRefTrx.id, ...newTrx }, ...prev]);
       
       await logActivity("BUAT", "TRANSAKSI", `Surat ${formData.jenisTransaksi} No: ${newTrx.nomorSurat}`);
 
-      // 2. Kalkulasi Perubahan Stok
       const aggregatedItems = {};
       for (const item of items) {
         if (!item.nama) continue;
@@ -363,9 +381,7 @@ export default function SuratSerahTerimaApp() {
         }
       }
 
-      // 3. Update Inventory & UI Langsung
       let updatedInventoryLocal = [...inventory];
-
       for (const key in aggregatedItems) {
         const item = aggregatedItems[key];
         const invIndex = updatedInventoryLocal.findIndex((i) => i.nama.toLowerCase() === item.nama.toLowerCase());
@@ -375,15 +391,11 @@ export default function SuratSerahTerimaApp() {
           const invItem = updatedInventoryLocal[invIndex];
           const itemRef = doc(db, "artifacts", safeAppId, "public", "data", "inventory", invItem.id);
           await updateDoc(itemRef, { stok: increment(diff) });
-          
-          // Update State Lokal
           updatedInventoryLocal[invIndex] = { ...invItem, stok: invItem.stok + diff };
         } else {
           const invRef = collection(db, "artifacts", safeAppId, "public", "data", "inventory");
           const newInvItem = { nama: item.nama, stok: diff, satuan: item.satuan };
           const docRefInvan = await addDoc(invRef, newInvItem);
-          
-          // Update State Lokal
           updatedInventoryLocal.push({ id: docRefInvan.id, ...newInvItem });
         }
       }
@@ -392,116 +404,24 @@ export default function SuratSerahTerimaApp() {
 
       showNotif("Transaksi berhasil disimpan & Stok diperbarui!");
       setActiveTransaction(newTrx);
-      setView("preview");
+      handleSetView("preview"); // ✅ Update ke handleSetView
     } catch (error) {
       showNotif("Gagal menyimpan transaksi.", "error");
     }
   };
 
   // ==============================
-  // ADD INVENTORY & OUTLET (MASTER)
-  // ==============================
-  const handleAddInventory = async (e) => {
-    e.preventDefault();
-    if (!db) return;
-    const form = new FormData(e.target);
-    const namaBarang = form.get("nama");
-    const newInv = {
-      nama: namaBarang,
-      stok: Number(form.get("stok")) || 0,
-      satuan: form.get("satuan") || "Pcs",
-      vendor_nama: form.get("vendor_nama") || "",
-      no_spk: form.get("no_spk") || "",
-      no_pks: form.get("no_pks") || "",
-      tanggal_mulai: form.get("tanggal_mulai") || "",
-      tanggal_selesai: form.get("tanggal_selesai") || "",
-      masa_sewa_bulan: Number(form.get("masa_sewa_bulan")) || 0,
-      created_at: new Date().toISOString(),
-    };
-
-    if (inventory.some((i) => i.nama.toLowerCase() === namaBarang.toLowerCase())) {
-      return showNotif(`Gagal: "${namaBarang}" sudah ada di Master Barang!`, "error");
-    }
-    try {
-      const safeAppId = appId || "logistikku_app_01";
-      const docRef = await addDoc(collection(db, "artifacts", safeAppId, "public", "data", "inventory"), newInv);
-      
-      // Update UI langsung
-      setInventory(prev => [...prev, { id: docRef.id, ...newInv }]);
-      await logActivity("TAMBAH", "MASTER BARANG", `Menambahkan barang baru: ${namaBarang} (${newInv.stok} ${newInv.satuan})`);
-      
-      showNotif("Master barang berhasil ditambahkan!");
-      e.target.reset();
-    } catch (error) {
-      showNotif("Gagal menambah barang.", "error");
-    }
-  };
-
-  const handleAddOutlet = async (e) => {
-    e.preventDefault();
-    if (!db) return;
-    const form = new FormData(e.target);
-    const namaOutlet = form.get("nama");
-    const newOutlet = {
-      kode: form.get("kode") || "-",
-      nama: namaOutlet,
-      created_at: new Date().toISOString(),
-    };
-
-    if (outlets.some((o) => o.nama.toLowerCase() === namaOutlet.toLowerCase())) {
-      return showNotif(`Gagal: "${namaOutlet}" sudah ada di Master Outlet!`, "error");
-    }
-    try {
-      const safeAppId = appId || "logistikku_app_01";
-      const docRef = await addDoc(collection(db, "artifacts", safeAppId, "public", "data", "outlets"), newOutlet);
-      
-      // Update UI langsung
-      setOutlets(prev => [...prev, { id: docRef.id, ...newOutlet }]);
-      await logActivity("TAMBAH", "MASTER INSTANSI", `Menambahkan instansi baru: ${namaOutlet}`);
-      
-      showNotif("Master outlet berhasil ditambahkan!");
-      e.target.reset();
-    } catch (error) {
-      showNotif("Gagal menambah outlet.", "error");
-    }
-  };
-
-  // ==============================
-  // UPDATE ROLE PENGGUNA (Hanya Admin)
-  // ==============================
-  const handleUpdateRole = async (userId, newRole) => {
-    if (userRole !== "admin") return;
-    try {
-      const userRef = doc(db, "users", userId);
-      await updateDoc(userRef, { role: newRole });
-      
-      // Update UI langsung
-      setUsersList(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
-      await logActivity("EDIT", "MANAJEMEN AKSES", `Mengubah role pengguna menjadi ${newRole}`);
-    } catch (error) {
-      console.error("Gagal update role:", error);
-      throw error;
-    }
-  };
-
-  // ==============================
-  // RENDER
+  // RENDER PADA BAGIAN TAB
   // ==============================
   if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        Memuat sistem...
-      </div>
-    );
+    return <div className="min-h-screen bg-gray-50 flex items-center justify-center">Memuat sistem...</div>;
   }
 
   if (!user) {
     return (
       <>
         {notification.show && (
-          <div
-            className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-5 py-3 rounded-xl shadow-xl text-white ${notification.type === "success" ? "bg-green-600" : "bg-red-500"}`}
-          >
+          <div className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-5 py-3 rounded-xl shadow-xl text-white ${notification.type === "success" ? "bg-green-600" : "bg-red-500"}`}>
             <span>{notification.message}</span>
           </div>
         )}
@@ -511,107 +431,163 @@ export default function SuratSerahTerimaApp() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-12 font-sans text-gray-900 pt-16 md:pt-0 md:pl-64 print:pl-0 print:pt-0">
+    <div className="min-h-screen bg-gray-50 pb-12 font-sans text-gray-900 pt-16 md:pt-0 md:pl-64 print:pl-0 print:pt-0 flex flex-col">
       {notification.show && (
-        <div
-          className={`fixed top-4 right-4 z-50 flex items-center gap-2 px-5 py-3 rounded-xl shadow-xl text-white ${notification.type === "success" ? "bg-green-600" : "bg-red-500"}`}
-        >
+        <div className={`fixed top-4 right-4 z-[999] flex items-center gap-2 px-5 py-3 rounded-xl shadow-xl text-white ${notification.type === "success" ? "bg-green-600" : "bg-red-500"}`}>
           <CheckCircle className="w-5 h-5" />
           <span>{notification.message}</span>
         </div>
       )}
 
+      {/* ✅ Lempar activeTab dan handleSetView ke Navbar */}
       <Navbar
-        view={view}
-        setView={setView}
+        view={activeTab}
+        setView={handleSetView}
         startNewDocument={startNewDocument}
         handleLogout={handleLogout}
         notifCount={notifSewa.length + notifSewaKomputer.length}
         userRole={userRole}
       />
 
-      {view === "dashboard" && (
-        <DashboardView
-          view={view}
-          transactions={transactions}
-          inventory={inventory}
-          setFormData={setFormData}
-          setItems={setItems}
-          setActiveTransaction={setActiveTransaction}
-          setView={setView}
-          user={user}
-          userRole={userRole}
-          notifSewa={notifSewa}
-          notifSewaKomputer={notifSewaKomputer}
-          printers={printers}
-          computers={computers}
-        />
-      )}
+      {/* ==================== TAB BAR UI ==================== */}
+      <div className="sticky top-16 md:top-0 z-40 bg-gray-100 border-b border-gray-200 px-4 pt-3 flex gap-1 overflow-x-auto custom-scrollbar print:hidden">
+        {tabs.map((tab) => (
+          <div
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`group flex items-center gap-2 px-4 py-2 min-w-max border-t border-x rounded-t-xl cursor-pointer transition-all select-none ${
+              activeTab === tab.id
+                ? "bg-white border-gray-200 text-blue-700 font-bold shadow-[0_2px_0_0_white]" 
+                : "bg-gray-200/50 border-transparent text-gray-500 hover:bg-gray-200"
+            }`}
+          >
+            <span className="text-sm">{tab.title}</span>
+            {tab.id !== "dashboard" && ( 
+              <button 
+                onClick={(e) => closeTab(e, tab.id)}
+                className={`p-0.5 rounded-md transition-colors ${
+                  activeTab === tab.id ? "hover:bg-blue-100 text-gray-400 hover:text-red-500" : "hover:bg-gray-300 text-gray-400"
+                }`}
+              >
+                <X className="w-3.5 h-3.5" /> 
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
 
-      {view === "riwayat" && (
-        <RiwayatTransaksi
-          transactions={transactions}
-          setFormData={setFormData}
-          setItems={setItems}
-          setActiveTransaction={setActiveTransaction}
-          setView={setView}
-        />
-      )}
+      {/* ==================== CONTENT AREA ==================== */}
+      <div className="flex-1 w-full bg-white relative">
+        
+        {tabs.some(t => t.id === "dashboard") && (
+          <div className={activeTab === "dashboard" ? "block animate-in fade-in duration-300" : "hidden"}>
+            <DashboardView
+              transactions={transactions}
+              inventory={inventory}
+              setView={handleSetView} 
+              user={user}
+              userRole={userRole}
+              notifSewa={notifSewa}
+              notifSewaKomputer={notifSewaKomputer}
+              printers={printers}
+              computers={computers}
+            />
+          </div>
+        )}
 
-      {(view === "master_barang" || view === "master_outlet") && (
-        <Barang
-          activeMenu={view}
-          inventory={inventory}
-          handleAddInventory={handleAddInventory}
-          outlets={outlets}
-          handleAddOutlet={handleAddOutlet}
-          userRole={userRole}
-        />
-      )}
+        {tabs.some(t => t.id === "form") && (
+          <div className={activeTab === "form" ? "block animate-in fade-in duration-300" : "hidden"}>
+            <FormView
+              formData={formData}
+              handleInputChange={handleInputChange}
+              items={items}
+              handleItemChange={handleItemChange}
+              addItem={addItem}
+              removeItem={removeItem}
+              setView={handleSetView}
+              inventory={inventory}
+              outlets={outlets}
+            />
+          </div>
+        )}
 
-      {view === "form" && (
-        <FormView
-          formData={formData}
-          handleInputChange={handleInputChange}
-          items={items}
-          handleItemChange={handleItemChange}
-          addItem={addItem}
-          removeItem={removeItem}
-          setView={setView}
-          inventory={inventory}
-          outlets={outlets}
-        />
-      )}
+        {tabs.some(t => t.id === "master_barang") && (
+          <div className={activeTab === "master_barang" ? "block animate-in fade-in duration-300" : "hidden"}>
+             <Barang activeMenu="master_barang" inventory={inventory} outlets={outlets} userRole={userRole} />
+          </div>
+        )}
 
-      {view === "preview" && (
-        <PreviewView
-          formData={formData}
-          items={items}
-          activeTransaction={activeTransaction}
-          setView={setView}
-          handleSaveTransaction={handleSaveTransaction}
-        />
-      )}
+        {tabs.some(t => t.id === "master_outlet") && (
+          <div className={activeTab === "master_outlet" ? "block animate-in fade-in duration-300" : "hidden"}>
+             <Barang activeMenu="master_outlet" inventory={inventory} outlets={outlets} userRole={userRole} />
+          </div>
+        )}
 
-      {view === "perangkat_printer" && <DataPrinter userRole={userRole} />}
-      {view === "perangkat_komputer" && <DataKomputer userRole={userRole} />}
+        {tabs.some(t => t.id === "perangkat_printer") && (
+          <div className={activeTab === "perangkat_printer" ? "block animate-in fade-in duration-300" : "hidden"}>
+             <DataPrinter userRole={userRole} />
+          </div>
+        )}
 
-      {view === "kelola_user" && userRole === "admin" && (
-        <KelolaUser usersList={usersList} handleUpdateRole={handleUpdateRole} />
-      )}
+        {tabs.some(t => t.id === "perangkat_komputer") && (
+          <div className={activeTab === "perangkat_komputer" ? "block animate-in fade-in duration-300" : "hidden"}>
+             <DataKomputer userRole={userRole} />
+          </div>
+        )}
 
-      {view === "log_aktivitas" && userRole === "admin" && (
-        <LogAktivitas logs={activityLogs} />
-      )}
+        {tabs.some(t => t.id === "riwayat") && (
+          <div className={activeTab === "riwayat" ? "block animate-in fade-in duration-300" : "hidden"}>
+            <RiwayatTransaksi
+              transactions={transactions}
+              setFormData={setFormData}
+              setItems={setItems}
+              setActiveTransaction={setActiveTransaction}
+              setView={handleSetView}
+            />
+          </div>
+        )}
 
-      {/* Update array halaman terlindungi */}
-      {["kelola_user", "log_aktivitas"].includes(view) && userRole !== "admin" && (
-        <div className="flex flex-col items-center justify-center py-20 text-gray-500">
-          <div className="text-4xl mb-4">🔒</div>
-          <h2 className="text-xl font-bold text-gray-800">Akses Ditolak</h2>
-          <p>Anda tidak memiliki izin (Admin) untuk mengakses halaman ini.</p>
-        </div>
-      )}
+        {tabs.some(t => t.id === "preview") && (
+          <div className={activeTab === "preview" ? "block animate-in fade-in duration-300" : "hidden"}>
+            <PreviewView
+              formData={formData}
+              items={items}
+              activeTransaction={activeTransaction}
+              setView={handleSetView}
+              handleSaveTransaction={handleSaveTransaction}
+            />
+          </div>
+        )}
+
+        {tabs.some(t => t.id === "kelola_user") && (
+          <div className={activeTab === "kelola_user" ? "block animate-in fade-in duration-300" : "hidden"}>
+            {userRole === "admin" ? (
+              <KelolaUser usersList={usersList} />
+            ) : (
+              <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+                <div className="text-4xl mb-4">🔒</div>
+                <h2 className="text-xl font-bold text-gray-800">Akses Ditolak</h2>
+                <p>Anda tidak memiliki izin (Admin) untuk mengakses halaman ini.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {tabs.some(t => t.id === "log_aktivitas") && (
+          <div className={activeTab === "log_aktivitas" ? "block animate-in fade-in duration-300" : "hidden"}>
+            {userRole === "admin" ? (
+              <LogAktivitas logs={activityLogs} />
+            ) : (
+              <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+                <div className="text-4xl mb-4">🔒</div>
+                <h2 className="text-xl font-bold text-gray-800">Akses Ditolak</h2>
+                <p>Anda tidak memiliki izin (Admin) untuk mengakses halaman ini.</p>
+              </div>
+            )}
+          </div>
+        )}
+        
+      </div>
     </div>
   );
 }

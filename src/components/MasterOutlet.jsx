@@ -153,7 +153,7 @@ export default function MasterOutlet({ outlets, handleAddOutlet, userRole }) {
             <div className="p-6 text-center">
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4"><AlertTriangle className="w-8 h-8 text-red-600" /></div>
               <h3 className="text-xl font-bold mb-2">Konfirmasi Hapus</h3>
-              <p className="text-sm text-gray-500">Yakin hapus <span className="font-bold">"{deleteConfirm.name}"</span>?</p>
+              <p className="text-sm text-gray-500">Yakin hapus <span className="font-bold">{deleteConfirm.name}</span>?</p>
             </div>
             <div className="flex border-t border-gray-100">
               <button onClick={() => setDeleteConfirm({show:false, id:null, name:""})} disabled={isSaving} className="flex-1 px-4 py-4 text-sm font-bold text-gray-500 hover:bg-gray-50 border-r">BATAL</button>

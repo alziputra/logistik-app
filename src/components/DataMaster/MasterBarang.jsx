@@ -1,10 +1,10 @@
-// components/MasterBarang.jsx
 "use client";
 
 import { useState, useEffect } from "react";
 import { Database, Plus, Box, Hash, Scale, Building2, CalendarDays, Clock, Search, X, Edit, Trash2, Loader2, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import { doc, updateDoc, deleteDoc } from "firebase/firestore";
-import { db } from "../lib/firebase";
+// PERHATIKAN: Path firebase mundur 2 kali karena sekarang ada di dalam folder
+import { db } from "../../lib/firebase"; 
 
 export default function MasterBarang({ inventory, handleAddInventory, userRole }) {
   const [searchQuery, setSearchQuery] = useState("");

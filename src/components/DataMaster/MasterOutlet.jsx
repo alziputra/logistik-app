@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { Plus, Search, MapPin, X, Edit, Trash2, Loader2, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import { doc, updateDoc, deleteDoc } from "firebase/firestore";
-import { db } from "../lib/firebase";
+// PERHATIKAN: Path mundur 2 kali
+import { db } from "../../lib/firebase";
 
 export default function MasterOutlet({ outlets, handleAddOutlet, userRole }) {
   const [searchQuery, setSearchQuery] = useState("");

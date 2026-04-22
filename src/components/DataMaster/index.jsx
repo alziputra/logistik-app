@@ -1,10 +1,9 @@
-// components/DataMaster.jsx
 "use client";
 
 import MasterBarang from "./MasterBarang";
 import MasterOutlet from "./MasterOutlet";
 
-export default function Barang(props) {
+export default function DataMaster(props) {
   return (
     <div className="max-w-7xl mx-auto p-6 flex flex-col gap-6">
       {props.activeMenu === "master_barang" && <MasterBarang {...props} />}

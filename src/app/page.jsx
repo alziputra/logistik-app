@@ -32,7 +32,7 @@ import LoginView from "../components/LoginView";
 const DashboardView = dynamic(() => import("../components/Dashboard"), { 
   loading: () => <div className="p-10 text-center text-gray-500 animate-pulse">Memuat Dashboard...</div> 
 });
-const Barang = dynamic(() => import("../components/DataMaster"), { 
+const DataMaster = dynamic(() => import("../components/DataMaster"), { 
   loading: () => <div className="p-10 text-center text-gray-500 animate-pulse">Memuat Data Barang...</div> 
 });
 const FormView = dynamic(() => import("../components/FormView"), { 
@@ -514,13 +514,13 @@ export default function SuratSerahTerimaApp() {
 
         {tabs.some(t => t.id === "master_barang") && (
           <div className={activeTab === "master_barang" ? "block animate-in fade-in duration-300" : "hidden"}>
-             <Barang activeMenu="master_barang" inventory={inventory} outlets={outlets} userRole={userRole} />
+             <DataMaster activeMenu="master_barang" inventory={inventory} outlets={outlets} userRole={userRole} />
           </div>
         )}
 
         {tabs.some(t => t.id === "master_outlet") && (
           <div className={activeTab === "master_outlet" ? "block animate-in fade-in duration-300" : "hidden"}>
-             <Barang activeMenu="master_outlet" inventory={inventory} outlets={outlets} userRole={userRole} />
+             <DataMaster activeMenu="master_outlet" inventory={inventory} outlets={outlets} userRole={userRole} />
           </div>
         )}
 

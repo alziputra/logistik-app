@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Search, MapPin, X, Edit, Trash2, Loader2, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { Plus, Search, MapPin, Edit, Trash2, Loader2, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import { doc, updateDoc, deleteDoc } from "firebase/firestore";
-// PERHATIKAN: Path mundur 2 kali
 import { db } from "../../lib/firebase";
+import OutletFormModal from "./OutletFormModal"; 
 
 export default function MasterOutlet({ outlets, handleAddOutlet, userRole }) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -70,6 +70,7 @@ export default function MasterOutlet({ outlets, handleAddOutlet, userRole }) {
 
   return (
     <div className="flex flex-col gap-8 animate-in fade-in zoom-in-95 duration-300 relative">
+      {/* ==================== TABEL UTAMA ==================== */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col lg:flex-row justify-between items-center gap-4">
           <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
@@ -111,8 +112,8 @@ export default function MasterOutlet({ outlets, handleAddOutlet, userRole }) {
                     {userRole === "admin" && (
                       <td className="py-3 text-right">
                         <div className="flex justify-end gap-1.5">
-                          <button onClick={() => openEdit(out)} className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg"><Edit className="w-4 h-4" /></button>
-                          <button onClick={() => askDelete(out)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><Trash2 className="w-4 h-4" /></button>
+                          <button onClick={() => openEdit(out)} className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"><Edit className="w-4 h-4" /></button>
+                          <button onClick={() => askDelete(out)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
                         </div>
                       </td>
                     )}
@@ -124,30 +125,18 @@ export default function MasterOutlet({ outlets, handleAddOutlet, userRole }) {
         </div>
       </div>
 
-      {isModalOpen && userRole === "admin" && (
-        <div className="fixed inset-0 bg-black/50 z-[100] flex items-start sm:items-center justify-center p-4 pt-12 pb-12 sm:pt-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200 relative">
-            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 shrink-0 rounded-t-2xl">
-              <div className="flex items-center gap-3">
-                <div className="bg-purple-100 p-2 rounded-xl">{editingOutlet ? <Edit className="w-5 h-5 text-purple-600" /> : <MapPin className="w-5 h-5 text-purple-600" />}</div>
-                <h3 className="font-bold text-lg text-gray-800">{editingOutlet ? "Edit Instansi" : "Tambah Instansi Baru"}</h3>
-              </div>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:bg-gray-100 p-1.5 rounded-lg"><X className="w-5 h-5" /></button>
-            </div>
-            <div className="p-6 overflow-y-auto custom-scrollbar">
-              <form onSubmit={onSubmit} className="flex flex-col gap-5">
-                <div><label className="block text-sm mb-1.5">Kode Outlet (Opsional)</label><input name="kode" defaultValue={editingOutlet?.kode||""} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl" /></div>
-                <div><label className="block text-sm mb-1.5">Nama Outlet / Instansi *</label><input name="nama" defaultValue={editingOutlet?.nama||""} required className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl" /></div>
-                <div className="flex flex-col sm:flex-row justify-end gap-3 mt-2 border-t pt-5 shrink-0">
-                  <button type="button" onClick={() => setIsModalOpen(false)} disabled={isSaving} className="px-5 py-2.5 text-gray-600 hover:bg-gray-100 rounded-xl">Batal</button>
-                  <button type="submit" disabled={isSaving} className="px-6 bg-purple-600 hover:bg-purple-700 text-white py-2.5 rounded-xl flex items-center justify-center gap-2">{isSaving ? <Loader2 className="w-5 h-5 animate-spin"/> : <Plus className="w-5 h-5"/>} {editingOutlet ? "Simpan Perubahan" : "Simpan Outlet"}</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
+      {/* ==================== MODAL TAMBAH/EDIT (DIPANGGIL DARI FILE LAIN) ==================== */}
+      {userRole === "admin" && (
+        <OutletFormModal 
+          isOpen={isModalOpen} 
+          onClose={() => setIsModalOpen(false)} 
+          editingOutlet={editingOutlet} 
+          onSubmit={onSubmit} 
+          isSaving={isSaving} 
+        />
       )}
 
+      {/* ==================== MODAL KONFIRMASI HAPUS ==================== */}
       {deleteConfirm.show && (
         <div className="fixed inset-0 bg-black/60 z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
@@ -158,12 +147,13 @@ export default function MasterOutlet({ outlets, handleAddOutlet, userRole }) {
             </div>
             <div className="flex border-t border-gray-100">
               <button onClick={() => setDeleteConfirm({show:false, id:null, name:""})} disabled={isSaving} className="flex-1 px-4 py-4 text-sm font-bold text-gray-500 hover:bg-gray-50 border-r">BATAL</button>
-              <button onClick={confirmDeleteAction} disabled={isSaving} className="flex-1 px-4 py-4 text-sm font-bold text-red-600 hover:bg-red-50 flex items-center justify-center gap-2">{isSaving ? <Loader2 className="w-4 h-4 animate-spin"/> : "YA, HAPUS"}</button>
+              <button onClick={confirmDeleteAction} disabled={isSaving} className="flex-1 px-4 py-4 text-sm font-bold text-red-600 hover:bg-red-50 flex items-center justify-center gap-2 transition-colors">{isSaving ? <Loader2 className="w-4 h-4 animate-spin"/> : "YA, HAPUS"}</button>
             </div>
           </div>
         </div>
       )}
 
+      {/* ==================== TOAST NOTIFICATION ==================== */}
       {notif.show && (
         <div className={`fixed bottom-6 right-6 z-[200] flex items-center gap-3 px-5 py-3 rounded-xl shadow-xl text-sm text-white animate-in slide-in-from-bottom-8 duration-300 ${notif.type === "success" ? "bg-green-600" : "bg-red-600"}`}>
           {notif.type === "success" ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}{notif.message}

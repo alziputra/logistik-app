@@ -1,3 +1,4 @@
+// components/MasterBarang.jsx
 "use client";
 
 import { useState, useEffect } from "react";

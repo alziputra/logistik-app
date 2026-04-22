@@ -1,3 +1,4 @@
+// components/DataMaster.jsx
 "use client";
 
 import MasterBarang from "./MasterBarang";

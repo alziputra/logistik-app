@@ -32,17 +32,27 @@ import LoginView from "../components/LoginView";
 const DashboardView = dynamic(() => import("../components/Dashboard"), { 
   loading: () => <div className="p-10 text-center text-gray-500 animate-pulse">Memuat Dashboard...</div> 
 });
+
+// 
 const DataMaster = dynamic(() => import("../components/DataMaster"), { 
   loading: () => <div className="p-10 text-center text-gray-500 animate-pulse">Memuat Data Barang...</div> 
 });
+
+//
 const FormView = dynamic(() => import("../components/FormView"), { 
   loading: () => <div className="p-10 text-center text-gray-500 animate-pulse">Memuat Form...</div> 
 });
+
+//
 const PreviewView = dynamic(() => import("../components/PreviewView"));
+
+// 
 const DataPrinter = dynamic(() => import("../components/DataPrinter"), { 
   loading: () => <div className="p-10 text-center text-gray-500 animate-pulse">Memuat Modul Printer...</div> 
 });
-const DataKomputer = dynamic(() => import("../components/DataKomputer"), { 
+
+// 
+const DataKomputer = dynamic(() => import("../components/DataPerangkat/DataKomputer"), { 
   loading: () => <div className="p-10 text-center text-gray-500 animate-pulse">Memuat Modul Komputer... (QR & CSV)</div> 
 });
 const KelolaUser = dynamic(() => import("../components/KelolaUser"));

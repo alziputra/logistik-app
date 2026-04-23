@@ -47,7 +47,7 @@ const FormView = dynamic(() => import("../components/FormView"), {
 const PreviewView = dynamic(() => import("../components/PreviewView"));
 
 // 
-const DataPrinter = dynamic(() => import("../components/DataPrinter"), { 
+const DataPrinter = dynamic(() => import("../components/DataPerangkat/DataPrinter"), { 
   loading: () => <div className="p-10 text-center text-gray-500 animate-pulse">Memuat Modul Printer...</div> 
 });
 

@@ -5,7 +5,7 @@ import {
   Loader2, Network, Cpu, HardDrive, AlertTriangle,
   QrCode, Edit, Trash2, ChevronLeft, ChevronRight,
 } from "lucide-react";
-import { formatBulanTahun, hitungSisaBulan, getStatusBadge } from "./komputerUtils";
+import { formatBulanTahun, hitungSisaBulan, getStatusBadge } from "../../../utils/deviceUtils";
 
 export default function KomputerTable({
   isLoading,

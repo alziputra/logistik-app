@@ -1,4 +1,4 @@
-// src/components/LazyComponents.js
+// src/components/Layout/LazyComponents.js
 // Komponen yang di-load secara dinamis (lazy loading) untuk optimasi performa
 import dynamic from "next/dynamic";
 
@@ -19,12 +19,12 @@ export const DataMaster = dynamic(
 );
 
 export const FormView = dynamic(
-  () => import("../FormView"),
+  () => import("../Form/FormView"),
   { loading: () => loadMsg("Form") }
 );
 
 export const PreviewView = dynamic(
-  () => import("../PreviewView")
+  () => import("../Form/PreviewView")
 );
 
 export const DataPrinter = dynamic(
@@ -38,13 +38,13 @@ export const DataKomputer = dynamic(
 );
 
 export const KelolaUser = dynamic(
-  () => import("../KelolaUser")
+  () => import("../Admin/KelolaUser")
 );
 
 export const RiwayatTransaksi = dynamic(
-  () => import("../RiwayatTransaksi")
+  () => import("../Transaksi/RiwayatTransaksi")
 );
 
 export const LogAktivitas = dynamic(
-  () => import("../LogAktivitas")
+  () => import("../Admin/LogAktivitas")
 );

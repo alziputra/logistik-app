@@ -12,11 +12,17 @@ import {
   XCircle,
   AlertTriangle,
 } from "lucide-react";
-import { doc, updateDoc, deleteDoc } from "firebase/firestore";
+import {
+  doc,
+  updateDoc,
+  deleteDoc,
+  addDoc,
+  collection,
+} from "firebase/firestore";
 import { db } from "../../lib/firebase";
 import OutletFormModal from "./OutletFormModal";
 
-export default function MasterOutlet({ outlets, handleAddOutlet, userRole }) {
+export default function MasterOutlet({ outlets, userRole }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [localOutlets, setLocalOutlets] = useState([]);
 
@@ -127,8 +133,26 @@ export default function MasterOutlet({ outlets, handleAddOutlet, userRole }) {
         setIsSaving(false);
       }
     } else {
-      await handleAddOutlet(e);
-      setIsModalOpen(false);
+      // ✅ Tangani add langsung di sini, tidak perlu prop handleAddOutlet
+      setIsSaving(true);
+      try {
+        const form = new FormData(e.target);
+        const newOutlet = {
+          kode: form.get("kode") || "-",
+          nama: form.get("nama"),
+        };
+        const docRef = await addDoc(
+          collection(db, "artifacts", appId, "public", "data", "outlets"),
+          newOutlet,
+        );
+        setLocalOutlets((prev) => [...prev, { id: docRef.id, ...newOutlet }]);
+        setIsModalOpen(false);
+        showLocalNotif("Instansi berhasil ditambahkan!", "success");
+      } catch (error) {
+        showLocalNotif("Gagal menambahkan instansi!", "error");
+      } finally {
+        setIsSaving(false);
+      }
     }
   };
 
@@ -171,10 +195,20 @@ export default function MasterOutlet({ outlets, handleAddOutlet, userRole }) {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b-2 text-gray-500 text-xs">
-                  <th className="pb-2 w-12 text-center sticky top-0 bg-white">No</th>
-                  <th className="pb-2 w-40 sticky top-0 bg-white">Kode Outlet</th>
-                  <th className="pb-2 sticky top-0 bg-white">Nama Outlet / Instansi</th>
-                  {userRole === "admin" && <th className="pb-2 text-right sticky top-0 bg-white">Aksi</th>}
+                  <th className="pb-2 w-12 text-center sticky top-0 bg-white">
+                    No
+                  </th>
+                  <th className="pb-2 w-40 sticky top-0 bg-white">
+                    Kode Outlet
+                  </th>
+                  <th className="pb-2 sticky top-0 bg-white">
+                    Nama Outlet / Instansi
+                  </th>
+                  {userRole === "admin" && (
+                    <th className="pb-2 text-right sticky top-0 bg-white">
+                      Aksi
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody className="text-gray-700">

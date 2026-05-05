@@ -1,7 +1,7 @@
-// src/components/DataPerangkat/DataKomputer/useKomputerFilter.js
+// src/hooks/printer/usePrinterFilter.js
 import { useState } from "react";
 
-export function useKomputerFilter(computerData) {
+export function usePrinterFilter(printerData) {
   const [searchQuery, setSearchQuery]   = useState("");
   const [filterStatus, setFilterStatus] = useState("Semua");
   const [currentPage, setCurrentPage]   = useState(1);
@@ -10,13 +10,12 @@ export function useKomputerFilter(computerData) {
   const handleSearch       = (e) => { setSearchQuery(e.target.value); setCurrentPage(1); };
   const handleFilterStatus = (e) => { setFilterStatus(e.target.value); setCurrentPage(1); };
 
-  const filteredData = computerData.filter((item) => {
+  const filteredData = printerData.filter((item) => {
     const q = searchQuery.toLowerCase();
     const matchSearch =
       item.produk?.toLowerCase().includes(q) ||
       item.sn?.toLowerCase().includes(q) ||
-      item.outlet?.toLowerCase().includes(q) ||
-      item.ipAddress?.toLowerCase().includes(q);
+      item.outlet?.toLowerCase().includes(q);
     const matchFilter = filterStatus === "Semua" || item.status === filterStatus;
     return matchSearch && matchFilter;
   });

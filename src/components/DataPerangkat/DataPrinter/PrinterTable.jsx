@@ -5,7 +5,7 @@ import {
   Loader2, AlertTriangle, QrCode, Edit, Trash2,
   ChevronLeft, ChevronRight,
 } from "lucide-react";
-import { formatBulanTahun, hitungSisaBulan, getStatusBadge } from "./printerUtils";
+import { formatBulanTahun, hitungSisaBulan, getStatusBadge } from "../../../utils/deviceUtils";
 
 export default function PrinterTable({
   isLoading,

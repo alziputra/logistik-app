@@ -5,7 +5,7 @@ import { CheckCircle } from "lucide-react";
 import AppHeader        from "../components/Layout/AppHeader";
 import { VIEW_TITLES }  from "../constants/tabConfig";
 import Navbar           from "../components/Layout/Navbar";
-import LoginView        from "../components/LoginView";
+import LoginView        from "../components/Auth/LoginView";
 import TabBar           from "../components/Layout/TabBar";
 import TabContent       from "../components/Layout/TabContent";
 import { useNotif }     from "../hooks/useNotif";

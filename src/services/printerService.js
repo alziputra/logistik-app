@@ -1,10 +1,10 @@
-// src/components/DataPerangkat/DataPrinter/printerService.js
+// src/services/printerService.js
 import {
   collection, getDocs, addDoc, updateDoc,
   deleteDoc, doc, writeBatch,
 } from "firebase/firestore";
-import { db } from "../../../lib/firebase";
-import { parseIndoDateToISO } from "./printerUtils";
+import { db } from "../lib/firebase";
+import { parseIndoDateToISO } from "../utils/deviceUtils";
 
 const getBaseRef = (appId) => {
   const id = appId || process.env.NEXT_PUBLIC_APP_ID || "logistikku_app_01";

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../lib/firebase";
+import { auth } from "../../lib/firebase";
 import { Package, Lock, Mail, LogIn } from "lucide-react";
 
 export default function LoginView({ showNotif }) {

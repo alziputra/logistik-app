@@ -1,11 +1,11 @@
-// src/components/DataPerangkat/DataKomputer/useKomputerData.js
+// src/hooks/komputer/useKomputerData.js
 "use client";
 
 import { useState, useEffect } from "react";
-import { fetchKomputer, fetchDropdowns } from "./komputerService";
-import { calculateAutoStatus } from "./komputerUtils";
-import { useKomputerCRUD }    from "./useKomputerCRUD";
-import { useKomputerFilter }  from "./useKomputerFilter";
+import { fetchKomputer, fetchDropdowns } from "../../services/komputerService";
+import { calculateAutoStatus } from "../../utils/deviceUtils";
+import { useKomputerCRUD }   from "./useKomputerCRUD";
+import { useKomputerFilter } from "./useKomputerFilter";
 import { useKomputerActions } from "./useKomputerActions";
 
 const APP_ID = process.env.NEXT_PUBLIC_APP_ID || "logistikku_app_01";

@@ -1,8 +1,8 @@
-// src/components/DataPerangkat/DataKomputer/useKomputerCRUD.js
+// src/hooks/komputer/useKomputerCRUD.js
 import { useState } from "react";
-import { addKomputer, updateKomputer, deleteKomputer } from "./komputerService";
-import { emptyForm } from "./komputerUtils";
-import { syncKomputerToSheet } from "@/lib/syncToSheets";
+import { addKomputer, updateKomputer, deleteKomputer } from "../../services/komputerService";
+import { emptyFormKomputer as emptyForm } from "../../utils/deviceUtils";
+import { syncKomputerToSheet } from "../../lib/syncToSheets";
 
 const APP_ID = process.env.NEXT_PUBLIC_APP_ID || "logistikku_app_01";
 

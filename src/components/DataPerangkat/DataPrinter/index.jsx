@@ -16,7 +16,7 @@ import {
   X,
 } from "lucide-react";
 
-import { usePrinterData } from "./usePrinterData";
+import { usePrinterData } from "../../../hooks/printer/usePrinterData";
 import PrinterTable      from "./PrinterTable";
 import PrinterModal      from "./PrinterModal";
 import QrLabelModal      from "./QrLabelModal";

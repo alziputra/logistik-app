@@ -16,7 +16,7 @@ import {
   X,
 } from "lucide-react";
 
-import { useKomputerData } from "./useKomputerData";
+import { useKomputerData } from "../../../hooks/komputer/useKomputerData";
 import KomputerTable from "./KomputerTable";
 import KomputerModal from "./KomputerModal";
 import QrLabelModal from "./QrLabelModal";

@@ -1,10 +1,10 @@
-// src/components/DataPerangkat/DataKomputer/komputerService.js
+// src/services/komputerService.js
 import {
   collection, getDocs, addDoc, updateDoc,
   deleteDoc, doc, writeBatch,
 } from "firebase/firestore";
-import { db } from "../../../lib/firebase";
-import { parseIndoDateToISO } from "./komputerUtils";
+import { db } from "../lib/firebase";
+import { parseIndoDateToISO } from "../utils/deviceUtils";
 
 /**
  * Path koleksi Firestore yang dipakai di seluruh service ini.

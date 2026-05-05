@@ -59,6 +59,7 @@ export default function DataKomputer({ userRole }) {
     handleProdukChange,
     handleDateChange,
     qrModalData,
+    exportToExcel,
   } = useKomputerData();
 
   return (
@@ -68,10 +69,12 @@ export default function DataKomputer({ userRole }) {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <div>
             <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-              <Monitor className="w-6 h-6 text-blue-600" /> Manajemen Data Komputer
+              <Monitor className="w-6 h-6 text-blue-600" /> Manajemen Data
+              Komputer
             </h2>
             <p className="text-sm text-gray-500 mt-1">
-              Kelola spesifikasi, jaringan, dan masa sewa perangkat komputer outlet.
+              Kelola spesifikasi, jaringan, dan masa sewa perangkat komputer
+              outlet.
             </p>
           </div>
 
@@ -108,6 +111,14 @@ export default function DataKomputer({ userRole }) {
                 aria-label="Upload file CSV data komputer"
               />
 
+              <button
+                type="button"
+                onClick={exportToExcel}
+                disabled={filteredData.length === 0}
+                className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-3 py-2 rounded-lg font-medium shadow-sm transition-colors text-sm disabled:opacity-50"
+              >
+                <FileSpreadsheet className="w-4 h-4" /> Export Excel
+              </button>
               <button
                 type="button"
                 onClick={openModalForAdd}
@@ -222,10 +233,7 @@ export default function DataKomputer({ userRole }) {
       />
 
       {/* ── Modal QR Code ── */}
-      <QrLabelModal
-        data={qrModalData}
-        onClose={() => setQrModalData(null)}
-      />
+      <QrLabelModal data={qrModalData} onClose={() => setQrModalData(null)} />
     </>
   );
 }

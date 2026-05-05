@@ -23,31 +23,31 @@ export default function PrinterTable({
 }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-left min-w-[1100px]">
+      <table className="w-full text-left min-w-[900px]">
         <thead>
-          <tr className="text-xs uppercase text-gray-500 border-b border-gray-100 bg-white tracking-wider">
-            <th className="p-4 font-semibold">Outlet</th>
-            <th className="p-4 font-semibold">Hardware & S/N</th>
-            <th className="p-4 font-semibold">Penyedia</th>
-            <th className="p-4 font-semibold">Masa Sewa</th>
-            <th className="p-4 font-semibold text-center">Status & Kondisi</th>
+          <tr className="text-[10px] uppercase text-gray-500 border-b border-gray-100 bg-white tracking-wider">
+            <th className="px-3 py-2.5 font-semibold">Outlet</th>
+            <th className="px-3 py-2.5 font-semibold">Hardware & S/N</th>
+            <th className="px-3 py-2.5 font-semibold">Penyedia</th>
+            <th className="px-3 py-2.5 font-semibold">Masa Sewa</th>
+            <th className="px-3 py-2.5 font-semibold text-center">Status & Kondisi</th>
             {userRole === "admin" && (
-              <th className="p-4 font-semibold text-right">Aksi</th>
+              <th className="px-3 py-2.5 font-semibold text-right">Aksi</th>
             )}
           </tr>
         </thead>
 
-        <tbody className="text-sm divide-y divide-gray-50">
+        <tbody className="text-xs divide-y divide-gray-50">
           {isLoading ? (
             <tr>
-              <td colSpan="6" className="p-12 text-center text-blue-500">
-                <Loader2 className="w-8 h-8 animate-spin mx-auto" />
-                <p className="mt-2 text-gray-500">Memuat data...</p>
+              <td colSpan="6" className="p-10 text-center text-blue-500">
+                <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+                <p className="mt-2 text-gray-500 text-xs">Memuat data...</p>
               </td>
             </tr>
           ) : paginatedData.length === 0 ? (
             <tr>
-              <td colSpan="6" className="p-8 text-center text-gray-500">
+              <td colSpan="6" className="p-6 text-center text-gray-500 text-xs">
                 Tidak ada data printer ditemukan.
               </td>
             </tr>
@@ -71,25 +71,27 @@ export default function PrinterTable({
               return (
                 <tr key={printer.id} className={rowClass}>
                   {/* Outlet */}
-                  <td className="p-4">
-                    <p className="font-semibold text-gray-800">{printer.outlet}</p>
-                    <p className="text-xs text-gray-500">ID: {printer.idOutlet}</p>
+                  <td className="px-3 py-2.5">
+                    <p className="font-semibold text-gray-800 text-xs">{printer.outlet}</p>
+                    <p className="text-[10px] text-gray-500">ID: {printer.idOutlet}</p>
                   </td>
 
                   {/* Hardware */}
-                  <td className="p-4">
-                    <p className="font-medium text-gray-800">{printer.produk}</p>
-                    <p className="text-xs text-gray-500 font-mono mt-0.5">SN: {printer.sn}</p>
+                  <td className="px-3 py-2.5">
+                    <p className="font-medium text-gray-800 text-xs">{printer.produk}</p>
+                    <p className="text-[10px] text-gray-500 font-mono mt-0.5">SN: {printer.sn}</p>
                   </td>
 
                   {/* Penyedia */}
-                  <td className="p-4 font-medium text-gray-700">{printer.penyedia}</td>
+                  <td className="px-3 py-2.5 text-xs font-medium text-gray-700">
+                    {printer.penyedia}
+                  </td>
 
                   {/* Masa Sewa */}
-                  <td className="p-4 text-xs">
+                  <td className="px-3 py-2.5">
                     <div
-                      className={`flex items-center gap-1.5 ${
-                        isExpiringSoon || isExpired ? "text-gray-800" : "text-gray-600"
+                      className={`text-[10px] flex items-center gap-1 ${
+                        isExpiringSoon || isExpired ? "text-gray-800 font-medium" : "text-gray-600"
                       }`}
                     >
                       {printer.tanggalMulai || printer.tanggalSelesai ? (
@@ -99,28 +101,28 @@ export default function PrinterTable({
                       )}
                       {isExpiringSoon && (
                         <AlertTriangle
-                          className="w-3.5 h-3.5 text-orange-500"
+                          className="w-3 h-3 text-orange-500 shrink-0"
                           title="Segera Habis"
                         />
                       )}
                     </div>
                     {isExpiringSoon && (
-                      <p className="text-[10px] text-orange-600 font-bold mt-1 bg-orange-100/50 w-max px-1.5 py-0.5 rounded">
+                      <p className="text-[10px] text-orange-600 font-bold mt-0.5 bg-orange-100/50 w-max px-1.5 py-0.5 rounded">
                         Sisa {sisaBulan} bln
                       </p>
                     )}
                   </td>
 
                   {/* Status & Kondisi */}
-                  <td className="p-4 text-center">
-                    <div className="flex flex-col items-center justify-center gap-1.5">
+                  <td className="px-3 py-2.5 text-center">
+                    <div className="flex flex-col items-center justify-center gap-1">
                       <span
-                        className={`px-2.5 py-1 rounded-md text-[11px] font-bold border ${getStatusBadge(printer.status)}`}
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold border ${getStatusBadge(printer.status)}`}
                       >
                         {printer.status}
                       </span>
                       <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold border ${
+                        className={`px-1.5 py-0.5 rounded text-[10px] font-bold border ${
                           printer.kondisi === "BAIK"
                             ? "text-green-600 bg-green-50 border-green-100"
                             : "text-orange-600 bg-orange-50 border-orange-100"
@@ -133,29 +135,29 @@ export default function PrinterTable({
 
                   {/* Aksi */}
                   {userRole === "admin" && (
-                    <td className="p-4 text-right">
-                      <div className="flex justify-end gap-1.5">
+                    <td className="px-3 py-2.5 text-right">
+                      <div className="flex justify-end gap-1">
                         <button
                           onClick={() => onQr(printer)}
                           title="Cetak Label QR Code"
-                          className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-transparent hover:border-indigo-200"
+                          className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors border border-transparent hover:border-indigo-200"
                         >
-                          <QrCode className="w-4 h-4" />
+                          <QrCode className="w-3.5 h-3.5" />
                         </button>
-                        <div className="w-px h-6 bg-gray-200 my-auto mx-1" />
+                        <div className="w-px h-5 bg-gray-200 my-auto mx-0.5" />
                         <button
                           onClick={() => onEdit(printer)}
                           title="Edit Data"
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                         >
-                          <Edit className="w-4 h-4" />
+                          <Edit className="w-3.5 h-3.5" />
                         </button>
                         <button
                           onClick={() => onDelete(printer.id)}
                           title="Hapus Data"
-                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </td>
@@ -169,8 +171,8 @@ export default function PrinterTable({
 
       {/* Paginasi */}
       {totalPages > 1 && (
-        <div className="px-6 py-4 border-t border-gray-100 bg-white flex items-center justify-between">
-          <span className="text-sm text-gray-500 hidden sm:inline-block">
+        <div className="px-4 py-3 border-t border-gray-100 bg-white flex items-center justify-between">
+          <span className="text-xs text-gray-500 hidden sm:inline-block">
             Menampilkan{" "}
             <span className="font-bold text-gray-900">{startIndex + 1}</span>
             {" - "}
@@ -180,23 +182,23 @@ export default function PrinterTable({
             {" dari "}
             <span className="font-bold text-gray-900">{filteredData.length}</span> printer
           </span>
-          <div className="flex gap-2 ml-auto">
+          <div className="flex gap-1.5 ml-auto">
             <button
               onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
               disabled={currentPage === 1}
-              className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="p-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              <ChevronLeft className="w-4 h-4 text-gray-600" />
+              <ChevronLeft className="w-3.5 h-3.5 text-gray-600" />
             </button>
-            <span className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-50 rounded-lg border border-gray-200">
+            <span className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-50 rounded-lg border border-gray-200">
               Hal {currentPage} / {totalPages}
             </span>
             <button
               onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
               disabled={currentPage === totalPages}
-              className="p-2 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="p-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              <ChevronRight className="w-4 h-4 text-gray-600" />
+              <ChevronRight className="w-3.5 h-3.5 text-gray-600" />
             </button>
           </div>
         </div>

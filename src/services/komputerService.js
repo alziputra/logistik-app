@@ -114,6 +114,11 @@ export const importKomputerCSV = async (appId, rows) => {
       idOutlet:    row["OUTLET ID"]?.trim()         || "",
       outlet:      row["NAMA OUTLET"]?.trim()       || "",
       ipAddress:   row["IP ADDRESS"]?.trim()        || "",
+      macAddress:  row["MAC"]?.trim()               || "",
+      ram:         row["RAM"]?.trim()               || "",
+      storage:     row["PHYSICAL DISK"]?.trim()     || "",
+      cpu:         row["CPU"]?.trim()               || "",
+      os:          row["OS NAME"]?.trim()           || "",
       produk:      row["PRODUCT HARDWARE"]?.trim()  || "",
       sn:          row["SERIAL NUMBER"]?.trim()     || "",
       tanggalMulai,
@@ -121,11 +126,6 @@ export const importKomputerCSV = async (appId, rows) => {
       penyedia:    row["PENYEDIA"]?.trim()          || "",
       status:      row["STATUS"]?.trim()            || "Inventaris",
       deskripsi:   row["DESKRIPSI"]?.trim()         || "",
-      macAddress:  row["MAC"]?.trim()               || "",
-      ram:         row["RAM"]?.trim()               || "",
-      storage:     row["PHYSICAL DISK"]?.trim()     || "",
-      cpu:         row["CPU"]?.trim()               || "",
-      os:          row["OS NAME"]?.trim()           || "",
       kondisi:     "BAIK",
     };
 

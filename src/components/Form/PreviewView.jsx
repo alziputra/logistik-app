@@ -42,7 +42,7 @@ const PreviewView = ({
       id="printable-area"
     >
       {/* Konten Utama */}
-      <div className="print:pb-[100px]">
+      <div className="print:pb-4">
         {/* Header Surat */}
         <div className="flex items-center justify-between mb-8 print:mb-6 border-b-[3px] border-black pb-5 print:pb-3">
           <img
@@ -98,28 +98,28 @@ const PreviewView = ({
         </div>
 
         {/* Tabel Barang */}
-        <table className="w-full border-collapse border border-black text-gray-900 text-sm print:text-[11px] mb-6 print:mb-5">
+        <table className="w-full border-collapse border border-black text-gray-900 text-xs print:text-[9px] mb-4 print:mb-3">
           <thead className="bg-gray-100">
             <tr>
-              <th className="border border-black p-2 print:py-2 print:px-1 w-10 text-center">
+              <th className="border border-black py-1 px-1 w-7 text-center">
                 No
               </th>
-              <th className="border border-black p-2 print:py-2 print:px-2 text-left">
+              <th className="border border-black py-1 px-2 text-left">
                 Nama Barang
               </th>
-              <th className="border border-black p-2 print:py-2 print:px-2 text-left w-32">
+              <th className="border border-black py-1 px-2 text-left w-28">
                 S/N
               </th>
-              <th className="border border-black p-2 print:py-2 print:px-1 text-center w-10">
+              <th className="border border-black py-1 px-1 text-center w-8">
                 Qty
               </th>
-              <th className="border border-black p-2 print:py-2 print:px-1 text-center w-14">
+              <th className="border border-black py-1 px-1 text-center w-12">
                 Satuan
               </th>
-              <th className="border border-black p-2 print:py-2 print:px-2 text-left w-48">
+              <th className="border border-black py-1 px-2 text-left w-40">
                 Outlet Tujuan
               </th>
-              <th className="border border-black p-2 print:py-2 print:px-2 text-left w-24">
+              <th className="border border-black py-1 px-2 text-left w-20">
                 Keterangan
               </th>
             </tr>
@@ -127,32 +127,27 @@ const PreviewView = ({
           <tbody>
             {items.map((item, index) => (
               <tr key={item.id} className="break-inside-avoid">
-                <td className="border border-black p-2 print:py-1.5 print:px-1 text-center">
+                <td className="border border-black py-1 px-1 text-center">
                   {index + 1}
                 </td>
-                <td className="border border-black p-2 print:py-1.5 print:px-2">
-                  {item.nama}
-                </td>
-                <td className="border border-black p-2 print:py-1.5 print:px-2 break-all">
+                <td className="border border-black py-1 px-2">{item.nama}</td>
+                <td className="border border-black py-1 px-2 break-all">
                   {item.sn}
                 </td>
-                <td className="border border-black p-2 print:py-1.5 print:px-1 text-center">
+                <td className="border border-black py-1 px-1 text-center">
                   {item.kuantitas}
                 </td>
-                <td className="border border-black p-2 print:py-1.5 print:px-1 text-center">
+                <td className="border border-black py-1 px-1 text-center">
                   {item.satuan}
                 </td>
-                <td className="border border-black p-2 print:py-1.5 print:px-2">
-                  {item.outlet}
-                </td>
-                <td className="border border-black p-2 print:py-1.5 print:px-2">
+                <td className="border border-black py-1 px-2">{item.outlet}</td>
+                <td className="border border-black py-1 px-2">
                   {item.keterangan}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-
         {/* Teks Penutup */}
         <div className="text-gray-800 mb-6 print:mb-4 text-justify">
           <p className="leading-relaxed print:leading-7">
@@ -170,7 +165,7 @@ const PreviewView = ({
         {/* Tanda Tangan */}
         <div className="grid grid-cols-3 mt-8 print:mt-6 text-center text-gray-900 w-full break-inside-avoid">
           <div className="flex flex-col items-start">
-            <p className="mb-20 print:mb-20">Yang Menerima,</p>
+            <p className="mb-20 print:mb-12">Yang Menerima,</p>
             <div className="h-10 flex flex-col items-start justify-end w-full">
               <p className="font-bold underline uppercase">
                 {formData.penerimaNama || "( ........................ )"}
@@ -182,7 +177,7 @@ const PreviewView = ({
           </div>
 
           <div className="flex flex-col items-center">
-            <p className="mb-20 print:mb-20">Yang Menyerahkan,</p>
+            <p className="mb-20 print:mb-12">Yang Menyerahkan,</p>
             <div className="h-10 flex flex-col items-center justify-end w-full">
               <p className="font-bold underline uppercase">
                 {formData.pengirimNama || "( ........................ )"}
@@ -194,7 +189,7 @@ const PreviewView = ({
           </div>
 
           <div className="flex flex-col items-end">
-            <p className="mb-20 print:mb-20">Mengetahui,</p>
+            <p className="mb-20 print:mb-12">Mengetahui,</p>
             <div className="h-10 flex flex-col items-end justify-end w-full">
               <p className="font-bold underline uppercase">
                 {formData.mengetahuiNama || "( ........................ )"}

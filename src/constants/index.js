@@ -9,7 +9,7 @@ export const createInitialFormData = () => ({
   pengirimJabatan: "Staff Pengadaan dan Logistik",
   pengirimInstansi: "",
   mengetahuiNama: "Zoni Rahmawan Putra",
-  mengetahuiJabatan: "Kepala Bagian Pengadaan dan Logistik",
+  mengetahuiJabatan: "Kabag Pengadaan dan Logistik",
   lokasi: "Jakarta",
 });
 

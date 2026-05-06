@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { addKomputer, updateKomputer, deleteKomputer } from "../../services/komputerService";
 import { emptyFormKomputer as emptyForm } from "../../utils/deviceUtils";
-import { syncKomputerToSheet } from "../../lib/syncToSheets";
 
 const APP_ID = process.env.NEXT_PUBLIC_APP_ID || "logistikku_app_01";
 
@@ -21,29 +20,21 @@ export function useKomputerCRUD({ computerData, setComputerData, showNotif }) {
     setIsModalOpen(true);
   };
 
-  const syncToSheet = async (data) => {
-    try { await syncKomputerToSheet(data); }
-    catch (err) { console.warn("Sync Sheet gagal:", err); }
-  };
-
   const handleSave = async (e) => {
     e.preventDefault();
     setIsSaving(true);
     try {
-      let updatedData;
       if (editingId) {
         await updateKomputer(APP_ID, editingId, formData);
-        updatedData = computerData.map((item) =>
-          item.id === editingId ? { id: editingId, ...formData } : item
+        setComputerData((prev) =>
+          prev.map((item) => item.id === editingId ? { id: editingId, ...formData } : item)
         );
         showNotif("Perubahan data komputer berhasil disimpan!");
       } else {
         const newItem = await addKomputer(APP_ID, formData);
-        updatedData = [newItem, ...computerData];
+        setComputerData((prev) => [newItem, ...prev]);
         showNotif("Data komputer baru berhasil ditambahkan!");
       }
-      setComputerData(updatedData);
-      await syncToSheet(updatedData);
       setIsModalOpen(false);
       resetForm();
     } catch (err) {
@@ -58,9 +49,7 @@ export function useKomputerCRUD({ computerData, setComputerData, showNotif }) {
     if (!window.confirm("Apakah Anda yakin ingin menghapus data komputer ini?")) return;
     try {
       await deleteKomputer(APP_ID, id);
-      const updatedData = computerData.filter((p) => p.id !== id);
-      setComputerData(updatedData);
-      await syncToSheet(updatedData);
+      setComputerData((prev) => prev.filter((p) => p.id !== id));
       showNotif("Data komputer berhasil dihapus.");
     } catch (err) {
       console.error(err);

@@ -3,7 +3,6 @@ import { useRef } from "react";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import { importKomputerCSV, downloadTemplate } from "../../services/komputerService";
-import { syncKomputerToSheet } from "../../lib/syncToSheets";
 
 const APP_ID = process.env.NEXT_PUBLIC_APP_ID || "logistikku_app_01";
 
@@ -39,10 +38,6 @@ export function useKomputerActions({ filteredData, setIsSaving, showNotif }) {
     });
   };
 
-
-  //________________________________
-  // Fitur tambahan: Export Excel & Manual Sync
-  
   const exportToExcel = () => {
     const rows = filteredData.map((item) => ({
       "Outlet":           item.outlet         || "",
@@ -73,22 +68,10 @@ export function useKomputerActions({ filteredData, setIsSaving, showNotif }) {
     XLSX.writeFile(wb, `Data_Komputer_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
-  const manualSyncToSheet = async () => {
-    try {
-      showNotif("Menyinkronkan ke Google Sheet...");
-      await syncKomputerToSheet(filteredData);
-      showNotif("Berhasil disinkronkan ke Google Sheet!");
-    } catch (err) {
-      console.error(err);
-      showNotif("Gagal sinkronisasi ke Google Sheet.", "error");
-    }
-  };
-
   return {
     fileInputRef,
     handleFileUpload,
     exportToExcel,
-    manualSyncToSheet,
     downloadTemplate,
   };
 }

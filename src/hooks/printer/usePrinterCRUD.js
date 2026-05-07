@@ -52,7 +52,6 @@ export function usePrinterCRUD({ printerData, setPrinterData, showNotif, outlets
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Apakah Anda yakin ingin menghapus data printer ini?")) return;
     try {
       await deletePrinter(APP_ID, id);
       setPrinterData((prev) => prev.filter((p) => p.id !== id));

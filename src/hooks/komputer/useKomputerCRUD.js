@@ -46,7 +46,6 @@ export function useKomputerCRUD({ computerData, setComputerData, showNotif }) {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Apakah Anda yakin ingin menghapus data komputer ini?")) return;
     try {
       await deleteKomputer(APP_ID, id);
       setComputerData((prev) => prev.filter((p) => p.id !== id));

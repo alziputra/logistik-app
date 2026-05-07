@@ -4,12 +4,13 @@
 import { useState, useEffect } from "react";
 import {
   Database, Plus, Box, Hash, Scale, Building2,
-  CalendarDays, Clock, Search, Edit, Trash2,
-  Loader2, CheckCircle, XCircle, AlertTriangle,
+  CalendarDays, Clock, Search, Edit, Trash2, Loader2,
 } from "lucide-react";
 import { collection, doc, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "../../lib/firebase";
-import BarangFormModal from "./BarangFormModal";
+import BarangFormModal    from "./BarangFormModal";
+import ConfirmDeleteModal from "../Modal/ConfirmDeleteModal";
+import ToastNotif         from "../Modal/ToastNotif";
 
 export default function MasterBarang({ inventory, userRole }) {
   const [searchQuery, setSearchQuery]           = useState("");
@@ -25,9 +26,8 @@ export default function MasterBarang({ inventory, userRole }) {
 
   useEffect(() => { setLocalInventory(inventory || []); }, [inventory]);
 
-  const showLocalNotif = (message, type = "success") => {
+  const showNotif = (message, type = "success") => {
     setNotif({ show: true, message, type });
-    setTimeout(() => setNotif({ show: false, message: "", type: "" }), 2500);
   };
 
   const formatDate = (dateString) => {
@@ -37,7 +37,6 @@ export default function MasterBarang({ inventory, userRole }) {
     });
   };
 
-  // Hitung status & masa sewa otomatis saat tanggal berubah di form
   const handleDateChange = () => {
     const form = document.getElementById("formBarang");
     if (!form) return;
@@ -87,8 +86,8 @@ export default function MasterBarang({ inventory, userRole }) {
   });
 
   // ── Modal helpers ─────────────────────────────────────────────────────
-  const openAdd  = () => { setEditingInv(null); setCalculatedStatus("Inventaris"); setIsModalOpen(true); };
-  const openEdit = (inv) => { setEditingInv(inv); setCalculatedStatus(getStatusInfo(inv)); setIsModalOpen(true); };
+  const openAdd   = () => { setEditingInv(null); setCalculatedStatus("Inventaris"); setIsModalOpen(true); };
+  const openEdit  = (inv) => { setEditingInv(inv); setCalculatedStatus(getStatusInfo(inv)); setIsModalOpen(true); };
   const askDelete = (inv) => setDeleteConfirm({ show: true, id: inv.id, name: inv.nama });
 
   // ── DELETE ────────────────────────────────────────────────────────────
@@ -97,9 +96,9 @@ export default function MasterBarang({ inventory, userRole }) {
     try {
       await deleteDoc(doc(db, "artifacts", appId, "public", "data", "inventory", deleteConfirm.id));
       setLocalInventory((prev) => prev.filter((item) => item.id !== deleteConfirm.id));
-      showLocalNotif("Barang berhasil dihapus!");
+      showNotif("Barang berhasil dihapus!");
     } catch {
-      showLocalNotif("Gagal menghapus data.", "error");
+      showNotif("Gagal menghapus data.", "error");
     } finally {
       setIsSaving(false);
       setDeleteConfirm({ show: false, id: null, name: "" });
@@ -129,16 +128,16 @@ export default function MasterBarang({ inventory, userRole }) {
         setLocalInventory((prev) =>
           prev.map((item) => item.id === editingInv.id ? { id: editingInv.id, ...payload } : item)
         );
-        showLocalNotif("Data barang diperbarui!");
+        showNotif("Data barang berhasil diperbarui!");
       } else {
         const docRef = await addDoc(collection(db, "artifacts", appId, "public", "data", "inventory"), payload);
         setLocalInventory((prev) => [{ id: docRef.id, ...payload }, ...prev]);
-        showLocalNotif("Barang baru berhasil ditambahkan!");
+        showNotif("Barang baru berhasil ditambahkan!");
       }
       setIsModalOpen(false);
     } catch (err) {
       console.error(err);
-      showLocalNotif(editingInv ? "Gagal mengupdate barang!" : "Gagal menambah barang!", "error");
+      showNotif(editingInv ? "Gagal mengupdate barang!" : "Gagal menambah barang!", "error");
     } finally {
       setIsSaving(false);
     }
@@ -179,72 +178,82 @@ export default function MasterBarang({ inventory, userRole }) {
         </div>
 
         {/* Tabel */}
-        <div className="overflow-x-auto px-4 py-3">
-          <table className="w-full text-left min-w-[1100px]">
-            <thead>
-              <tr className="border-b-2 text-gray-500 text-xs">
-                <th className="pb-2 w-10 text-center">No</th>
-                <th className="pb-2"><Box className="w-3 h-3 inline mr-1" /> Nama Barang</th>
-                <th className="pb-2"><Hash className="w-3 h-3 inline mr-1" /> Stok</th>
-                <th className="pb-2"><Scale className="w-3 h-3 inline mr-1" /> Satuan</th>
-                <th className="pb-2"><Building2 className="w-3 h-3 inline mr-1" /> Vendor & Kontrak</th>
-                <th className="pb-2"><CalendarDays className="w-3 h-3 inline mr-1" /> Mulai</th>
-                <th className="pb-2"><CalendarDays className="w-3 h-3 inline mr-1" /> Selesai</th>
-                <th className="pb-2 text-center"><Clock className="w-3 h-3 inline mr-1" /> Durasi</th>
-                <th className="pb-2 text-center">Status</th>
-                {userRole === "admin" && <th className="pb-2 text-right">Aksi</th>}
-              </tr>
-            </thead>
-            <tbody className="text-gray-700">
-              {filteredInventory.map((inv, index) => {
-                const statusVal = getStatusInfo(inv);
-                return (
-                  <tr key={inv.id} className="border-b border-gray-50 hover:bg-gray-50/80">
-                    <td className="py-2 text-center text-xs">{index + 1}</td>
-                    <td className="py-2 text-sm font-medium">{inv.nama}</td>
-                    <td className="py-2">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${inv.stok <= 5 ? "bg-red-50 text-red-600" : "bg-green-50 text-green-700"}`}>
-                        {inv.stok}
-                      </span>
-                    </td>
-                    <td className="py-2 text-xs">{inv.satuan}</td>
-                    <td className="py-2 text-xs">
-                      {inv.vendor_nama ? (
-                        <div>
-                          <p className="font-medium text-blue-700">{inv.vendor_nama}</p>
-                          <p className="text-xs text-gray-500">SPK: {inv.no_spk || "-"}</p>
-                        </div>
-                      ) : "-"}
-                    </td>
-                    <td className="py-2 text-xs">{formatDate(inv.tanggal_mulai)}</td>
-                    <td className="py-2 text-xs">{formatDate(inv.tanggal_selesai)}</td>
-                    <td className="py-2 text-center text-xs">{inv.masa_sewa_bulan ? `${inv.masa_sewa_bulan} Bln` : "-"}</td>
-                    <td className="py-2 text-center">
-                      <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${getStatusBadge(statusVal)}`}>
-                        {statusVal}
-                      </span>
-                    </td>
-                    {userRole === "admin" && (
-                      <td className="py-2 text-right">
-                        <div className="flex justify-end gap-1">
-                          <button onClick={() => openEdit(inv)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg">
-                            <Edit className="w-3.5 h-3.5" />
-                          </button>
-                          <button onClick={() => askDelete(inv)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg">
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+        <div className="px-4 py-3">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left min-w-[1100px]">
+              <thead>
+                <tr className="border-b-2 text-gray-500 text-xs">
+                  <th className="pb-2 w-10 text-center">No</th>
+                  <th className="pb-2"><Box className="w-3 h-3 inline mr-1" /> Nama Barang</th>
+                  <th className="pb-2"><Hash className="w-3 h-3 inline mr-1" /> Stok</th>
+                  <th className="pb-2"><Scale className="w-3 h-3 inline mr-1" /> Satuan</th>
+                  <th className="pb-2"><Building2 className="w-3 h-3 inline mr-1" /> Vendor & Kontrak</th>
+                  <th className="pb-2"><CalendarDays className="w-3 h-3 inline mr-1" /> Mulai</th>
+                  <th className="pb-2"><CalendarDays className="w-3 h-3 inline mr-1" /> Selesai</th>
+                  <th className="pb-2 text-center"><Clock className="w-3 h-3 inline mr-1" /> Durasi</th>
+                  <th className="pb-2 text-center">Status</th>
+                  {userRole === "admin" && <th className="pb-2 text-right">Aksi</th>}
+                </tr>
+              </thead>
+              <tbody className="text-gray-700">
+                {filteredInventory.map((inv, index) => {
+                  const statusVal = getStatusInfo(inv);
+                  return (
+                    <tr key={inv.id} className="border-b border-gray-50 hover:bg-gray-50/80">
+                      <td className="py-2 text-center text-xs">{index + 1}</td>
+                      <td className="py-2 text-sm font-medium overflow-visible">
+                        <div className="relative group cursor-default">
+                          {inv.nama}
+                          <div className="absolute left-0 top-full mt-1 z-[999] hidden group-hover:block bg-gray-900 text-xs rounded-lg px-3 py-2 whitespace-nowrap shadow-xl pointer-events-none">
+                            <p className="!text-gray-400 mb-0.5">Document ID</p>
+                            <p className="font-mono !text-white">{inv.id}</p>
+                          </div>
                         </div>
                       </td>
-                    )}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      <td className="py-2">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${inv.stok <= 5 ? "bg-red-50 text-red-600" : "bg-green-50 text-green-700"}`}>
+                          {inv.stok}
+                        </span>
+                      </td>
+                      <td className="py-2 text-xs">{inv.satuan}</td>
+                      <td className="py-2 text-xs">
+                        {inv.vendor_nama ? (
+                          <div>
+                            <p className="font-medium text-blue-700">{inv.vendor_nama}</p>
+                            <p className="text-xs text-gray-500">SPK: {inv.no_spk || "-"}</p>
+                          </div>
+                        ) : "-"}
+                      </td>
+                      <td className="py-2 text-xs">{formatDate(inv.tanggal_mulai)}</td>
+                      <td className="py-2 text-xs">{formatDate(inv.tanggal_selesai)}</td>
+                      <td className="py-2 text-center text-xs">{inv.masa_sewa_bulan ? `${inv.masa_sewa_bulan} Bln` : "-"}</td>
+                      <td className="py-2 text-center">
+                        <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold border ${getStatusBadge(statusVal)}`}>
+                          {statusVal}
+                        </span>
+                      </td>
+                      {userRole === "admin" && (
+                        <td className="py-2 text-right">
+                          <div className="flex justify-end gap-1">
+                            <button onClick={() => openEdit(inv)} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg">
+                              <Edit className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={() => askDelete(inv)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      {/* ── Modal Form (komponen terpisah) ── */}
+      {/* ── Modal Form ── */}
       {userRole === "admin" && (
         <BarangFormModal
           isOpen={isModalOpen}
@@ -257,46 +266,22 @@ export default function MasterBarang({ inventory, userRole }) {
         />
       )}
 
-      {/* ── Konfirmasi Hapus ── */}
-      {deleteConfirm.show && (
-        <div className="fixed inset-0 bg-black/60 z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-6 text-center">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <AlertTriangle className="w-8 h-8 text-red-600" />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Konfirmasi Hapus</h3>
-              <p className="text-sm text-gray-500">
-                Yakin hapus <span className="font-bold text-gray-800">{deleteConfirm.name}</span>?
-              </p>
-            </div>
-            <div className="flex border-t border-gray-100">
-              <button
-                onClick={() => setDeleteConfirm({ show: false, id: null, name: "" })}
-                disabled={isSaving}
-                className="flex-1 px-4 py-4 text-sm font-bold text-gray-500 hover:bg-gray-50 border-r border-gray-100"
-              >
-                BATAL
-              </button>
-              <button
-                onClick={confirmDeleteAction}
-                disabled={isSaving}
-                className="flex-1 px-4 py-4 text-sm font-bold text-red-600 hover:bg-red-50 flex items-center justify-center gap-2"
-              >
-                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "YA, HAPUS"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ── Modal Konfirmasi Hapus ── */}
+      <ConfirmDeleteModal
+        show={deleteConfirm.show}
+        name={deleteConfirm.name}
+        isSaving={isSaving}
+        onConfirm={confirmDeleteAction}
+        onCancel={() => setDeleteConfirm({ show: false, id: null, name: "" })}
+      />
 
-      {/* ── Toast notif ── */}
-      {notif.show && (
-        <div className={`fixed bottom-6 right-6 z-[200] flex items-center gap-3 px-5 py-3 rounded-xl shadow-xl text-sm text-white animate-in slide-in-from-bottom-8 duration-300 ${notif.type === "success" ? "bg-green-600" : "bg-red-600"}`}>
-          {notif.type === "success" ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
-          {notif.message}
-        </div>
-      )}
+      {/* ── Toast Notifikasi ── */}
+      <ToastNotif
+        show={notif.show}
+        message={notif.message}
+        type={notif.type}
+        onClose={() => setNotif({ show: false, message: "", type: "" })}
+      />
     </div>
   );
 }

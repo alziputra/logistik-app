@@ -1,16 +1,33 @@
-// components/Form/FormView.jsx
-
 "use client";
-import { useState } from "react";                          // ← tambah import
-import { FileText, ArrowLeft, Plus, Trash2, AlertCircle } from "lucide-react";
+import { useState } from "react";
+import {
+  FileText, ArrowRight, Plus, Trash2, AlertCircle,
+  PackageCheck, PackageMinus, User, Building2, Hash,
+  MapPin, Calendar, ClipboardList, ChevronDown,
+} from "lucide-react";
 
 const NOMOR_PATTERN = /^\d{3}\/\d{5}\.\d{2}\/\d{2}\/\d{4}$/;
 
 const isNomorValid = (nomor) => {
   if (!nomor || !NOMOR_PATTERN.test(nomor)) return false;
-  const prefix = nomor.split("/")[0];
-  return prefix !== "000";
+  return nomor.split("/")[0] !== "000";
 };
+
+// ── Komponen input field kecil dengan label & icon ──
+const Field = ({ label, icon: Icon, children, className = "" }) => (
+  <div className={className}>
+    {label && (
+      <label className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+        {Icon && <Icon className="w-3 h-3" />}
+        {label}
+      </label>
+    )}
+    {children}
+  </div>
+);
+
+const inputCls =
+  "w-full px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-50 placeholder:text-gray-300";
 
 const FormView = ({
   formData,
@@ -23,337 +40,361 @@ const FormView = ({
   inventory,
   outlets,
 }) => {
-  
   const [nomorUrut, setNomorUrut] = useState("");
-
-  const handleLanjutPreview = () => {
-    if (!isNomorValid(formData.nomorSurat)) return;
-    setView("preview");
-  };
+  const [jenisTransaksi, setJenisTransaksi] = useState(
+    formData.jenisTransaksi || "Barang Keluar"
+  );
 
   const tahun = new Date().getFullYear();
   const suffix = `/00108.00/04/${tahun}`;
 
   const handleNomorChange = (e) => {
     const raw = e.target.value.replace(/\D/g, "").slice(0, 3);
-    setNomorUrut(raw);                                      // simpan nilai mentah
-
-    if (raw === "" || raw === "0" || raw === "00" || raw === "000") {
-      // Kosong atau belum terisi → kosongkan nomorSurat agar tombol disabled
+    setNomorUrut(raw);
+    if (!raw || ["0", "00", "000"].includes(raw)) {
       handleInputChange({ target: { name: "nomorSurat", value: "" } });
     } else {
-      const full = `${raw.padStart(3, "0")}${suffix}`;
-      handleInputChange({ target: { name: "nomorSurat", value: full } });
+      handleInputChange({ target: { name: "nomorSurat", value: `${raw.padStart(3, "0")}${suffix}` } });
     }
   };
 
-  // Tentukan status validasi untuk UI
-  const nomorIsEmpty  = !formData.nomorSurat;
-  const nomorIs000    = formData.nomorSurat?.startsWith("000/");
-  const nomorIsValid  = isNomorValid(formData.nomorSurat);
+  const handleJenisChange = (jenis) => {
+    setJenisTransaksi(jenis);
+    handleInputChange({ target: { name: "jenisTransaksi", value: jenis } });
+  };
+
+  const nomorIsEmpty = !formData.nomorSurat;
+  const nomorIs000   = formData.nomorSurat?.startsWith("000/");
+  const nomorIsValid = isNomorValid(formData.nomorSurat);
+  const canProceed   = nomorIsValid;
+
+  const isKeluar = jenisTransaksi === "Barang Keluar";
 
   return (
-    <div className="max-w-6xl mx-auto bg-white p-6 md:p-8 rounded-xl shadow-lg border border-gray-100 print:hidden mt-6">
-      <div className="flex items-center justify-between mb-8 pb-4 border-b border-gray-200">
-        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-          <FileText className="text-blue-500" /> Buat Surat Serah Terima
-        </h2>
+    <div className="max-w-6xl mx-auto mt-6 print:hidden">
+
+      {/* ── TOP BAR ── */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-4 px-6 py-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center flex-shrink-0">
+            <FileText className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-gray-900 leading-tight">Buat Surat Serah Terima</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Isi semua data dengan benar sebelum lanjut ke preview</p>
+          </div>
+        </div>
         <button
-          onClick={handleLanjutPreview}
-          disabled={!nomorIsValid}
-          className="bg-gray-800 text-white px-5 py-2.5 rounded-lg hover:bg-gray-900 transition-colors font-medium flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
+          onClick={() => canProceed && setView("preview")}
+          disabled={!canProceed}
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 text-white px-5 py-2.5 rounded-xl text-sm font-semibold transition-all shadow-sm"
         >
-          Lanjut ke Preview <ArrowLeft className="w-4 h-4 transform rotate-180" />
+          Lanjut ke Preview <ArrowRight className="w-4 h-4" />
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div>
-          <label className="text-sm block mb-1 font-medium text-gray-600">Transaksi</label>
-          <select
-            name="jenisTransaksi"
-            value={formData.jenisTransaksi}
-            onChange={handleInputChange}
-            className="w-full p-2 border border-gray-300 rounded-lg outline-none focus:border-blue-500 bg-gray-50"
-          >
-            <option>Barang Keluar</option>
-            <option>Barang Masuk</option>
-          </select>
-        </div>
+      {/* ── SECTION 1: Info Dokumen ── */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-4 p-6">
+        <p className="text-[10px] font-bold tracking-[0.18em] uppercase text-gray-400 mb-4">
+          Informasi Dokumen
+        </p>
 
-        {/* ─── Nomor Surat (FIXED) ─── */}
-        <div className="md:col-span-2">
-          <label className="text-sm block mb-1 font-medium text-gray-600">Nomor Surat</label>
-          <div
-            className={`flex items-center border rounded-lg overflow-hidden transition-colors ${
-              nomorIsValid
-                ? "border-green-400 bg-green-50"
-                : "border-gray-300"
-            }`}
-          >
-            <input
-              type="text"
-              inputMode="numeric"
-              maxLength={3}
-              placeholder="000"
-              value={nomorUrut}                              // ← pakai state lokal
-              onChange={handleNomorChange}                   // ← handler baru
-              className="w-20 p-2 text-center font-mono font-bold text-lg outline-none bg-transparent"
-            />
-            <span className="text-gray-500 font-mono text-sm pr-3">{suffix}</span>
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
+
+          {/* Jenis Transaksi — toggle pill */}
+          <div className="md:col-span-3">
+            <Field label="Jenis Transaksi">
+              <div className="flex gap-2 mt-0.5">
+                <button
+                  onClick={() => handleJenisChange("Barang Keluar")}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border text-xs font-semibold transition-all ${
+                    isKeluar
+                      ? "bg-red-50 border-red-300 text-red-700"
+                      : "bg-white border-gray-200 text-gray-400 hover:border-gray-300"
+                  }`}
+                >
+                  <PackageMinus className="w-3.5 h-3.5" /> Keluar
+                </button>
+                <button
+                  onClick={() => handleJenisChange("Barang Masuk")}
+                  className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border text-xs font-semibold transition-all ${
+                    !isKeluar
+                      ? "bg-green-50 border-green-300 text-green-700"
+                      : "bg-white border-gray-200 text-gray-400 hover:border-gray-300"
+                  }`}
+                >
+                  <PackageCheck className="w-3.5 h-3.5" /> Masuk
+                </button>
+              </div>
+            </Field>
           </div>
 
-          {/* Pesan validasi */}
-          {nomorIs000 && (
-            <p className="text-xs text-red-500 mt-1 flex items-center gap-1">
-              <AlertCircle className="w-3 h-3" /> Nomor surat masih 000, harap isi nomor yang benar
+          {/* Nomor Surat */}
+          <div className="md:col-span-5">
+            <Field label="Nomor Surat" icon={Hash}>
+              <div
+                className={`flex items-center rounded-lg border overflow-hidden transition-all ${
+                  nomorIsValid
+                    ? "border-green-400 bg-green-50 ring-2 ring-green-50"
+                    : nomorIs000
+                    ? "border-red-300 bg-red-50"
+                    : "border-gray-200 bg-white"
+                }`}
+              >
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={3}
+                  placeholder="000"
+                  value={nomorUrut}
+                  onChange={handleNomorChange}
+                  className="w-16 py-2 pl-3 text-center font-mono font-bold text-base outline-none bg-transparent text-gray-900"
+                />
+                <span className="text-gray-400 font-mono text-xs px-2 border-l border-gray-200 bg-gray-50/80 py-2 select-none">
+                  {suffix}
+                </span>
+              </div>
+              {nomorIs000 && (
+                <p className="flex items-center gap-1 text-[11px] text-red-500 mt-1.5">
+                  <AlertCircle className="w-3 h-3" /> Nomor tidak boleh 000
+                </p>
+              )}
+              {!nomorIsEmpty && nomorIsValid && (
+                <p className="text-[11px] text-green-600 mt-1.5 font-mono">
+                  ✓ {formData.nomorSurat}
+                </p>
+              )}
+            </Field>
+          </div>
+
+          {/* Tanggal */}
+          <div className="md:col-span-2">
+            <Field label="Tanggal" icon={Calendar}>
+              <input
+                type="date"
+                name="tanggal"
+                value={formData.tanggal}
+                onChange={handleInputChange}
+                className={inputCls}
+              />
+            </Field>
+          </div>
+
+          {/* Lokasi */}
+          <div className="md:col-span-2">
+            <Field label="Lokasi" icon={MapPin}>
+              <input
+                type="text"
+                name="lokasi"
+                value={formData.lokasi}
+                onChange={handleInputChange}
+                placeholder="Contoh: Gudang Pusat"
+                className={inputCls}
+              />
+            </Field>
+          </div>
+        </div>
+      </div>
+
+      {/* ── SECTION 2: Pihak yang Terlibat ── */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-4 p-6">
+        <p className="text-[10px] font-bold tracking-[0.18em] uppercase text-gray-400 mb-4">
+          Pihak yang Terlibat
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+          {/* Yang Menyerahkan */}
+          <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-[10px] font-bold">1</div>
+              <p className="text-xs font-bold text-blue-800 uppercase tracking-wider">Yang Menyerahkan</p>
+            </div>
+            <div className="space-y-2">
+              <input name="pengirimNama" value={formData.pengirimNama} onChange={handleInputChange}
+                placeholder="Nama lengkap" className={inputCls} />
+              <input name="pengirimJabatan" value={formData.pengirimJabatan} onChange={handleInputChange}
+                placeholder="Jabatan" className={inputCls} />
+              <input list="db-instansi" name="pengirimInstansi" value={formData.pengirimInstansi} onChange={handleInputChange}
+                placeholder="Instansi / Area" className={inputCls} />
+            </div>
+          </div>
+
+          {/* Mengetahui */}
+          <div className="rounded-xl border border-purple-100 bg-purple-50/40 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-6 h-6 rounded-full bg-purple-600 flex items-center justify-center text-white text-[10px] font-bold">2</div>
+              <p className="text-xs font-bold text-purple-800 uppercase tracking-wider">Mengetahui</p>
+            </div>
+            <div className="space-y-2">
+              <input name="mengetahuiNama" value={formData.mengetahuiNama} onChange={handleInputChange}
+                placeholder="Nama lengkap" className={inputCls} />
+              <input name="mengetahuiJabatan" value={formData.mengetahuiJabatan} onChange={handleInputChange}
+                placeholder="Jabatan" className={inputCls} />
+            </div>
+          </div>
+
+          {/* Yang Menerima */}
+          <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <div className="w-6 h-6 rounded-full bg-emerald-600 flex items-center justify-center text-white text-[10px] font-bold">3</div>
+              <p className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Yang Menerima</p>
+            </div>
+            <div className="space-y-2">
+              <input name="penerimaNama" value={formData.penerimaNama} onChange={handleInputChange}
+                placeholder="Nama lengkap" className={inputCls} />
+              <input name="penerimaJabatan" value={formData.penerimaJabatan} onChange={handleInputChange}
+                placeholder="Jabatan" className={inputCls} />
+              <input list="db-instansi" name="penerimaInstansi" value={formData.penerimaInstansi} onChange={handleInputChange}
+                placeholder="Instansi / Area" className={inputCls} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── SECTION 3: Daftar Barang ── */}
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <ClipboardList className="w-4 h-4 text-gray-400" />
+            <p className="text-[10px] font-bold tracking-[0.18em] uppercase text-gray-400">
+              Daftar Barang
             </p>
-          )}
-          {!nomorIsEmpty && nomorIsValid && (
-            <p className="text-xs text-green-600 mt-1">✓ {formData.nomorSurat}</p>
-          )}
+            <span className="text-[10px] font-semibold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
+              {items.length} baris
+            </span>
+          </div>
+          <button
+            onClick={addItem}
+            className="flex items-center gap-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 active:scale-95 text-white px-3.5 py-2 rounded-lg transition-all"
+          >
+            <Plus className="w-3.5 h-3.5" /> Tambah Baris
+          </button>
         </div>
 
-        <div>
-          <label className="text-sm block mb-1 font-medium text-gray-600">Tanggal</label>
-          <input
-            type="date"
-            name="tanggal"
-            value={formData.tanggal}
-            onChange={handleInputChange}
-            className="w-full p-2 border border-gray-300 rounded-lg outline-none focus:border-blue-500"
-          />
-        </div>
-      </div>
+        <datalist id="db-barang">
+          {inventory.map((i) => <option key={i.id} value={i.nama} />)}
+        </datalist>
+        <datalist id="db-instansi">
+          {outlets?.map((out) => <option key={out.id} value={out.nama} />)}
+        </datalist>
 
-      {/* Sisa komponen tidak berubah ... */}
+        <div className="rounded-xl border border-gray-100 overflow-hidden">
+          {/* Header tabel */}
+          <div
+            className="grid text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-gray-50 border-b border-gray-100 px-3 py-2.5"
+            style={{ gridTemplateColumns: "40px 1fr 120px 64px 90px 180px 1fr 44px" }}
+          >
+            <div className="text-center">No</div>
+            <div>Nama Barang</div>
+            <div>S/N</div>
+            <div className="text-center">Qty</div>
+            <div>Satuan</div>
+            <div>Outlet Tujuan</div>
+            <div>Keterangan</div>
+            <div />
+          </div>
 
-      {/* Lokasi — baris baru karena kolom nomor surat melebar */}
-      <div className="mb-6">
-        <label className="text-sm block mb-1 font-medium text-gray-600">
-          Lokasi
-        </label>
-        <input
-          type="text"
-          name="lokasi"
-          value={formData.lokasi}
-          onChange={handleInputChange}
-          className="w-full p-2 border border-gray-300 rounded-lg outline-none focus:border-blue-500"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-blue-50/50 p-5 rounded-xl border border-blue-100">
-          <h3 className="font-bold text-sm mb-3 text-blue-800 flex items-center gap-2">
-            <span className="bg-blue-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs">
-              1
-            </span>{" "}
-            Yang Menyerahkan
-          </h3>
-          <input
-            name="pengirimNama"
-            value={formData.pengirimNama}
-            onChange={handleInputChange}
-            placeholder="Nama Lengkap"
-            className="w-full p-2 mb-3 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-500"
-          />
-          <input
-            name="pengirimJabatan"
-            value={formData.pengirimJabatan}
-            onChange={handleInputChange}
-            placeholder="Jabatan"
-            className="w-full p-2 mb-3 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-500"
-          />
-          <input
-            list="db-instansi"
-            name="pengirimInstansi"
-            value={formData.pengirimInstansi}
-            onChange={handleInputChange}
-            placeholder="Instansi / Area"
-            className="w-full p-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-500"
-          />
-        </div>
-        <div className="bg-purple-50/50 p-5 rounded-xl border border-purple-100">
-          <h3 className="font-bold text-sm mb-3 text-purple-800 flex items-center gap-2">
-            <span className="bg-purple-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs">
-              2
-            </span>{" "}
-            Mengetahui
-          </h3>
-          <input
-            name="mengetahuiNama"
-            value={formData.mengetahuiNama}
-            onChange={handleInputChange}
-            placeholder="Nama Lengkap"
-            className="w-full p-2 mb-3 border border-gray-200 rounded-lg text-sm outline-none focus:border-purple-500"
-          />
-          <input
-            name="mengetahuiJabatan"
-            value={formData.mengetahuiJabatan}
-            onChange={handleInputChange}
-            placeholder="Jabatan"
-            className="w-full p-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-purple-500"
-          />
-        </div>
-        <div className="bg-green-50/50 p-5 rounded-xl border border-green-100">
-          <h3 className="font-bold text-sm mb-3 text-green-800 flex items-center gap-2">
-            <span className="bg-green-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs">
-              3
-            </span>{" "}
-            Yang Menerima
-          </h3>
-          <input
-            name="penerimaNama"
-            value={formData.penerimaNama}
-            onChange={handleInputChange}
-            placeholder="Nama Lengkap"
-            className="w-full p-2 mb-3 border border-gray-200 rounded-lg text-sm outline-none focus:border-green-500"
-          />
-          <input
-            name="penerimaJabatan"
-            value={formData.penerimaJabatan}
-            onChange={handleInputChange}
-            placeholder="Jabatan"
-            className="w-full p-2 mb-3 border border-gray-200 rounded-lg text-sm outline-none focus:border-green-500"
-          />
-          <input
-            list="db-instansi"
-            name="penerimaInstansi"
-            value={formData.penerimaInstansi}
-            onChange={handleInputChange}
-            placeholder="Instansi / Area"
-            className="w-full p-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-green-500"
-          />
-        </div>
-      </div>
-
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="font-bold text-lg text-gray-800">Daftar Barang</h3>
-        <button
-          onClick={addItem}
-          className="text-sm bg-blue-100 text-blue-700 px-4 py-2 rounded-lg font-medium flex items-center hover:bg-blue-200 transition-colors"
-        >
-          <Plus className="w-4 h-4 mr-1" /> Tambah Baris
-        </button>
-      </div>
-
-      <datalist id="db-barang">
-        {inventory.map((i) => (
-          <option key={i.id} value={i.nama} />
-        ))}
-      </datalist>
-      <datalist id="db-instansi">
-        {outlets &&
-          outlets.map((out) => <option key={out.id} value={out.nama} />)}
-      </datalist>
-
-      <div className="overflow-x-auto border border-gray-200 rounded-lg shadow-sm">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-gray-50 text-sm text-gray-600">
-              <th className="p-3 border-b w-10 text-center font-semibold">
-                No
-              </th>
-              <th className="p-3 border-b min-w-[200px] font-semibold">
-                Nama Barang
-              </th>
-              <th className="p-3 border-b w-32 font-semibold">S/N</th>
-              <th className="p-3 border-b w-20 text-center font-semibold">
-                Qty
-              </th>
-              <th className="p-3 border-b w-24 font-semibold">Satuan</th>
-              <th className="p-3 border-b w-56 font-semibold">Outlet Tujuan</th>
-              <th className="p-3 border-b font-semibold">Keterangan</th>
-              <th className="p-3 border-b w-12 text-center font-semibold">
-                Aksi
-              </th>
-            </tr>
-          </thead>
-          <tbody>
+          {/* Rows */}
+          <div className="divide-y divide-gray-50">
             {items.map((item, idx) => (
-              <tr key={item.id} className="border-b hover:bg-gray-50/50">
-                <td className="p-2 text-center text-gray-500 text-sm">
-                  {idx + 1}
-                </td>
-                <td className="p-2">
-                  <input
-                    list="db-barang"
-                    value={item.nama}
-                    onChange={(e) =>
-                      handleItemChange(item.id, "nama", e.target.value)
-                    }
-                    className="w-full p-2 border border-gray-200 rounded-md text-sm outline-none focus:border-blue-500"
-                    placeholder="Ketik/Pilih Barang..."
-                  />
-                </td>
-                <td className="p-2">
-                  <input
-                    value={item.sn}
-                    onChange={(e) =>
-                      handleItemChange(item.id, "sn", e.target.value)
-                    }
-                    className="w-full p-2 border border-gray-200 rounded-md text-sm outline-none focus:border-blue-500"
-                    placeholder="S/N"
-                  />
-                </td>
-                <td className="p-2">
-                  <input
-                    type="number"
-                    min="1"
-                    value={item.kuantitas}
-                    onChange={(e) =>
-                      handleItemChange(item.id, "kuantitas", e.target.value)
-                    }
-                    className="w-full p-2 border border-gray-200 rounded-md text-sm text-center outline-none focus:border-blue-500"
-                  />
-                </td>
-                <td className="p-2">
+              <div
+                key={item.id}
+                className="grid items-center gap-2 px-3 py-2 hover:bg-gray-50/60 transition-colors group"
+                style={{ gridTemplateColumns: "40px 1fr 120px 64px 90px 180px 1fr 44px" }}
+              >
+                {/* No */}
+                <div className="text-center text-xs font-mono text-gray-300 font-semibold">
+                  {String(idx + 1).padStart(2, "0")}
+                </div>
+
+                {/* Nama Barang */}
+                <input
+                  list="db-barang"
+                  value={item.nama}
+                  onChange={(e) => handleItemChange(item.id, "nama", e.target.value)}
+                  className={inputCls + " text-xs"}
+                  placeholder="Ketik atau pilih..."
+                />
+
+                {/* S/N */}
+                <input
+                  value={item.sn}
+                  onChange={(e) => handleItemChange(item.id, "sn", e.target.value)}
+                  className={inputCls + " text-xs font-mono"}
+                  placeholder="Serial number"
+                />
+
+                {/* Qty */}
+                <input
+                  type="number"
+                  min="1"
+                  value={item.kuantitas}
+                  onChange={(e) => handleItemChange(item.id, "kuantitas", e.target.value)}
+                  className={inputCls + " text-xs text-center"}
+                />
+
+                {/* Satuan */}
+                <div className="relative">
                   <select
                     value={item.satuan}
-                    onChange={(e) =>
-                      handleItemChange(item.id, "satuan", e.target.value)
-                    }
-                    className="w-full p-2 border border-gray-200 rounded-md text-sm outline-none focus:border-blue-500 bg-white"
+                    onChange={(e) => handleItemChange(item.id, "satuan", e.target.value)}
+                    className={inputCls + " text-xs appearance-none pr-7"}
                   >
                     <option>Pcs</option>
                     <option>Unit</option>
                     <option>Box</option>
+                    <option>Set</option>
+                    <option>Lembar</option>
                   </select>
-                </td>
-                <td className="p-2">
-                  <input
-                    list="db-instansi"
-                    value={item.outlet || ""}
-                    onChange={(e) =>
-                      handleItemChange(item.id, "outlet", e.target.value)
-                    }
-                    className="w-full p-2 border border-gray-200 rounded-md text-sm outline-none focus:border-blue-500"
-                    placeholder="Pilih Outlet..."
-                  />
-                </td>
-                <td className="p-2">
-                  <input
-                    value={item.keterangan}
-                    onChange={(e) =>
-                      handleItemChange(item.id, "keterangan", e.target.value)
-                    }
-                    className="w-full p-2 border border-gray-200 rounded-md text-sm outline-none focus:border-blue-500"
-                    placeholder="Catatan..."
-                  />
-                </td>
-                <td className="p-2 text-center">
+                  <ChevronDown className="w-3 h-3 text-gray-300 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+
+                {/* Outlet */}
+                <input
+                  list="db-instansi"
+                  value={item.outlet || ""}
+                  onChange={(e) => handleItemChange(item.id, "outlet", e.target.value)}
+                  className={inputCls + " text-xs"}
+                  placeholder="Pilih outlet..."
+                />
+
+                {/* Keterangan */}
+                <input
+                  value={item.keterangan}
+                  onChange={(e) => handleItemChange(item.id, "keterangan", e.target.value)}
+                  className={inputCls + " text-xs"}
+                  placeholder="Catatan..."
+                />
+
+                {/* Hapus */}
+                <div className="flex justify-center">
                   <button
                     onClick={() => removeItem(item.id)}
                     disabled={items.length === 1}
-                    className="text-red-500 disabled:opacity-30 p-1.5 hover:bg-red-50 rounded-md transition-colors"
+                    className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
-                </td>
-              </tr>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
+          </div>
+
+          {/* Footer ringkasan */}
+          <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50 border-t border-gray-100">
+            <p className="text-[11px] text-gray-400">
+              {items.filter(i => i.nama).length} barang diisi
+            </p>
+            <p className="text-[11px] font-semibold text-gray-600">
+              Total:{" "}
+              <span className="font-mono text-gray-900">
+                {items.reduce((s, i) => s + Number(i.kuantitas || 0), 0)}
+              </span>{" "}
+              unit
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -98,28 +98,28 @@ const PreviewView = ({
         </div>
 
         {/* Tabel Barang */}
-        <table className="w-full border-collapse border border-black text-gray-900 text-xs print:text-[9px] mb-4 print:mb-3">
+        <table className="w-full border-collapse">
           <thead className="bg-gray-100">
             <tr>
-              <th className="border border-black py-1 px-1 w-7 text-center">
+              <th className="border border-black py-2 px-2 text-center w-[5%]">
                 No
               </th>
-              <th className="border border-black py-1 px-2 text-left">
+              <th className="border border-black py-2 px-2 text-left w-[25%]">
                 Nama Barang
               </th>
-              <th className="border border-black py-1 px-2 text-left w-28">
+              <th className="border border-black py-2 px-2 text-left w-[15%]">
                 S/N
               </th>
-              <th className="border border-black py-1 px-1 text-center w-8">
+              <th className="border border-black py-2 px-2 text-center w-[8%]">
                 Qty
               </th>
-              <th className="border border-black py-1 px-1 text-center w-12">
+              <th className="border border-black py-2 px-2 text-center w-[12%]">
                 Satuan
               </th>
-              <th className="border border-black py-1 px-2 text-left w-40">
+              <th className="border border-black py-2 px-2 text-left w-[20%]">
                 Outlet Tujuan
               </th>
-              <th className="border border-black py-1 px-2 text-left w-20">
+              <th className="border border-black py-2 px-2 text-left w-[15%]">
                 Keterangan
               </th>
             </tr>
@@ -127,17 +127,17 @@ const PreviewView = ({
           <tbody>
             {items.map((item, index) => (
               <tr key={item.id} className="break-inside-avoid">
-                <td className="border border-black py-1 px-1 text-center">
+                <td className="border border-black py-1 px-2 text-center">
                   {index + 1}
                 </td>
                 <td className="border border-black py-1 px-2">{item.nama}</td>
                 <td className="border border-black py-1 px-2 break-all">
                   {item.sn}
                 </td>
-                <td className="border border-black py-1 px-1 text-center">
+                <td className="border border-black py-1 px-2 text-center">
                   {item.kuantitas}
                 </td>
-                <td className="border border-black py-1 px-1 text-center">
+                <td className="border border-black py-1 px-2 text-center">
                   {item.satuan}
                 </td>
                 <td className="border border-black py-1 px-2">{item.outlet}</td>

@@ -53,19 +53,11 @@ export function useTransaksi({
     }
   };
 
-  // ── Generate nomor surat ───────────────────────────────────────────────
-  const generateNomorSurat = () => {
-    const total = transactions.length + 1;
-    const bulan = new Date().getMonth() + 1;
-    const tahun = new Date().getFullYear();
-    return `${String(total).padStart(3, "0")}/00108.00/${String(bulan).padStart(2, "0")}/${tahun}`;
-  };
-
   // ── Mulai dokumen baru ─────────────────────────────────────────────────
   const startNewDocument = (jenis = "Barang Keluar") => {
     setFormData({
       ...createInitialFormData(),
-      nomorSurat: generateNomorSurat(),
+      nomorSurat: "",
       jenisTransaksi: jenis,
     });
     setItems([createInitialItem()]);

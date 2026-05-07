@@ -54,7 +54,9 @@ const FormView = ({
     if (!raw || ["0", "00", "000"].includes(raw)) {
       handleInputChange({ target: { name: "nomorSurat", value: "" } });
     } else {
-      handleInputChange({ target: { name: "nomorSurat", value: `${raw.padStart(3, "0")}${suffix}` } });
+      handleInputChange({
+        target: { name: "nomorSurat", value: `${raw.padStart(3, "0")}${suffix}` },
+      });
     }
   };
 
@@ -64,15 +66,14 @@ const FormView = ({
   };
 
   const nomorIsEmpty = !formData.nomorSurat;
-  const nomorIs000   = formData.nomorSurat?.startsWith("000/");
+  const nomorIs000 = formData.nomorSurat?.startsWith("000/");
   const nomorIsValid = isNomorValid(formData.nomorSurat);
-  const canProceed   = nomorIsValid;
+  const canProceed = nomorIsValid;
 
   const isKeluar = jenisTransaksi === "Barang Keluar";
 
   return (
     <div className="max-w-6xl mx-auto mt-6 print:hidden">
-
       {/* ── TOP BAR ── */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 mb-4 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -100,7 +101,6 @@ const FormView = ({
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-
           {/* Jenis Transaksi — toggle pill */}
           <div className="md:col-span-3">
             <Field label="Jenis Transaksi">
@@ -203,7 +203,6 @@ const FormView = ({
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
           {/* Yang Menyerahkan */}
           <div className="rounded-xl border border-blue-100 bg-blue-50/40 p-4">
             <div className="flex items-center gap-2 mb-3">
@@ -273,116 +272,115 @@ const FormView = ({
         </div>
 
         <datalist id="db-barang">
-          {inventory.map((i) => <option key={i.id} value={i.nama} />)}
+          {inventory.map((i) => (
+            <option key={i.id} value={i.nama} />
+          ))}
         </datalist>
         <datalist id="db-instansi">
-          {outlets?.map((out) => <option key={out.id} value={out.nama} />)}
+          {outlets?.map((out) => (
+            <option key={out.id} value={out.nama} />
+          ))}
         </datalist>
 
-        <div className="rounded-xl border border-gray-100 overflow-hidden">
-          {/* Header tabel */}
-          <div
-            className="grid text-[10px] font-bold uppercase tracking-wider text-gray-400 bg-gray-50 border-b border-gray-100 px-3 py-2.5"
-            style={{ gridTemplateColumns: "40px 1fr 120px 64px 90px 180px 1fr 44px" }}
-          >
-            <div className="text-center">No</div>
-            <div>Nama Barang</div>
-            <div>S/N</div>
-            <div className="text-center">Qty</div>
-            <div>Satuan</div>
-            <div>Outlet Tujuan</div>
-            <div>Keterangan</div>
-            <div />
+        {/* Container tabel digabung dengan Footer Ringkasan */}
+        <div className="rounded-xl border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse whitespace-nowrap min-w-[800px]">
+              <thead className="bg-gray-50 border-b border-gray-200 text-[10px] font-bold uppercase tracking-wider text-gray-500">
+                <tr>
+                  <th className="px-3 py-3 text-center w-12">No</th>
+                  <th className="px-3 py-3 w-[25%]">Nama Barang</th>
+                  <th className="px-3 py-3 w-[15%]">S/N</th>
+                  <th className="px-3 py-3 text-center w-20">Qty</th>
+                  <th className="px-3 py-3 w-28">Satuan</th>
+                  <th className="px-3 py-3 w-[20%]">Outlet Tujuan</th>
+                  <th className="px-3 py-3 min-w-[150px]">Keterangan</th>
+                  <th className="px-3 py-3 w-12 text-center">Aksi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {items.map((item, idx) => (
+                  <tr
+                    key={item.id}
+                    className="hover:bg-blue-50/30 transition-colors group"
+                  >
+                    <td className="px-3 py-2 text-center text-xs font-mono text-gray-400 font-semibold">
+                      {String(idx + 1).padStart(2, "0")}
+                    </td>
+                    <td className="px-2 py-2">
+                      <input
+                        list="db-barang"
+                        value={item.nama}
+                        onChange={(e) => handleItemChange(item.id, "nama", e.target.value)}
+                        className="w-full text-xs px-2 py-2 border border-transparent hover:border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-md bg-transparent focus:bg-white transition-all outline-none"
+                        placeholder="Ketik atau pilih..."
+                      />
+                    </td>
+                    <td className="px-2 py-2">
+                      <input
+                        value={item.sn}
+                        onChange={(e) => handleItemChange(item.id, "sn", e.target.value)}
+                        className="w-full text-xs font-mono px-2 py-2 border border-transparent hover:border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-md bg-transparent focus:bg-white transition-all outline-none"
+                        placeholder="Serial number"
+                      />
+                    </td>
+                    <td className="px-2 py-2">
+                      <input
+                        type="number"
+                        min="1"
+                        value={item.kuantitas}
+                        onChange={(e) => handleItemChange(item.id, "kuantitas", e.target.value)}
+                        className="w-full text-xs text-center px-2 py-2 border border-transparent hover:border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-md bg-transparent focus:bg-white transition-all outline-none"
+                      />
+                    </td>
+                    <td className="px-2 py-2 relative">
+                      <select
+                        value={item.satuan}
+                        onChange={(e) => handleItemChange(item.id, "satuan", e.target.value)}
+                        className="w-full text-xs appearance-none px-2 py-2 border border-transparent hover:border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-md bg-transparent focus:bg-white transition-all outline-none pr-7 cursor-pointer"
+                      >
+                        <option>Pcs</option>
+                        <option>Unit</option>
+                        <option>Box</option>
+                        <option>Set</option>
+                        <option>Lembar</option>
+                      </select>
+                      <ChevronDown className="w-3 h-3 text-gray-400 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none group-hover:text-gray-600 transition-colors" />
+                    </td>
+                    <td className="px-2 py-2">
+                      <input
+                        list="db-instansi"
+                        value={item.outlet || ""}
+                        onChange={(e) => handleItemChange(item.id, "outlet", e.target.value)}
+                        className="w-full text-xs px-2 py-2 border border-transparent hover:border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-md bg-transparent focus:bg-white transition-all outline-none"
+                        placeholder="Pilih outlet..."
+                      />
+                    </td>
+                    <td className="px-2 py-2">
+                      <input
+                        value={item.keterangan}
+                        onChange={(e) => handleItemChange(item.id, "keterangan", e.target.value)}
+                        className="w-full text-xs px-2 py-2 border border-transparent hover:border-gray-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 rounded-md bg-transparent focus:bg-white transition-all outline-none"
+                        placeholder="Catatan..."
+                      />
+                    </td>
+                    <td className="px-2 py-2 text-center">
+                      <button
+                        onClick={() => removeItem(item.id)}
+                        disabled={items.length === 1}
+                        className="w-7 h-7 mx-auto flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-all"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
 
-          {/* Rows */}
-          <div className="divide-y divide-gray-50">
-            {items.map((item, idx) => (
-              <div
-                key={item.id}
-                className="grid items-center gap-2 px-3 py-2 hover:bg-gray-50/60 transition-colors group"
-                style={{ gridTemplateColumns: "40px 1fr 120px 64px 90px 180px 1fr 44px" }}
-              >
-                {/* No */}
-                <div className="text-center text-xs font-mono text-gray-300 font-semibold">
-                  {String(idx + 1).padStart(2, "0")}
-                </div>
-
-                {/* Nama Barang */}
-                <input
-                  list="db-barang"
-                  value={item.nama}
-                  onChange={(e) => handleItemChange(item.id, "nama", e.target.value)}
-                  className={inputCls + " text-xs"}
-                  placeholder="Ketik atau pilih..."
-                />
-
-                {/* S/N */}
-                <input
-                  value={item.sn}
-                  onChange={(e) => handleItemChange(item.id, "sn", e.target.value)}
-                  className={inputCls + " text-xs font-mono"}
-                  placeholder="Serial number"
-                />
-
-                {/* Qty */}
-                <input
-                  type="number"
-                  min="1"
-                  value={item.kuantitas}
-                  onChange={(e) => handleItemChange(item.id, "kuantitas", e.target.value)}
-                  className={inputCls + " text-xs text-center"}
-                />
-
-                {/* Satuan */}
-                <div className="relative">
-                  <select
-                    value={item.satuan}
-                    onChange={(e) => handleItemChange(item.id, "satuan", e.target.value)}
-                    className={inputCls + " text-xs appearance-none pr-7"}
-                  >
-                    <option>Pcs</option>
-                    <option>Unit</option>
-                    <option>Box</option>
-                    <option>Set</option>
-                    <option>Lembar</option>
-                  </select>
-                  <ChevronDown className="w-3 h-3 text-gray-300 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
-
-                {/* Outlet */}
-                <input
-                  list="db-instansi"
-                  value={item.outlet || ""}
-                  onChange={(e) => handleItemChange(item.id, "outlet", e.target.value)}
-                  className={inputCls + " text-xs"}
-                  placeholder="Pilih outlet..."
-                />
-
-                {/* Keterangan */}
-                <input
-                  value={item.keterangan}
-                  onChange={(e) => handleItemChange(item.id, "keterangan", e.target.value)}
-                  className={inputCls + " text-xs"}
-                  placeholder="Catatan..."
-                />
-
-                {/* Hapus */}
-                <div className="flex justify-center">
-                  <button
-                    onClick={() => removeItem(item.id)}
-                    disabled={items.length === 1}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 disabled:opacity-20 disabled:cursor-not-allowed transition-all"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Footer ringkasan */}
-          <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50 border-t border-gray-100">
+          {/* Footer ringkasan sekarang dibungkus rapi di dalam container tabel */}
+          <div className="flex items-center justify-between px-4 py-2.5 bg-gray-50 border-t border-gray-200">
             <p className="text-[11px] text-gray-400">
               {items.filter(i => i.nama).length} barang diisi
             </p>

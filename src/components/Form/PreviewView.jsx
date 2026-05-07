@@ -45,6 +45,7 @@ const PreviewView = ({
       <div className="print:pb-4">
         {/* Header Surat */}
         <div className="flex items-center justify-between mb-8 print:mb-6 border-b-[3px] border-black pb-5 print:pb-3">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logo-pegadaian.png"
             alt="Logo Pegadaian"

@@ -23,6 +23,7 @@ export default function KomputerTable({
             <th className="px-3 py-2.5 font-semibold w-56">Spesifikasi Sistem</th>
             <th className="px-3 py-2.5 font-semibold">Vendor & Sewa</th>
             <th className="px-3 py-2.5 font-semibold text-center">Status & Kondisi</th>
+            <th className="px-3 py-2.5 font-semibold">Keterangan</th>
             {userRole === "admin" && (
               <th className="px-3 py-2.5 font-semibold text-right">Aksi</th>
             )}
@@ -68,7 +69,6 @@ export default function KomputerTable({
                     <div className="relative group cursor-default">
                       <p className="font-bold text-gray-800 text-xs">{comp.produk}</p>
                       <div className="absolute left-0 top-full mt-1 z-[999] hidden group-hover:block bg-gray-900 text-xs rounded-lg px-3 py-2 whitespace-nowrap shadow-xl pointer-events-none">
-                        <p className="!text-gray-400 mb-0.5">Document ID</p>
                         <p className="font-mono !text-white">{comp.id}</p>
                       </div>
                     </div>
@@ -137,7 +137,12 @@ export default function KomputerTable({
                       </span>
                     </div>
                   </td>
-
+                  {/* Keterangan */}
+                  <td className="px-3 py-2.5">
+                    <p className="text-[10px] text-gray-500 truncate" title={comp.deskripsi}>
+                      {comp.deskripsi || "-"}
+                    </p>
+                  </td>
                   {/* Aksi */}
                   {userRole === "admin" && (
                     <td className="px-3 py-2.5 text-right">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Plus,
   Search,
@@ -11,6 +11,9 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
+  Download,
+  Upload,
+  FileSpreadsheet,
 } from "lucide-react";
 import {
   doc,
@@ -20,6 +23,7 @@ import {
   collection,
 } from "firebase/firestore";
 import { db } from "../../lib/firebase";
+import Papa from "papaparse";
 import OutletFormModal from "./OutletFormModal";
 
 export default function MasterOutlet({ outlets, userRole }) {
@@ -38,11 +42,13 @@ export default function MasterOutlet({ outlets, userRole }) {
   });
   const [editingOutlet, setEditingOutlet] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [notif, setNotif] = useState({
     show: false,
     message: "",
     type: "success",
   });
+  const fileInputRef = useRef(null);
 
   const appId = process.env.NEXT_PUBLIC_APP_ID || "logistikku_app_01";
 
@@ -133,7 +139,6 @@ export default function MasterOutlet({ outlets, userRole }) {
         setIsSaving(false);
       }
     } else {
-      // ✅ Tangani add langsung di sini, tidak perlu prop handleAddOutlet
       setIsSaving(true);
       try {
         const form = new FormData(e.target);
@@ -156,8 +161,127 @@ export default function MasterOutlet({ outlets, userRole }) {
     }
   };
 
+  // ── CSV EXPORT & TEMPLATE & IMPORT ─────────────────────────────────────
+  const exportToCSV = () => {
+    const dataToExport = filteredOutlets.map((item) => ({
+      "Kode Outlet": item.kode || "-",
+      "Nama Outlet / Instansi": item.nama || "",
+    }));
+
+    const csvString = Papa.unparse(dataToExport);
+    const blob = new Blob(["\uFEFF" + csvString], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `Master_Instansi_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showLocalNotif("Data instansi berhasil diekspor ke CSV!", "success");
+  };
+
+  const downloadTemplateCSV = () => {
+    const sampleData = [
+      {
+        "Kode Outlet": "OUT-001",
+        "Nama Outlet / Instansi": "Pegadaian CP Kebayoran Baru",
+      },
+      {
+        "Kode Outlet": "OUT-002",
+        "Nama Outlet / Instansi": "Pegadaian Kanwil Jakarta 1",
+      },
+    ];
+
+    const csvString = Papa.unparse(sampleData);
+    const blob = new Blob(["\uFEFF" + csvString], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "Template_Import_Instansi.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleImportCSV = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async (results) => {
+        try {
+          const rows = results.data;
+          if (!rows || rows.length === 0) {
+            showLocalNotif("File CSV kosong atau format tidak sesuai.", "error");
+            setIsImporting(false);
+            return;
+          }
+
+          const newOutlets = [];
+          const colRef = collection(db, "artifacts", appId, "public", "data", "outlets");
+
+          for (const row of rows) {
+            const nama = row["Nama Outlet / Instansi"] || row["Nama Outlet"] || row["nama"] || row["Nama"] || "";
+            if (!nama.trim()) continue;
+
+            const payload = {
+              kode: row["Kode Outlet"] || row["kode"] || "-",
+              nama: nama.trim(),
+            };
+
+            const docRef = await addDoc(colRef, payload);
+            newOutlets.push({ id: docRef.id, ...payload });
+          }
+
+          if (newOutlets.length > 0) {
+            setLocalOutlets((prev) => [...prev, ...newOutlets]);
+            showLocalNotif(`Berhasil mengimpor ${newOutlets.length} instansi baru!`, "success");
+          } else {
+            showLocalNotif("Tidak ada data instansi valid yang diimpor.", "error");
+          }
+        } catch (err) {
+          console.error("Gagal mengimpor CSV:", err);
+          showLocalNotif("Gagal mengimpor data CSV.", "error");
+        } finally {
+          setIsImporting(false);
+          if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+      },
+      error: (err) => {
+        console.error("PapaParse error:", err);
+        showLocalNotif("Gagal membaca file CSV.", "error");
+        setIsImporting(false);
+      },
+    });
+  };
+
+  // ✅ Fungsi untuk Export JSON (Pertahankan dukungan existing)
+  const handleExportJSON = () => {
+    const dataToExport = JSON.stringify(filteredOutlets, null, 2);
+    const blob = new Blob([dataToExport], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `data_instansi_${new Date().getTime()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    showLocalNotif("Data berhasil diexport ke JSON!", "success");
+  };
+
   return (
     <div className="flex flex-col gap-8 animate-in fade-in zoom-in-95 duration-300 relative">
+      <input
+        type="file"
+        accept=".csv"
+        ref={fileInputRef}
+        onChange={handleImportCSV}
+        className="hidden"
+      />
       {/* ==================== TABEL UTAMA ==================== */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col lg:flex-row justify-between items-center gap-4">
@@ -179,14 +303,60 @@ export default function MasterOutlet({ outlets, userRole }) {
             <div className="bg-purple-50 text-purple-700 px-5 py-2.5 rounded-xl text-sm font-semibold shrink-0">
               Total: {filteredOutlets.length}
             </div>
-            {userRole === "admin" && (
+
+            {/* Action Bar Berbasis Ikon */}
+            <div className="flex items-center gap-2 bg-gray-50/80 p-1.5 rounded-2xl border border-gray-200/80 shadow-xs shrink-0">
+              {userRole === "admin" && (
+                <button
+                  type="button"
+                  onClick={downloadTemplateCSV}
+                  title="Unduh Template CSV"
+                  aria-label="Unduh Template CSV"
+                  className="p-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/80 rounded-xl transition-all shadow-xs flex items-center justify-center hover:scale-105 active:scale-95"
+                >
+                  <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
+                </button>
+              )}
+
+              {userRole === "admin" && (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isImporting}
+                  title="Impor dari CSV"
+                  aria-label="Impor dari CSV"
+                  className="p-2.5 bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200/80 rounded-xl transition-all shadow-xs flex items-center justify-center disabled:opacity-50 hover:scale-105 active:scale-95"
+                >
+                  {isImporting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+                </button>
+              )}
+
               <button
-                onClick={openAdd}
-                className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium transition-colors flex items-center gap-2 shrink-0"
+                type="button"
+                onClick={exportToCSV}
+                title="Ekspor ke CSV"
+                aria-label="Ekspor ke CSV"
+                className="p-2.5 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200/80 rounded-xl transition-all shadow-xs flex items-center justify-center hover:scale-105 active:scale-95"
               >
-                <Plus className="w-4 h-4" /> Tambah Outlet
+                <Download className="w-5 h-5" />
               </button>
-            )}
+
+              {userRole === "admin" && (
+                <>
+                  <div className="h-6 w-px bg-gray-200 mx-1" />
+
+                  <button
+                    type="button"
+                    onClick={openAdd}
+                    title="Tambah Outlet Baru"
+                    aria-label="Tambah Outlet Baru"
+                    className="p-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-sm transition-all flex items-center justify-center hover:scale-105 active:scale-95"
+                  >
+                    <Plus className="w-5 h-5" />
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
 

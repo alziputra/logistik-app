@@ -4,7 +4,7 @@ import {
   deleteDoc, doc, writeBatch,
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import { parseIndoDateToISO } from "../utils/deviceUtils";
+import { parseIndoDateToISO, calculateAutoStatus } from "../utils/deviceUtils";
 
 const getBaseRef = (appId) => {
   const id = appId || process.env.NEXT_PUBLIC_APP_ID || "logistikku_app_01";
@@ -75,14 +75,14 @@ export const deletePrinter = async (appId, id) => {
   await deleteDoc(doc(db, getBaseRef(appId), "printers", id));
 };
 
-// ─── IMPORT CSV (BATCH) ────────────────────────────────────────────────────
+// ─── IMPORT CSV / EXCEL (BATCH) ────────────────────────────────────────────
 
 /**
- * Import massal dari array hasil parsing PapaParse.
+ * Import massal dari array data (hasil parsing PapaParse atau XLSX).
  * @returns {Promise<number>} jumlah baris yang berhasil di-import
  */
 export const importPrinterCSV = async (appId, rows) => {
-  if (!rows || rows.length === 0) throw new Error("File CSV kosong");
+  if (!rows || rows.length === 0) throw new Error("File CSV/Excel kosong");
 
   const printerRef = collection(db, getBaseRef(appId), "printers");
   const promises   = [];
@@ -91,38 +91,50 @@ export const importPrinterCSV = async (appId, rows) => {
   let total        = 0;
 
   for (const row of rows) {
-    if (!row["Outlet"] && !row["Serial Number"]) continue;
+    const outlet = (row.outlet || row["Outlet"] || row["NAMA OUTLET"] || row["Nama Outlet"] || "").toString().trim();
+    const idOutlet = (row.idOutlet || row["ID Outlet"] || row["Outlet Id"] || row["OUTLET ID"] || "").toString().trim();
+    const produk = (row.produk || row["Produk / Model"] || row["Product Hardware"] || row["PRODUK"] || row["Model"] || "").toString().trim();
+    const sn = (row.sn || row["Serial Number"] || row["SERIAL NUMBER"] || row["SN"] || "").toString().trim();
+    const penyedia = (row.penyedia || row["PENYEDIA"] || row["Vendor"] || row["Penyedia"] || "").toString().trim();
+    const kondisi = (row.kondisi || row["KONDISI"] || row["Kondisi"] || "BAIK").toString().trim();
+    let statusRaw = (row.status || row["STATUS"] || row["Status"] || "").toString().trim();
+    let deskripsi = (row.deskripsi || row["DESKRIPSI"] || row["Catatan"] || "").toString().trim();
+    const tglCek = (row.tglCek || row["TGL CEK"] || row["Tgl Cek"] || "").toString().trim();
 
-    // Pecah kolom "MASA SEWA" → tanggalMulai & tanggalSelesai
-    let tglMulai   = "";
-    let tglSelesai = "";
-    const rawMasaSewa = row["MASA SEWA"]?.trim() || "";
+    // Skip baris jika outlet dan SN dua-duanya kosong
+    if (!outlet && !sn) continue;
+
+    // Tanggal sewa
+    let tglMulai = (row.tanggalMulai || row["Tgl Mulai Sewa"] || row["Tanggal Mulai"] || "").toString().trim();
+    let tglSelesai = (row.tanggalSelesai || row["Tgl Selesai Sewa"] || row["Tanggal Selesai"] || "").toString().trim();
+
+    const rawMasaSewa = (row.masaSewa || row["MASA SEWA"] || "").toString().trim();
     if (rawMasaSewa.includes("-")) {
       const [start, end] = rawMasaSewa.split("-").map((p) => p.trim());
-      tglMulai   = parseIndoDateToISO(start);
-      tglSelesai = parseIndoDateToISO(end);
+      if (!tglMulai) tglMulai = parseIndoDateToISO(start) || start;
+      if (!tglSelesai) tglSelesai = parseIndoDateToISO(end) || end;
+    } else {
+      if (tglMulai && tglMulai.includes(" ")) tglMulai = parseIndoDateToISO(tglMulai) || tglMulai;
+      if (tglSelesai && tglSelesai.includes(" ")) tglSelesai = parseIndoDateToISO(tglSelesai) || tglSelesai;
     }
 
-    // Gabungkan TGL CEK ke deskripsi jika ada isinya
-    let deskripsiFinal = row["DESKRIPSI"]?.trim() || "";
-    const tglCek = row["TGL CEK"]?.trim();
     if (tglCek && tglCek !== "-") {
-      deskripsiFinal += deskripsiFinal
-        ? ` | Tgl Cek: ${tglCek}`
-        : `Tgl Cek: ${tglCek}`;
+      deskripsi += deskripsi ? ` | Tgl Cek: ${tglCek}` : `Tgl Cek: ${tglCek}`;
     }
+
+    const finalStatus = statusRaw || calculateAutoStatus(tglMulai, tglSelesai) || "Inventaris";
 
     const data = {
-      idOutlet:      row["Outlet Id"]?.trim()         || "",
-      outlet:        row["Outlet"]?.trim()             || "",
-      produk:        row["Product Hardware"]?.trim()   || "",
-      sn:            row["Serial Number"]?.trim()      || "",
-      tanggalMulai,
-      tanggalSelesai,
-      penyedia:      row["PENYEDIA"]?.trim()           || "",
-      status:        row["STATUS"]?.trim()             || "Inventaris",
-      kondisi:       row["KONDISI"]?.trim()            || "BAIK",
-      deskripsi:     deskripsiFinal,
+      idOutlet,
+      outlet,
+      produk,
+      sn,
+      tanggalMulai: tglMulai,
+      tanggalSelesai: tglSelesai,
+      penyedia,
+      status: finalStatus,
+      kondisi: kondisi || "BAIK",
+      deskripsi,
     };
 
     batch.set(doc(printerRef), data);
@@ -145,12 +157,12 @@ export const importPrinterCSV = async (appId, rows) => {
 
 export const downloadTemplate = () => {
   const headers = [
-    "Outlet Id", "Outlet", "Product Hardware", "Serial Number",
-    "PENYEDIA", "MASA SEWA", "STATUS", "KONDISI", "DESKRIPSI", "TGL CEK",
+    "ID Outlet", "Outlet", "Produk / Model", "Serial Number",
+    "Kondisi", "Vendor", "Tgl Mulai Sewa", "Tgl Selesai Sewa", "Status", "Catatan",
   ];
   const contoh = [
-    "12458,CP CIBINONG,EPSON L4260 ECO TANK,X8SS028432,POJ,April 2024 - April 2026,Sewa Berjalan,KURANG BAIK,Mikro,-",
-    "60830,UPS GALUH MAS,LQ-310 DOT MATRIX,R9JYJ33221,POJ,April 2024 - April 2026,Sewa Berjalan,BAIK,-,-",
+    '12458,"CP CIBINONG","EPSON L4260 ECO TANK",X8SS028432,KURANG BAIK,POJ,2024-04-01,2026-04-01,Sewa Berjalan,Mikro',
+    '60830,"UPS GALUH MAS","LQ-310 DOT MATRIX",R9JYJ33221,BAIK,POJ,2024-04-01,2026-04-01,Sewa Berjalan,-',
   ];
   const csv  = headers.join(",") + "\n" + contoh.join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
@@ -161,4 +173,4 @@ export const downloadTemplate = () => {
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-};
+};

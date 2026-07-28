@@ -1,13 +1,15 @@
 // src/components/DataMaster/MasterBarang.jsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Database, Plus, Box, Hash, Scale, Building2,
   CalendarDays, Clock, Search, Edit, Trash2, Loader2,
+  Download, Upload, FileSpreadsheet,
 } from "lucide-react";
-import { collection, doc, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, doc, addDoc, updateDoc, deleteDoc, writeBatch } from "firebase/firestore";
 import { db } from "../../lib/firebase";
+import Papa from "papaparse";
 import BarangFormModal    from "./BarangFormModal";
 import ConfirmDeleteModal from "../Modal/ConfirmDeleteModal";
 import ToastNotif         from "../Modal/ToastNotif";
@@ -20,7 +22,9 @@ export default function MasterBarang({ inventory, userRole }) {
   const [deleteConfirm, setDeleteConfirm]       = useState({ show: false, id: null, name: "" });
   const [editingInv, setEditingInv]             = useState(null);
   const [isSaving, setIsSaving]                 = useState(false);
+  const [isImporting, setIsImporting]           = useState(false);
   const [notif, setNotif]                       = useState({ show: false, message: "", type: "success" });
+  const fileInputRef = useRef(null);
 
   const appId = process.env.NEXT_PUBLIC_APP_ID || "logistikku_app_01";
 
@@ -85,6 +89,134 @@ export default function MasterBarang({ inventory, userRole }) {
     );
   });
 
+  // ── CSV EXPORT & TEMPLATE & IMPORT ─────────────────────────────────────
+  const exportToCSV = () => {
+    const dataToExport = filteredInventory.map((item) => ({
+      "Nama Barang": item.nama || "",
+      "Stok": item.stok || 0,
+      "Satuan": item.satuan || "Pcs",
+      "Vendor Nama": item.vendor_nama || "",
+      "No SPK": item.no_spk || "",
+      "No PKS": item.no_pks || "",
+      "Tanggal Mulai": item.tanggal_mulai || "",
+      "Tanggal Selesai": item.tanggal_selesai || "",
+      "Masa Sewa (Bulan)": item.masa_sewa_bulan || 0,
+      "Status": getStatusInfo(item),
+    }));
+
+    const csvString = Papa.unparse(dataToExport);
+    const blob = new Blob(["\uFEFF" + csvString], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `Master_Barang_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const downloadTemplateCSV = () => {
+    const sampleData = [
+      {
+        "Nama Barang": "Laptop Asus ExpertBook",
+        "Stok": 10,
+        "Satuan": "Unit",
+        "Vendor Nama": "PT Teknologi Nusantara",
+        "No SPK": "SPK/2026/001",
+        "No PKS": "PKS/2026/001",
+        "Tanggal Mulai": "2026-01-01",
+        "Tanggal Selesai": "2027-01-01",
+        "Masa Sewa (Bulan)": 12,
+        "Status": "Sewa Berjalan",
+      },
+      {
+        "Nama Barang": "Kertas HVS A4",
+        "Stok": 50,
+        "Satuan": "Rim",
+        "Vendor Nama": "CV ATK Jaya",
+        "No SPK": "",
+        "No PKS": "",
+        "Tanggal Mulai": "",
+        "Tanggal Selesai": "",
+        "Masa Sewa (Bulan)": 0,
+        "Status": "Inventaris",
+      },
+    ];
+
+    const csvString = Papa.unparse(sampleData);
+    const blob = new Blob(["\uFEFF" + csvString], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "Template_Import_Barang.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleImportCSV = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async (results) => {
+        try {
+          const rows = results.data;
+          if (!rows || rows.length === 0) {
+            showNotif("File CSV kosong atau format tidak sesuai.", "error");
+            setIsImporting(false);
+            return;
+          }
+
+          const newItems = [];
+          const colRef = collection(db, "artifacts", appId, "public", "data", "inventory");
+
+          for (const row of rows) {
+            const nama = row["Nama Barang"] || row["nama"] || row["Nama"] || "";
+            if (!nama.trim()) continue;
+
+            const payload = {
+              nama: nama.trim(),
+              stok: Number(row["Stok"] || row["stok"]) || 0,
+              satuan: row["Satuan"] || row["satuan"] || "Pcs",
+              vendor_nama: row["Vendor Nama"] || row["vendor_nama"] || "",
+              no_spk: row["No SPK"] || row["no_spk"] || "",
+              no_pks: row["No PKS"] || row["no_pks"] || "",
+              tanggal_mulai: row["Tanggal Mulai"] || row["tanggal_mulai"] || "",
+              tanggal_selesai: row["Tanggal Selesai"] || row["tanggal_selesai"] || "",
+              masa_sewa_bulan: Number(row["Masa Sewa (Bulan)"] || row["masa_sewa_bulan"]) || 0,
+              status: row["Status"] || row["status"] || "Inventaris",
+            };
+
+            const docRef = await addDoc(colRef, payload);
+            newItems.push({ id: docRef.id, ...payload });
+          }
+
+          if (newItems.length > 0) {
+            setLocalInventory((prev) => [...newItems, ...prev]);
+            showNotif(`Berhasil mengimpor ${newItems.length} barang baru!`);
+          } else {
+            showNotif("Tidak ada data barang valid yang diimpor.", "error");
+          }
+        } catch (err) {
+          console.error("Gagal mengimpor CSV:", err);
+          showNotif("Gagal mengimpor data CSV.", "error");
+        } finally {
+          setIsImporting(false);
+          if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+      },
+      error: (err) => {
+        console.error("PapaParse error:", err);
+        showNotif("Gagal membaca file CSV.", "error");
+        setIsImporting(false);
+      },
+    });
+  };
+
   // ── Modal helpers ─────────────────────────────────────────────────────
   const openAdd   = () => { setEditingInv(null); setCalculatedStatus("Inventaris"); setIsModalOpen(true); };
   const openEdit  = (inv) => { setEditingInv(inv); setCalculatedStatus(getStatusInfo(inv)); setIsModalOpen(true); };
@@ -145,6 +277,13 @@ export default function MasterBarang({ inventory, userRole }) {
 
   return (
     <div className="flex flex-col gap-8 animate-in fade-in zoom-in-95 duration-300 relative">
+      <input
+        type="file"
+        accept=".csv"
+        ref={fileInputRef}
+        onChange={handleImportCSV}
+        className="hidden"
+      />
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
 
         {/* Toolbar */}
@@ -166,14 +305,60 @@ export default function MasterBarang({ inventory, userRole }) {
             <div className="bg-blue-50 text-blue-700 px-5 py-2.5 rounded-xl text-sm font-semibold shrink-0">
               Total: {filteredInventory.length}
             </div>
-            {userRole === "admin" && (
+
+            {/* Action Bar Berbasis Ikon */}
+            <div className="flex items-center gap-2 bg-gray-50/80 p-1.5 rounded-2xl border border-gray-200/80 shadow-xs shrink-0">
+              {userRole === "admin" && (
+                <button
+                  type="button"
+                  onClick={downloadTemplateCSV}
+                  title="Unduh Template CSV"
+                  aria-label="Unduh Template CSV"
+                  className="p-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/80 rounded-xl transition-all shadow-xs flex items-center justify-center hover:scale-105 active:scale-95"
+                >
+                  <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
+                </button>
+              )}
+
+              {userRole === "admin" && (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isImporting}
+                  title="Impor dari CSV"
+                  aria-label="Impor dari CSV"
+                  className="p-2.5 bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200/80 rounded-xl transition-all shadow-xs flex items-center justify-center disabled:opacity-50 hover:scale-105 active:scale-95"
+                >
+                  {isImporting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+                </button>
+              )}
+
               <button
-                onClick={openAdd}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium shadow-sm transition-colors flex items-center gap-2 shrink-0"
+                type="button"
+                onClick={exportToCSV}
+                title="Ekspor ke CSV"
+                aria-label="Ekspor ke CSV"
+                className="p-2.5 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200/80 rounded-xl transition-all shadow-xs flex items-center justify-center hover:scale-105 active:scale-95"
               >
-                <Plus className="w-4 h-4" /> Tambah Barang
+                <Download className="w-5 h-5" />
               </button>
-            )}
+
+              {userRole === "admin" && (
+                <>
+                  <div className="h-6 w-px bg-gray-200 mx-1" />
+
+                  <button
+                    type="button"
+                    onClick={openAdd}
+                    title="Tambah Barang Baru"
+                    aria-label="Tambah Barang Baru"
+                    className="p-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm transition-all flex items-center justify-center hover:scale-105 active:scale-95"
+                  >
+                    <Plus className="w-5 h-5" />
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
 

@@ -4,7 +4,7 @@
 import React, { useState } from "react";
 import {
   Printer, Search, Filter, Plus,
-  AlertCircle, FileSpreadsheet, Upload, Loader2,
+  AlertCircle, FileSpreadsheet, Upload, Download, Loader2,
 } from "lucide-react";
 
 import { usePrinterData }  from "../../../hooks/printer/usePrinterData";
@@ -18,7 +18,7 @@ export default function DataPrinter({ userRole }) {
   const [deleteConfirm, setDeleteConfirm] = useState({ show: false, id: null, name: "" });
 
   const {
-    downloadTemplate, fileInputRef, isSaving, handleFileUpload,
+    downloadTemplate, fileInputRef, isSaving, handleFileUpload, exportToExcel,
     openModalForAdd, koneksiError,
     searchQuery, handleSearch, filterStatus, handleFilterStatus,
     isLoading, paginatedData, filteredData,
@@ -55,24 +55,58 @@ export default function DataPrinter({ userRole }) {
           </div>
 
           {userRole === "admin" && (
-            <div className="flex flex-wrap items-center gap-2">
-              <button type="button" onClick={downloadTemplate}
-                className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg font-medium shadow-sm transition-colors text-sm">
-                <FileSpreadsheet className="w-4 h-4" /> Template CSV
+            <div className="flex items-center gap-2 bg-gray-50/80 p-1.5 rounded-2xl border border-gray-200/80 shadow-xs">
+              <button
+                type="button"
+                onClick={downloadTemplate}
+                title="Download Template CSV"
+                aria-label="Download Template CSV"
+                className="p-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/80 rounded-xl transition-all shadow-xs flex items-center justify-center hover:scale-105 active:scale-95"
+              >
+                <FileSpreadsheet className="w-5 h-5" />
               </button>
 
-              <button type="button" onClick={() => fileInputRef.current?.click()} disabled={isSaving}
-                className="flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-3 py-2 rounded-lg font-medium shadow-sm transition-colors text-sm disabled:opacity-50">
-                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                Import CSV
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isSaving}
+                title="Import Data (CSV / Excel)"
+                aria-label="Import Data (CSV / Excel)"
+                className="p-2.5 bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200/80 rounded-xl transition-all shadow-xs flex items-center justify-center disabled:opacity-50 hover:scale-105 active:scale-95"
+              >
+                {isSaving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
               </button>
 
-              <input type="file" accept=".csv" ref={fileInputRef} onChange={handleFileUpload}
-                className="hidden" aria-label="Upload file CSV data printer" />
+              <input
+                type="file"
+                accept=".csv, .xlsx, .xls"
+                ref={fileInputRef}
+                onChange={handleFileUpload}
+                className="hidden"
+                aria-label="Upload file CSV atau Excel data printer"
+              />
 
-              <button type="button" onClick={openModalForAdd}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg font-medium shadow-sm transition-colors text-sm">
-                <Plus className="w-4 h-4" /> Tambah Printer
+              <button
+                type="button"
+                onClick={exportToExcel}
+                disabled={filteredData.length === 0}
+                title="Export Data ke Excel"
+                aria-label="Export Data ke Excel"
+                className="p-2.5 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200/80 rounded-xl transition-all shadow-xs flex items-center justify-center disabled:opacity-50 hover:scale-105 active:scale-95"
+              >
+                <Download className="w-5 h-5" />
+              </button>
+
+              <div className="h-6 w-px bg-gray-200 mx-1" />
+
+              <button
+                type="button"
+                onClick={openModalForAdd}
+                title="Tambah Printer Baru"
+                aria-label="Tambah Printer Baru"
+                className="p-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl shadow-sm transition-all flex items-center justify-center hover:scale-105 active:scale-95"
+              >
+                <Plus className="w-5 h-5" />
               </button>
             </div>
           )}

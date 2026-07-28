@@ -1,16 +1,29 @@
 "use client";
 
-import { useState } from "react";
-import { Search, Download, FileText, ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useRef } from "react";
+import { Search, Download, Upload, FileSpreadsheet, FileText, ArrowLeft, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { collection, addDoc } from "firebase/firestore";
+import { db } from "../../lib/firebase";
+import Papa from "papaparse";
 
 export default function RiwayatTransaksi({ transactions, setFormData, setItems, setActiveTransaction, setView }) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [isImporting, setIsImporting] = useState(false);
+  const [notif, setNotif] = useState({ show: false, message: "", type: "success" });
+  const fileInputRef = useRef(null);
   
+  const appId = process.env.NEXT_PUBLIC_APP_ID || "logistikku_app_01";
+
+  const showNotif = (message, type = "success") => {
+    setNotif({ show: true, message, type });
+    setTimeout(() => setNotif({ show: false, message: "", type: "" }), 3000);
+  };
+
   // === LOGIKA PAGINASI ===
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const filteredTransactions = transactions.filter((trx) => {
+  const filteredTransactions = (transactions || []).filter((trx) => {
     const query = searchQuery.toLowerCase();
     const matchSurat = trx.nomorSurat?.toLowerCase().includes(query);
     const matchPihak = 
@@ -24,7 +37,7 @@ export default function RiwayatTransaksi({ transactions, setFormData, setItems, 
   });
 
   // Potong array berdasarkan halaman saat ini
-  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage) || 1;
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedData = filteredTransactions.slice(startIndex, startIndex + itemsPerPage);
 
@@ -33,39 +46,218 @@ export default function RiwayatTransaksi({ transactions, setFormData, setItems, 
     setCurrentPage(1); // Reset ke halaman 1 saat user mengetik pencarian
   };
 
-  const exportToExcel = () => {
-    const headers = ["Tanggal", "No. Surat", "Jenis Transaksi", "Pengirim (Nama)", "Pengirim (Instansi)", "Penerima (Nama)", "Penerima (Instansi)", "Daftar Barang & Qty"];
-    const rows = filteredTransactions.map(trx => {
-      const itemsString = trx.items?.map(i => `${i.nama} (${i.kuantitas} ${i.satuan})`).join("; ") || "-";
-      const rowData = [trx.tanggal, trx.nomorSurat, trx.jenisTransaksi, trx.pengirimNama, trx.pengirimInstansi, trx.penerimaNama, trx.penerimaInstansi, itemsString];
-      return rowData.map(val => `"${(val || "").toString().replace(/"/g, '""')}"`).join(",");
+  // ── CSV EXPORT & TEMPLATE & IMPORT ─────────────────────────────────────
+  const exportToCSV = () => {
+    const dataToExport = filteredTransactions.map((trx) => {
+      const itemsString = trx.items?.map((i) => `${i.nama} (${i.kuantitas} ${i.satuan || "Pcs"})`).join("; ") || "-";
+      return {
+        "Tanggal": trx.tanggal || "",
+        "No. Surat": trx.nomorSurat || "",
+        "Jenis Transaksi": trx.jenisTransaksi || "",
+        "Pengirim (Nama)": trx.pengirimNama || "",
+        "Pengirim (Instansi)": trx.pengirimInstansi || "",
+        "Penerima (Nama)": trx.penerimaNama || "",
+        "Penerima (Instansi)": trx.penerimaInstansi || "",
+        "Daftar Barang & Qty": itemsString,
+      };
     });
-    const csvContent = [headers.join(","), ...rows].join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+
+    const csvString = Papa.unparse(dataToExport);
+    const blob = new Blob(["\uFEFF" + csvString], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `Riwayat_Transaksi_Logistik_${new Date().toISOString().split('T')[0]}.csv`);
+    link.href = url;
+    link.setAttribute("download", `Riwayat_Transaksi_Logistik_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showNotif("Riwayat transaksi berhasil diekspor ke CSV!");
+  };
+
+  const downloadTemplateCSV = () => {
+    const sampleData = [
+      {
+        "Tanggal": new Date().toISOString().split("T")[0],
+        "No. Surat": "LOG/2026/001",
+        "Jenis Transaksi": "Barang Keluar",
+        "Pengirim (Nama)": "Budi Santoso",
+        "Pengirim (Instansi)": "Gudang Pusat",
+        "Penerima (Nama)": "Siti Aminah",
+        "Penerima (Instansi)": "Pegadaian CP Kebayoran Baru",
+        "Daftar Barang & Qty": "Laptop Asus (2 Unit); Kertas HVS A4 (5 Rim)",
+      },
+      {
+        "Tanggal": new Date().toISOString().split("T")[0],
+        "No. Surat": "LOG/2026/002",
+        "Jenis Transaksi": "Barang Masuk",
+        "Pengirim (Nama)": "Vendor PT Logistik Jaya",
+        "Pengirim (Instansi)": "PT Logistik Jaya",
+        "Penerima (Nama)": "Budi Santoso",
+        "Penerima (Instansi)": "Gudang Pusat",
+        "Daftar Barang & Qty": "Tinta Printer Epson (10 Botol)",
+      },
+    ];
+
+    const csvString = Papa.unparse(sampleData);
+    const blob = new Blob(["\uFEFF" + csvString], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", "Template_Import_Riwayat_Transaksi.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
+  const parseItemsString = (str) => {
+    if (!str || str === "-") return [];
+    // Format yang diharapkan: "Nama (Qty Satuan); Nama2 (Qty2 Satuan2)"
+    const parts = str.split(";");
+    return parts.map((part, idx) => {
+      const trimmed = part.trim();
+      const match = trimmed.match(/^(.*?)(?:\s*\((?:(\d+(?:\.\d+)?)\s*(.*?))\))?$/);
+      if (match) {
+        return {
+          id: String(Date.now() + idx),
+          nama: match[1].trim(),
+          kuantitas: Number(match[2]) || 1,
+          satuan: match[3] || "Pcs",
+        };
+      }
+      return {
+        id: String(Date.now() + idx),
+        nama: trimmed,
+        kuantitas: 1,
+        satuan: "Pcs",
+      };
+    });
+  };
+
+  const handleImportCSV = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async (results) => {
+        try {
+          const rows = results.data;
+          if (!rows || rows.length === 0) {
+            showNotif("File CSV kosong atau format tidak sesuai.", "error");
+            setIsImporting(false);
+            return;
+          }
+
+          const colRef = collection(db, "artifacts", appId, "public", "data", "transactions");
+          let count = 0;
+
+          for (const row of rows) {
+            const noSurat = row["No. Surat"] || row["nomorSurat"] || row["No Surat"] || "";
+            if (!noSurat.trim()) continue;
+
+            const itemsParsed = parseItemsString(row["Daftar Barang & Qty"] || row["items"] || "");
+
+            const payload = {
+              tanggal: row["Tanggal"] || row["tanggal"] || new Date().toISOString().split("T")[0],
+              nomorSurat: noSurat.trim(),
+              jenisTransaksi: row["Jenis Transaksi"] || row["jenisTransaksi"] || "Barang Keluar",
+              pengirimNama: row["Pengirim (Nama)"] || row["pengirimNama"] || "",
+              pengirimInstansi: row["Pengirim (Instansi)"] || row["pengirimInstansi"] || "",
+              penerimaNama: row["Penerima (Nama)"] || row["penerimaNama"] || "",
+              penerimaInstansi: row["Penerima (Instansi)"] || row["penerimaInstansi"] || "",
+              items: itemsParsed,
+              createdAt: new Date().toISOString(),
+            };
+
+            await addDoc(colRef, payload);
+            count++;
+          }
+
+          if (count > 0) {
+            showNotif(`Berhasil mengimpor ${count} riwayat transaksi baru!`);
+          } else {
+            showNotif("Tidak ada data transaksi valid yang diimpor.", "error");
+          }
+        } catch (err) {
+          console.error("Gagal mengimpor CSV transaksi:", err);
+          showNotif("Gagal mengimpor data CSV.", "error");
+        } finally {
+          setIsImporting(false);
+          if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+      },
+      error: (err) => {
+        console.error("PapaParse error:", err);
+        showNotif("Gagal membaca file CSV.", "error");
+        setIsImporting(false);
+      },
+    });
+  };
+
   return (
-    <div className="max-w-7xl mx-auto p-4 sm:p-6 animate-in fade-in duration-300">
+    <div className="max-w-7xl mx-auto p-4 sm:p-6 animate-in fade-in duration-300 relative">
+      <input
+        type="file"
+        accept=".csv"
+        ref={fileInputRef}
+        onChange={handleImportCSV}
+        className="hidden"
+      />
+
+      {/* Toast Notifikasi internal */}
+      {notif.show && (
+        <div className={`fixed top-4 right-4 z-[999] px-5 py-3 rounded-xl shadow-xl text-white text-sm animate-in fade-in ${notif.type === "success" ? "bg-green-600" : "bg-red-600"}`}>
+          {notif.message}
+        </div>
+      )}
+
       <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-5 tracking-tight">Pusat Riwayat Transaksi</h2>
       
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-100 bg-gray-50/50 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
           <div><h3 className="font-bold text-sm text-gray-800">Daftar Log Transaksi</h3></div>
-          <div className="flex flex-col sm:flex-row w-full lg:w-auto gap-2 items-center">
+          <div className="flex flex-col sm:flex-row w-full lg:w-auto gap-2 items-center flex-wrap">
             <div className="relative w-full sm:w-64">
               <Search className="h-4 w-4 text-gray-400 absolute left-3 top-2.5" />
               <input type="text" placeholder="Cari data..." value={searchQuery} onChange={handleSearch} className="w-full pl-9 pr-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm shadow-sm transition-all" />
             </div>
-            <button onClick={exportToExcel} disabled={filteredTransactions.length === 0} className="w-full sm:w-auto px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white font-medium rounded-lg text-sm transition-colors flex items-center justify-center gap-2 shadow-sm whitespace-nowrap">
-              <Download className="w-4 h-4" /> Export CSV
-            </button>
+
+            {/* Action Bar Berbasis Ikon */}
+            <div className="flex items-center gap-2 bg-gray-50/80 p-1.5 rounded-2xl border border-gray-200/80 shadow-xs shrink-0">
+              <button
+                type="button"
+                onClick={downloadTemplateCSV}
+                title="Unduh Template CSV"
+                aria-label="Unduh Template CSV"
+                className="p-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/80 rounded-xl transition-all shadow-xs flex items-center justify-center hover:scale-105 active:scale-95"
+              >
+                <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isImporting}
+                title="Impor dari CSV"
+                aria-label="Impor dari CSV"
+                className="p-2.5 bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200/80 rounded-xl transition-all shadow-xs flex items-center justify-center disabled:opacity-50 hover:scale-105 active:scale-95"
+              >
+                {isImporting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+              </button>
+
+              <button
+                type="button"
+                onClick={exportToCSV}
+                disabled={filteredTransactions.length === 0}
+                title="Ekspor ke CSV"
+                aria-label="Ekspor ke CSV"
+                className="p-2.5 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200/80 rounded-xl transition-all shadow-xs flex items-center justify-center disabled:opacity-50 hover:scale-105 active:scale-95"
+              >
+                <Download className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
 

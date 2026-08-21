@@ -1,6 +1,6 @@
 # 📦 LogistikKu — Sistem Manajemen Logistik & Inventaris
 
-![Next.js](https://img.shields.io/badge/Next.js-black?style=for-the-badge&logo=next.js&logoColor=white)  
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)  
 ![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)  
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)  
 ![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
@@ -40,7 +40,8 @@ Gunakan akun berikut untuk mencoba aplikasi:
 
 Proyek ini menggunakan:
 
-- [Next.js](https://nextjs.org/)
+- [Vite](https://vitejs.dev/) + React
+- Tailwind CSS
 - Firebase (Authentication & Database)
 
 ---
@@ -59,29 +60,33 @@ Pastikan Anda telah menginstal:
 
 Clone repository dan install dependencies:
 
+```bash
 git clone https://github.com/alziputra/logistik-app.git  
 cd logistik-app  
 npm install
+```
 
 ---
 
 ## 🔐 Konfigurasi Environment
 
-Buat file `.env.local` di root project, lalu isi dengan konfigurasi Firebase:
+Buat file `.env` di root project, lalu isi dengan konfigurasi Firebase:
 
+```env
 # Firebase Config  
-NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key  
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com  
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id  
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project.appspot.com  
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_sender_id  
-NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id  
+VITE_FIREBASE_API_KEY=your_api_key  
+VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com  
+VITE_FIREBASE_PROJECT_ID=your_project_id  
+VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com  
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id  
+VITE_FIREBASE_APP_ID=your_app_id  
   
 # App Config  
-NEXT_PUBLIC_APP_ID=logistikku_app_01
+VITE_APP_ID=logistikku_app_01
+```
 
 > ⚠️ **Penting:**  
-> Jangan pernah commit file `.env.local` ke repository publik.
+> Jangan pernah commit file `.env` ke repository publik.
 
 ---
 
@@ -89,20 +94,12 @@ NEXT_PUBLIC_APP_ID=logistikku_app_01
 
 Jalankan development server:
 
+```bash
 npm run dev
+```
 
 Buka di browser:  
-👉 [http://localhost:3000](http://localhost:3000)
-
----
-
-## 📚 Dokumentasi
-
-Pelajari lebih lanjut teknologi yang digunakan:
-
-- Next.js → [https://nextjs.org/docs](https://nextjs.org/docs)
-- Tailwind CSS → [https://tailwindcss.com/docs](https://tailwindcss.com/docs)
-- Firebase → [https://firebase.google.com/docs](https://firebase.google.com/docs)
+👉 [http://localhost:5173](http://localhost:5173)
 
 ---
 
@@ -111,10 +108,8 @@ Pelajari lebih lanjut teknologi yang digunakan:
 Deploy dengan mudah menggunakan **Vercel**:
 
 1. Import repository ke Vercel
-2. Tambahkan environment variables dari `.env.local`
-3. Deploy
-
-📖 Detail: [https://nextjs.org/docs/deployment](https://nextjs.org/docs/deployment)
+2. Tambahkan environment variables dari `.env`
+3. Deploy (Vercel akan otomatis mengenali `vercel.json` bertipe Vite)
 
 ---
 

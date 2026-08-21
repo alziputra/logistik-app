@@ -1,484 +1,243 @@
-"use client";
-
-import { useState, useEffect, useRef } from "react";
-import {
-  Plus,
-  Search,
-  MapPin,
-  Edit,
-  Trash2,
-  Loader2,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  Download,
-  Upload,
-  FileSpreadsheet,
-} from "lucide-react";
-import {
-  doc,
-  updateDoc,
-  deleteDoc,
-  addDoc,
-  collection,
-} from "firebase/firestore";
-import { db } from "../../lib/firebase";
-import Papa from "papaparse";
+import React, { useState } from "react";
+import { Building2, Search, Plus, Edit, Trash2, MapPin } from "lucide-react";
+import { addInstansi, updateInstansi, deleteInstansi } from "../../services/instansiService";
 import OutletFormModal from "./OutletFormModal";
+import ExcelActionButtons from "../Common/ExcelActionButtons";
 
-export default function MasterOutlet({ outlets, userRole }) {
+export default function MasterOutlet({ outlets = [], userRole = "admin", loadAllData }) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [localOutlets, setLocalOutlets] = useState([]);
-
-  useEffect(() => {
-    setLocalOutlets(outlets || []);
-  }, [outlets]);
-
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState({
-    show: false,
-    id: null,
-    name: "",
-  });
   const [editingOutlet, setEditingOutlet] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [isImporting, setIsImporting] = useState(false);
-  const [notif, setNotif] = useState({
-    show: false,
-    message: "",
-    type: "success",
-  });
-  const fileInputRef = useRef(null);
 
-  const appId = process.env.NEXT_PUBLIC_APP_ID || "logistikku_app_01";
-
-  const showLocalNotif = (message, type = "success") => {
-    setNotif({ show: true, message, type });
-    setTimeout(() => setNotif({ show: false, message: "", type: "" }), 2500);
-  };
-
-  const filteredOutlets = localOutlets.filter((out) => {
+  const filteredOutlets = outlets.filter((out) => {
     const q = searchQuery.toLowerCase();
     return (
-      out.nama?.toLowerCase().includes(q) || out.kode?.toLowerCase().includes(q)
+      out.nama?.toLowerCase().includes(q) ||
+      out.code?.toLowerCase().includes(q) ||
+      out.kode?.toLowerCase().includes(q) ||
+      out.kodeCabang?.toLowerCase().includes(q) ||
+      out.cabangInduk?.toLowerCase().includes(q) ||
+      out.clustering?.toLowerCase().includes(q) ||
+      out.status?.toLowerCase().includes(q) ||
+      out.area?.toLowerCase().includes(q)
     );
   });
 
-  const openAdd = () => {
+  const handleOpenAdd = () => {
     setEditingOutlet(null);
     setIsModalOpen(true);
   };
-  const openEdit = (out) => {
+
+  const handleOpenEdit = (out) => {
     setEditingOutlet(out);
     setIsModalOpen(true);
   };
-  const askDelete = (out) => {
-    setDeleteConfirm({ show: true, id: out.id, name: out.nama });
-  };
 
-  const confirmDeleteAction = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setIsSaving(true);
+    const form = new FormData(e.target);
+    const payload = {
+      kode: form.get("kode"),
+      nama: form.get("nama"),
+      status: form.get("status"),
+      kodeCabang: form.get("kodeCabang"),
+      cabangInduk: form.get("cabangInduk"),
+      clustering: form.get("clustering"),
+      jenis: form.get("jenis"),
+      area: form.get("area"),
+    };
+
     try {
-      await deleteDoc(doc(db, "logistik", "master", "outlets", deleteConfirm.id));
-      setLocalOutlets((prev) =>
-        prev.filter((item) => item.id !== deleteConfirm.id),
-      );
-      showLocalNotif("Instansi berhasil dihapus!", "success");
-    } catch (e) {
-      showLocalNotif("Gagal menghapus data.", "error");
+      if (editingOutlet) {
+        await updateInstansi(editingOutlet.id, payload);
+      } else {
+        await addInstansi(payload);
+      }
+      setIsModalOpen(false);
+      if (loadAllData) loadAllData();
+    } catch (err) {
+      console.error("Gagal menyimpan data instansi:", err);
     } finally {
       setIsSaving(false);
-      setDeleteConfirm({ show: false, id: null, name: "" });
     }
   };
 
-  const onSubmit = async (e) => {
-    e.preventDefault();
-    if (editingOutlet) {
-      setIsSaving(true);
-      try {
-        const form = new FormData(e.target);
-        const updatedOutlet = {
-          kode: form.get("kode") || "-",
-          nama: form.get("nama"),
-        };
-        await updateDoc(
-          doc(db, "logistik", "master", "outlets", editingOutlet.id),
-          updatedOutlet,
-        );
-        setLocalOutlets((prev) =>
-          prev.map((item) =>
-            item.id === editingOutlet.id
-              ? { id: editingOutlet.id, ...updatedOutlet }
-              : item,
-          ),
-        );
-        setIsModalOpen(false);
-        showLocalNotif("Instansi diperbarui!", "success");
-      } catch (error) {
-        showLocalNotif("Gagal mengupdate instansi!", "error");
-      } finally {
-        setIsSaving(false);
-      }
-    } else {
-      setIsSaving(true);
-      try {
-        const form = new FormData(e.target);
-        const newOutlet = {
-          kode: form.get("kode") || "-",
-          nama: form.get("nama"),
-        };
-        const docRef = await addDoc(
-          collection(db, "logistik", "master", "outlets"),
-          newOutlet,
-        );
-        setLocalOutlets((prev) => [...prev, { id: docRef.id, ...newOutlet }]);
-        setIsModalOpen(false);
-        showLocalNotif("Instansi berhasil ditambahkan!", "success");
-      } catch (error) {
-        showLocalNotif("Gagal menambahkan instansi!", "error");
-      } finally {
-        setIsSaving(false);
-      }
+  const handleDelete = async (id) => {
+    if (!window.confirm("Apakah Anda yakin ingin menghapus instansi ini?")) return;
+    try {
+      await deleteInstansi(id);
+      if (loadAllData) loadAllData();
+    } catch (err) {
+      console.error("Gagal menghapus data instansi:", err);
     }
-  };
-
-  // ── CSV EXPORT & TEMPLATE & IMPORT ─────────────────────────────────────
-  const exportToCSV = () => {
-    const dataToExport = filteredOutlets.map((item) => ({
-      "Kode Outlet": item.kode || "-",
-      "Nama Outlet / Instansi": item.nama || "",
-    }));
-
-    const csvString = Papa.unparse(dataToExport);
-    const blob = new Blob(["\uFEFF" + csvString], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `Master_Instansi_${new Date().toISOString().split("T")[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showLocalNotif("Data instansi berhasil diekspor ke CSV!", "success");
-  };
-
-  const downloadTemplateCSV = () => {
-    const sampleData = [
-      {
-        "Kode Outlet": "OUT-001",
-        "Nama Outlet / Instansi": "Pegadaian CP Kebayoran Baru",
-      },
-      {
-        "Kode Outlet": "OUT-002",
-        "Nama Outlet / Instansi": "Pegadaian Kanwil Jakarta 1",
-      },
-    ];
-
-    const csvString = Papa.unparse(sampleData);
-    const blob = new Blob(["\uFEFF" + csvString], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", "Template_Import_Instansi.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const handleImportCSV = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsImporting(true);
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: async (results) => {
-        try {
-          const rows = results.data;
-          if (!rows || rows.length === 0) {
-            showLocalNotif("File CSV kosong atau format tidak sesuai.", "error");
-            setIsImporting(false);
-            return;
-          }
-
-          const newOutlets = [];
-          const colRef = collection(db, "logistik", "master", "outlets");
-
-          for (const row of rows) {
-            const nama = row["Nama Outlet / Instansi"] || row["Nama Outlet"] || row["nama"] || row["Nama"] || "";
-            if (!nama.trim()) continue;
-
-            const payload = {
-              kode: row["Kode Outlet"] || row["kode"] || "-",
-              nama: nama.trim(),
-            };
-
-            const docRef = await addDoc(colRef, payload);
-            newOutlets.push({ id: docRef.id, ...payload });
-          }
-
-          if (newOutlets.length > 0) {
-            setLocalOutlets((prev) => [...prev, ...newOutlets]);
-            showLocalNotif(`Berhasil mengimpor ${newOutlets.length} instansi baru!`, "success");
-          } else {
-            showLocalNotif("Tidak ada data instansi valid yang diimpor.", "error");
-          }
-        } catch (err) {
-          console.error("Gagal mengimpor CSV:", err);
-          showLocalNotif("Gagal mengimpor data CSV.", "error");
-        } finally {
-          setIsImporting(false);
-          if (fileInputRef.current) fileInputRef.current.value = "";
-        }
-      },
-      error: (err) => {
-        console.error("PapaParse error:", err);
-        showLocalNotif("Gagal membaca file CSV.", "error");
-        setIsImporting(false);
-      },
-    });
-  };
-
-  // ✅ Fungsi untuk Export JSON (Pertahankan dukungan existing)
-  const handleExportJSON = () => {
-    const dataToExport = JSON.stringify(filteredOutlets, null, 2);
-    const blob = new Blob([dataToExport], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `data_instansi_${new Date().getTime()}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    showLocalNotif("Data berhasil diexport ke JSON!", "success");
   };
 
   return (
-    <div className="flex flex-col gap-8 animate-in fade-in zoom-in-95 duration-300 relative">
-      <input
-        type="file"
-        accept=".csv"
-        ref={fileInputRef}
-        onChange={handleImportCSV}
-        className="hidden"
-      />
-      {/* ==================== TABEL UTAMA ==================== */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="p-6 border-b border-gray-100 bg-gray-50/50 flex flex-col lg:flex-row justify-between items-center gap-4">
-          <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
-            <MapPin className="w-5 h-5 text-purple-600" /> Daftar Instansi
-            Terdaftar
-          </h3>
-          <div className="flex flex-wrap w-full lg:w-auto gap-3 items-center">
-            <div className="relative w-full sm:w-72">
-              <Search className="h-4 w-4 text-gray-400 absolute left-3 top-3" />
-              <input
-                type="text"
-                placeholder="Cari nama atau kode..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
-            <div className="bg-purple-50 text-purple-700 px-5 py-2.5 rounded-xl text-sm font-semibold shrink-0">
-              Total: {filteredOutlets.length}
-            </div>
-
-            {/* Action Bar Berbasis Ikon */}
-            <div className="flex items-center gap-2 bg-gray-50/80 p-1.5 rounded-2xl border border-gray-200/80 shadow-xs shrink-0">
-              {userRole === "admin" && (
-                <button
-                  type="button"
-                  onClick={downloadTemplateCSV}
-                  title="Unduh Template CSV"
-                  aria-label="Unduh Template CSV"
-                  className="p-2.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/80 rounded-xl transition-all shadow-xs flex items-center justify-center hover:scale-105 active:scale-95"
-                >
-                  <FileSpreadsheet className="w-5 h-5 text-emerald-600" />
-                </button>
-              )}
-
-              {userRole === "admin" && (
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isImporting}
-                  title="Impor dari CSV"
-                  aria-label="Impor dari CSV"
-                  className="p-2.5 bg-orange-50 hover:bg-orange-100 text-orange-600 border border-orange-200/80 rounded-xl transition-all shadow-xs flex items-center justify-center disabled:opacity-50 hover:scale-105 active:scale-95"
-                >
-                  {isImporting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
-                </button>
-              )}
-
-              <button
-                type="button"
-                onClick={exportToCSV}
-                title="Ekspor ke CSV"
-                aria-label="Ekspor ke CSV"
-                className="p-2.5 bg-teal-50 hover:bg-teal-100 text-teal-700 border border-teal-200/80 rounded-xl transition-all shadow-xs flex items-center justify-center hover:scale-105 active:scale-95"
-              >
-                <Download className="w-5 h-5" />
-              </button>
-
-              {userRole === "admin" && (
-                <>
-                  <div className="h-6 w-px bg-gray-200 mx-1" />
-
-                  <button
-                    type="button"
-                    onClick={openAdd}
-                    title="Tambah Outlet Baru"
-                    aria-label="Tambah Outlet Baru"
-                    className="p-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-sm transition-all flex items-center justify-center hover:scale-105 active:scale-95"
-                  >
-                    <Plus className="w-5 h-5" />
-                  </button>
-                </>
-              )}
-            </div>
+    <div className="space-y-6 animate-in fade-in duration-300">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex items-center gap-3">
+          <div className="bg-emerald-950 p-2.5 rounded-2xl border border-emerald-800/40">
+            <Building2 className="w-6 h-6 text-emerald-400" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-slate-100">Master Data Instansi / Outlet</h2>
+            <p className="text-xs text-slate-400">Manajemen lokasi unit kerja & kantor cabang Pegadaian.</p>
           </div>
         </div>
 
-        <div className="px-4 py-3">
-          <div className="overflow-y-auto max-h-[560px]">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b-2 text-gray-500 text-xs">
-                  <th className="pb-2 w-12 text-center sticky top-0 bg-white">
-                    No
-                  </th>
-                  <th className="pb-2 w-40 sticky top-0 bg-white">
-                    Kode Outlet
-                  </th>
-                  <th className="pb-2 sticky top-0 bg-white">
-                    Nama Outlet / Instansi
-                  </th>
-                  {userRole === "admin" && (
-                    <th className="pb-2 text-right sticky top-0 bg-white">
-                      Aksi
-                    </th>
-                  )}
-                </tr>
-              </thead>
-              <tbody className="text-gray-700">
-                {filteredOutlets.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={userRole === "admin" ? "4" : "3"}
-                      className="py-12 text-center text-gray-400 text-sm"
-                    >
-                      Belum ada data instansi/outlet.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredOutlets.map((out, index) => (
-                    <tr
-                      key={out.id}
-                      className="border-b border-gray-50 hover:bg-gray-50/80"
-                    >
-                      <td className="py-2 text-center text-xs text-gray-400">
-                        {index + 1}
-                      </td>
-                      <td className="py-2 font-mono text-xs text-gray-600">
-                        {out.kode || "-"}
-                      </td>
-                      <td className="py-2 text-sm font-medium text-gray-800">
-                        {out.nama}
-                      </td>
-                      {userRole === "admin" && (
-                        <td className="py-2 text-right">
-                          <div className="flex justify-end gap-1">
-                            <button
-                              onClick={() => openEdit(out)}
-                              className="p-1.5 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                            >
-                              <Edit className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              onClick={() => askDelete(out)}
-                              className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      )}
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="relative w-full sm:w-64">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Cari kode / nama / cabang..."
+              className="w-full pl-9 pr-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-100 outline-none focus:border-emerald-500"
+            />
           </div>
+          <ExcelActionButtons
+            data={filteredOutlets}
+            fileName="Master_Instansi_Outlet_Pegadaian"
+            headersMap={{
+              kode: "Kode Outlet",
+              nama: "Nama Outlet",
+              status: "Status",
+              kodeCabang: "Kode Cabang",
+              cabangInduk: "Cabang Induk",
+              clustering: "Clustering",
+              jenis: "Konven / Syariah",
+              area: "Area",
+            }}
+            onImport={async (parsedRows) => {
+              if (!parsedRows || parsedRows.length === 0) return;
+              let successCount = 0;
+              for (const row of parsedRows) {
+                const nama = row.nama || row["Nama Outlet"] || row["Nama Outlet / Instansi"] || row["Nama"];
+                const kode = row.kode || row.code || row["Kode Outlet"] || row["Kode Instansi"] || row["Kode"];
+                if (!nama) continue;
+
+                const statusVal = row.status || row["Status"] || "UPC";
+                const kodeCabangVal = row.kodeCabang || row["Kode Cabang"] || row["Kode_Cabang"] || row["kode_cabang"] || "";
+                const cabangIndukVal = row.cabangInduk || row["Cabang Induk"] || row["Cabang_Induk"] || row["cabang_induk"] || row["Induk"] || "";
+                const clusteringVal = row.clustering || row["Clustering"] || "NON CLUSTER";
+                const jenisVal = row.jenis || row["Konven / Syariah"] || row["Konven/Syariah"] || row["Jenis"] || "KONVEN";
+                const areaVal = row.area || row["Area"] || "AREA BEKASI";
+
+                try {
+                  await addInstansi({
+                    code: String(kode || "INST").trim(),
+                    kode: String(kode || "INST").trim(),
+                    nama: String(nama).trim(),
+                    status: String(statusVal).trim(),
+                    kodeCabang: String(kodeCabangVal).trim(),
+                    cabangInduk: String(cabangIndukVal).trim(),
+                    clustering: String(clusteringVal).trim(),
+                    jenis: String(jenisVal).trim(),
+                    area: String(areaVal).trim(),
+                  });
+                  successCount++;
+                } catch (err) {
+                  console.error("Error import outlet row:", err);
+                }
+              }
+              alert(`${successCount} data instansi/outlet berhasil diimpor.`);
+              if (loadAllData) loadAllData();
+            }}
+          />
+          {userRole === "admin" && (
+            <button
+              onClick={handleOpenAdd}
+              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-sm transition-colors cursor-pointer shrink-0"
+            >
+              <Plus className="w-4 h-4" /> Tambah Instansi
+            </button>
+          )}
         </div>
       </div>
 
-      {/* ==================== MODAL TAMBAH/EDIT (DIPANGGIL DARI FILE LAIN) ==================== */}
-      {userRole === "admin" && (
-        <OutletFormModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          editingOutlet={editingOutlet}
-          onSubmit={onSubmit}
-          isSaving={isSaving}
-        />
-      )}
-
-      {/* ==================== MODAL KONFIRMASI HAPUS ==================== */}
-      {deleteConfirm.show && (
-        <div className="fixed inset-0 bg-black/60 z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="p-6 text-center">
-              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <AlertTriangle className="w-8 h-8 text-red-600" />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Konfirmasi Hapus</h3>
-              <p className="text-sm text-gray-500">
-                Yakin hapus{" "}
-                <span className="font-bold">{deleteConfirm.name}</span>?
-              </p>
-            </div>
-            <div className="flex border-t border-gray-100">
-              <button
-                onClick={() =>
-                  setDeleteConfirm({ show: false, id: null, name: "" })
-                }
-                disabled={isSaving}
-                className="flex-1 px-4 py-4 text-sm font-bold text-gray-500 hover:bg-gray-50 border-r"
-              >
-                BATAL
-              </button>
-              <button
-                onClick={confirmDeleteAction}
-                disabled={isSaving}
-                className="flex-1 px-4 py-4 text-sm font-bold text-red-600 hover:bg-red-50 flex items-center justify-center gap-2 transition-colors"
-              >
-                {isSaving ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  "YA, HAPUS"
-                )}
-              </button>
-            </div>
-          </div>
+      <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs whitespace-nowrap">
+            <thead className="bg-slate-950 text-slate-400 border-b border-slate-800 font-bold uppercase tracking-wider">
+              <tr>
+                <th className="px-5 py-4 w-12 text-center">No</th>
+                <th className="px-5 py-4">Kode Outlet</th>
+                <th className="px-5 py-4">Nama Outlet</th>
+                <th className="px-5 py-4">Status</th>
+                <th className="px-5 py-4">Kode Cabang</th>
+                <th className="px-5 py-4">Cabang Induk</th>
+                <th className="px-5 py-4">Clustering</th>
+                <th className="px-5 py-4">Jenis</th>
+                <th className="px-5 py-4">Area</th>
+                {userRole === "admin" && <th className="px-5 py-4 text-center">Aksi</th>}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800">
+              {filteredOutlets.length === 0 ? (
+                <tr>
+                  <td colSpan={userRole === "admin" ? "10" : "9"} className="px-6 py-8 text-center text-slate-500 italic">
+                    Belum ada data instansi terdaftar.
+                  </td>
+                </tr>
+              ) : (
+                filteredOutlets.map((item, idx) => (
+                  <tr key={item.id || idx} className="hover:bg-slate-800/50 transition-colors">
+                    <td className="px-5 py-3.5 text-center text-slate-500 font-mono">{idx + 1}</td>
+                    <td className="px-5 py-3.5 font-mono font-bold text-emerald-400">{item.code || item.kode || "-"}</td>
+                    <td className="px-5 py-3.5 font-bold text-slate-100 flex items-center gap-2">
+                      <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                      {item.nama || "-"}
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <span
+                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase border ${
+                          item.status === "Cabang"
+                            ? "bg-emerald-950/80 text-emerald-400 border-emerald-800/50"
+                            : "bg-blue-950/80 text-blue-400 border-blue-800/50"
+                        }`}
+                      >
+                        {item.status || "UPC"}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5 font-mono text-slate-300">{item.kodeCabang || "-"}</td>
+                    <td className="px-5 py-3.5 text-slate-300 font-medium">{item.cabangInduk || "-"}</td>
+                    <td className="px-5 py-3.5">
+                      <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px] font-semibold border border-slate-700">
+                        {item.clustering || "NON CLUSTER"}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5 text-slate-300">{item.jenis || "KONVEN"}</td>
+                    <td className="px-5 py-3.5 text-slate-400 text-[11px]">{item.area || "AREA BEKASI"}</td>
+                    {userRole === "admin" && (
+                      <td className="px-5 py-3.5 text-center">
+                        <div className="flex justify-center gap-1.5">
+                          <button onClick={() => handleOpenEdit(item)} className="p-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-lg cursor-pointer transition-colors">
+                            <Edit className="w-3.5 h-3.5" />
+                          </button>
+                          <button onClick={() => handleDelete(item.id)} className="p-1.5 bg-slate-800 hover:bg-slate-700 text-rose-400 rounded-lg cursor-pointer transition-colors">
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    )}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
 
-      {/* ==================== TOAST NOTIFICATION ==================== */}
-      {notif.show && (
-        <div
-          className={`fixed bottom-6 right-6 z-[200] flex items-center gap-3 px-5 py-3 rounded-xl shadow-xl text-sm text-white animate-in slide-in-from-bottom-8 duration-300 ${notif.type === "success" ? "bg-green-600" : "bg-red-600"}`}
-        >
-          {notif.type === "success" ? (
-            <CheckCircle className="w-5 h-5" />
-          ) : (
-            <XCircle className="w-5 h-5" />
-          )}
-          {notif.message}
-        </div>
-      )}
+      <OutletFormModal
+        isOpen={isModalOpen}
+        editingOutlet={editingOutlet}
+        isSaving={isSaving}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleSubmit}
+      />
     </div>
   );
 }

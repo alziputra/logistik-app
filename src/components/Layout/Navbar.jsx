@@ -1,183 +1,252 @@
-"use client";
-
-import { useState } from "react";
+import React, { useState } from "react";
 import {
-  Package, LayoutDashboard, Menu, X, LogOut, ChevronDown, Box, Building2, Database,
-  ArrowRightLeft, History, FileText, Server, Monitor, Printer, Bell, Shield, Activity
+  Package, LayoutDashboard, LogOut, ChevronDown, FileText, Monitor, Printer, Shield,
+  Users, List, Cpu, Box, Building2, Database, History, Map, Building, Hammer, FileCheck,
+  Sun, Moon
 } from "lucide-react";
+import NotificationBell from "./NotificationBell";
+import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 
-const Navbar = ({ view, setView, startNewDocument, handleLogout, notifCount = 0, userRole }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  // State untuk mengontrol dropdown
+export default function Navbar({
+  view,
+  setView,
+  startNewDocument,
+  printers = [],
+  computers = [],
+  buildingLands = [],
+  buildingSewas = [],
+  isSidebarOpen,
+  setIsSidebarOpen,
+  setLandFilter,
+  setSewaFilter,
+  setComputerFilter,
+  setPrinterFilter,
+}) {
+  const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [isMasterOpen, setIsMasterOpen] = useState(view.startsWith("master_"));
-  const [isTransaksiOpen, setIsTransaksiOpen] = useState(view === "riwayat" || view === "form");
   const [isPerangkatOpen, setIsPerangkatOpen] = useState(view.startsWith("perangkat_"));
+  const [isBuatSuratOpen, setIsBuatSuratOpen] = useState(view.startsWith("spk_") || view.startsWith("sopp_") || view === "form");
+  const [isBangunanOpen, setIsBangunanOpen] = useState(view.startsWith("bangunan_") || view.startsWith("spk_"));
+  const [isPengamananOpen, setIsPengamananOpen] = useState(view === "bangunan_sarana" || view === "sopp_generator");
 
-  const closeMenu = () => setIsOpen(false);
+  const closeMenu = () => setIsSidebarOpen(false);
 
   const handleNavClick = (targetView) => {
+    if (setLandFilter) setLandFilter("");
+    if (setSewaFilter) setSewaFilter("");
+    if (setComputerFilter) setComputerFilter("Semua");
+    if (setPrinterFilter) setPrinterFilter("Semua");
+
     setView(targetView);
-    closeMenu();
   };
 
-  // Menjalankan fungsi Buat Surat Baru secara default
   const handleStartNew = () => {
-    startNewDocument(); // Otomatis akan tersetting default (Barang Keluar) dari page.jsx
-    closeMenu();
+    if (setLandFilter) setLandFilter("");
+    if (setSewaFilter) setSewaFilter("");
+    if (setComputerFilter) setComputerFilter("Semua");
+    if (setPrinterFilter) setPrinterFilter("Semua");
+
+    if (startNewDocument) startNewDocument();
   };
 
   return (
     <>
-      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 z-30 print:hidden shadow-sm">
+      {/* Mobile Topbar */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 z-30 print:hidden shadow-sm transition-colors">
         <div className="flex items-center gap-2">
-          <Package className="w-6 h-6 text-blue-600" />
-          <span className="font-bold text-lg text-gray-900 tracking-tight">LogistikKu</span>
+          <button onClick={() => setIsSidebarOpen(true)} className="p-1.5 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer flex items-center justify-center">
+            <List className="w-6 h-6" />
+          </button>
+          <div className="flex items-center gap-2">
+            <Package className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+            <span className="font-bold text-lg text-slate-900 dark:text-slate-100 tracking-tight">Logistik Pegadaian</span>
+          </div>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => setView("dashboard")} className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-            <Bell className="w-6 h-6" />
-            {notifCount > 0 && (
-              <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
-                {notifCount}
-              </span>
-            )}
+          <button
+            onClick={toggleTheme}
+            title={theme === "dark" ? "Ganti ke Tema Terang" : "Ganti ke Tema Gelap"}
+            className="p-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-amber-500 dark:text-amber-400 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer flex items-center justify-center transition-colors"
+          >
+            {theme === "dark" ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-indigo-600" />}
           </button>
-          <button onClick={() => setIsOpen(true)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-            <Menu className="w-6 h-6" />
-          </button>
+          <NotificationBell
+            printers={printers}
+            computers={computers}
+            buildingLands={buildingLands}
+            buildingSewas={buildingSewas}
+            setView={setView}
+            isMobile={true}
+          />
         </div>
       </div>
 
-      {isOpen && <div className="md:hidden fixed inset-0 bg-black/50 z-40 print:hidden transition-opacity" onClick={closeMenu} />}
+      {isSidebarOpen && <div className="md:hidden fixed inset-0 bg-black/60 z-40 print:hidden transition-opacity" onClick={closeMenu} />}
 
-      <aside className={`fixed top-0 left-0 h-screen w-64 bg-white border-r border-gray-200 print:hidden flex flex-col z-50 shadow-lg md:shadow-sm transition-transform duration-300 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}>
-        <div className="flex items-center justify-between px-6 h-16 md:h-20 border-b border-gray-100 shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="bg-blue-50 p-2 rounded-lg">
-              <Package className="w-6 h-6 md:w-7 md:h-7 text-blue-600 shrink-0" />
+      <aside className={`fixed top-0 left-0 h-screen w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 print:hidden flex flex-col z-50 shadow-xl transition-transform duration-300 ease-in-out ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="flex items-center gap-3 px-4 h-16 md:h-20 border-b border-slate-200 dark:border-slate-800 shrink-0">
+          <button onClick={closeMenu} className="p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer flex items-center justify-center shrink-0">
+            <List className="w-5 h-5" />
+          </button>
+
+          <div className="flex items-center gap-2">
+            <div className="bg-emerald-100 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-800/40 p-1.5 rounded-lg">
+              <Package className="w-5 h-5 md:w-6 md:h-6 text-emerald-600 dark:text-emerald-400 shrink-0" />
             </div>
-            <span className="font-bold text-lg md:text-xl text-gray-900 tracking-tight">LogistikKu</span>
+            <span className="font-bold text-base md:text-lg text-slate-900 dark:text-slate-100 tracking-tight">Logistik Pegadaian</span>
           </div>
-          <button
-            onClick={() => handleNavClick("dashboard")}
-            title="Lihat Peringatan di Dashboard"
-            className="hidden md:flex relative p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
-          >
-            <Bell className="w-5 h-5" />
-            {notifCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm animate-pulse">
-                {notifCount}
-              </span>
-            )}
-          </button>
-
-          <button onClick={closeMenu} className="md:hidden p-2 text-gray-500 hover:bg-red-50 hover:text-red-500 rounded-lg transition-colors">
-            <X className="w-5 h-5" />
-          </button>
         </div>
 
-        <nav className="flex-1 px-4 space-y-2 overflow-y-auto mt-6 custom-scrollbar pb-6">
-
+        <nav className="flex-1 px-4 space-y-2 overflow-y-auto mt-4 custom-scrollbar pb-6">
           {/* MENU DASHBOARD */}
-          <button onClick={() => handleNavClick("dashboard")} className={`w-full px-4 py-3 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "dashboard" ? "bg-blue-50 text-blue-700" : "text-gray-600 hover:bg-gray-50"}`}>
-            <LayoutDashboard className="w-5 h-5" /> Dashboard Informasi
+          <button onClick={() => handleNavClick("dashboard")} className={`w-full px-4 py-3 rounded-xl font-semibold text-sm flex items-center gap-3 text-left transition-colors ${view === "dashboard" ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-emerald-600 dark:hover:text-emerald-400"}`}>
+            <LayoutDashboard className="w-5 h-5 shrink-0" /> Dashboard Informasi
           </button>
 
-          {/* MENU DROPDOWN: TRANSAKSI (Semua User Bisa Akses) */}
+          {/* KATEGORI: SURAT & DOKUMEN */}
+          <div className="pt-3 pb-1 border-t border-slate-200 dark:border-slate-800 mt-2">
+            <span className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider px-4">Surat & Transaksi</span>
+          </div>
+
           <div className="space-y-1">
-            <button onClick={() => setIsTransaksiOpen(!isTransaksiOpen)} className={`w-full px-4 py-3 rounded-xl font-medium text-sm flex items-center justify-between transition-colors ${view === "riwayat" || view === "form" ? "bg-blue-50 text-blue-700" : "text-gray-600 hover:bg-gray-50"}`}>
+            <button onClick={() => setIsBuatSuratOpen(!isBuatSuratOpen)} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center justify-between text-left transition-colors ${view === "form" || view === "riwayat" ? "bg-slate-100 dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 font-semibold" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-emerald-600 dark:hover:text-emerald-400"}`}>
               <div className="flex items-center gap-3">
-                <ArrowRightLeft className="w-5 h-5" /> Transaksi
+                <FileText className="w-5 h-5 shrink-0" /> Surat Serah Terima
               </div>
-              <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${isTransaksiOpen ? "rotate-180" : ""}`} />
+              <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 shrink-0 ${isBuatSuratOpen ? "rotate-180" : ""}`} />
             </button>
-            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isTransaksiOpen ? "max-h-48 opacity-100" : "max-h-0 opacity-0"}`}>
-              <div className="pl-4 pr-2 py-1 space-y-1 border-l-2 border-gray-100 ml-6 mt-1">
-                <button onClick={() => handleNavClick("riwayat")} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "riwayat" ? "bg-blue-100 text-blue-700" : "text-gray-500 hover:text-blue-700 hover:bg-blue-50"}`}>
-                  <History className="w-4 h-4" /> Riwayat Transaksi
+            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isBuatSuratOpen ? "max-h-[300px] opacity-100" : "max-h-0 opacity-0"}`}>
+              <div className="pl-4 pr-2 py-1 space-y-1 border-l-2 border-slate-200 dark:border-slate-800 ml-6 mt-1">
+                <button onClick={handleStartNew} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-3 text-left transition-colors ${view === "form" ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 font-semibold" : "text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800/60"}`}>
+                  <FileText className="w-4 h-4 shrink-0" /> Buat Surat Baru
                 </button>
-                <button onClick={handleStartNew} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "form" ? "bg-indigo-50 text-indigo-700" : "text-gray-500 hover:text-indigo-700 hover:bg-indigo-50"}`}>
-                  <FileText className="w-4 h-4" /> Buat Surat Baru
+                <button onClick={() => handleNavClick("riwayat")} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-3 text-left transition-colors ${view === "riwayat" ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 font-semibold" : "text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800/60"}`}>
+                  <History className="w-4 h-4 shrink-0" /> Riwayat Transaksi
                 </button>
               </div>
             </div>
           </div>
 
-          {/* ================================================= */}
-          {/* MENU DROPDOWN: DATA MASTER (Kini Semua Bisa Akses) */}
-          {/* ================================================= */}
-          <div className="space-y-1 mt-2">
-            <button onClick={() => setIsMasterOpen(!isMasterOpen)} className={`w-full px-4 py-3 rounded-xl font-medium text-sm flex items-center justify-between transition-colors ${view.startsWith("master_") ? "bg-blue-50 text-blue-700" : "text-gray-600 hover:bg-gray-50"}`}>
+          {/* KATEGORI: BANGUNAN & GEDUNG */}
+          <div className="pt-3 pb-1 border-t border-slate-200 dark:border-slate-800 mt-2">
+            <span className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider px-4">Bangunan & Gedung</span>
+          </div>
+
+          <div className="space-y-1">
+            <button onClick={() => setIsBangunanOpen(!isBangunanOpen)} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center justify-between text-left transition-colors ${view.startsWith("bangunan_") || view.startsWith("spk_") ? "bg-slate-100 dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 font-semibold" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-emerald-600 dark:hover:text-emerald-400"}`}>
               <div className="flex items-center gap-3">
-                <Database className="w-5 h-5" /> Data Master
+                <Building className="w-5 h-5 shrink-0" /> Manajemen Bangunan
               </div>
-              <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${isMasterOpen ? "rotate-180" : ""}`} />
+              <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 shrink-0 ${isBangunanOpen ? "rotate-180" : ""}`} />
             </button>
-            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isMasterOpen ? "max-h-40 opacity-100" : "max-h-0 opacity-0"}`}>
-              <div className="pl-4 pr-2 py-1 space-y-1 border-l-2 border-gray-100 ml-6 mt-1">
-                <button onClick={() => handleNavClick("master_barang")} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "master_barang" ? "bg-blue-100 text-blue-700" : "text-gray-500 hover:text-blue-700 hover:bg-blue-50"}`}>
-                  <Box className="w-4 h-4" /> Master Barang
+            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isBangunanOpen ? "max-h-[400px] opacity-100" : "max-h-0 opacity-0"}`}>
+              <div className="pl-4 pr-2 py-1 space-y-1 border-l-2 border-slate-200 dark:border-slate-800 ml-6 mt-1">
+                <button onClick={() => handleNavClick("bangunan_tanah")} className={`w-full px-4 py-2 rounded-xl font-medium text-xs flex items-center gap-3 text-left transition-colors ${view === "bangunan_tanah" ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 font-semibold" : "text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800/60"}`}>
+                  <Map className="w-4 h-4 shrink-0" /> Aset Tanah & SHGB
                 </button>
-                <button onClick={() => handleNavClick("master_outlet")} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "master_outlet" ? "bg-purple-100 text-purple-700" : "text-gray-500 hover:text-purple-700 hover:bg-purple-50"}`}>
-                  <Building2 className="w-4 h-4" /> Master Outlet
+                <button onClick={() => handleNavClick("bangunan_sewa")} className={`w-full px-4 py-2 rounded-xl font-medium text-xs flex items-center gap-3 text-left transition-colors ${view === "bangunan_sewa" ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 font-semibold" : "text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800/60"}`}>
+                  <Building2 className="w-4 h-4 shrink-0" /> Sewa Gedung / Bangunan
+                </button>
+                <button onClick={() => handleNavClick("bangunan_renovasi")} className={`w-full px-4 py-2 rounded-xl font-medium text-xs flex items-center gap-3 text-left transition-colors ${view === "bangunan_renovasi" ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 font-semibold" : "text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800/60"}`}>
+                  <Hammer className="w-4 h-4 shrink-0" /> Renovasi & Pemeliharaan
+                </button>
+                <button onClick={() => handleNavClick("spk_renovasi")} className={`w-full px-4 py-2 rounded-xl font-medium text-xs flex items-center gap-3 text-left transition-colors ${view === "spk_renovasi" ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 font-semibold" : "text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800/60"}`}>
+                  <FileCheck className="w-4 h-4 shrink-0" /> Histori SPK
                 </button>
               </div>
             </div>
           </div>
 
-          {/* ================================================= */}
-          {/* MENU DROPDOWN: DATA PERANGKAT (Kini Semua Bisa Akses) */}
-          {/* ================================================= */}
-          <div className="space-y-1 mt-2">
-            <button onClick={() => setIsPerangkatOpen(!isPerangkatOpen)} className={`w-full px-4 py-3 rounded-xl font-medium text-sm flex items-center justify-between transition-colors ${view.startsWith("perangkat_") ? "bg-blue-50 text-blue-700" : "text-gray-600 hover:bg-gray-50"}`}>
+          {/* KATEGORI: PENGAMANAN & KORPORASI */}
+          <div className="pt-3 pb-1 border-t border-slate-200 dark:border-slate-800 mt-2">
+            <span className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider px-4">Pengamanan & Korporasi</span>
+          </div>
+
+          <div className="space-y-1">
+            <button onClick={() => setIsPengamananOpen(!isPengamananOpen)} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center justify-between text-left transition-colors ${view === "bangunan_sarana" || view === "sopp_generator" ? "bg-slate-100 dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 font-semibold" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-emerald-600 dark:hover:text-emerald-400"}`}>
               <div className="flex items-center gap-3">
-                <Server className="w-5 h-5" /> Data Perangkat
+                <Shield className="w-5 h-5 shrink-0" /> Sistem Pengamanan
               </div>
-              <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-300 ${isPerangkatOpen ? "rotate-180" : ""}`} />
+              <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 shrink-0 ${isPengamananOpen ? "rotate-180" : ""}`} />
             </button>
-            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isPerangkatOpen ? "max-h-40 opacity-100" : "max-h-0 opacity-0"}`}>
-              <div className="pl-4 pr-2 py-1 space-y-1 border-l-2 border-gray-100 ml-6 mt-1">
-                <button onClick={() => handleNavClick("perangkat_komputer")} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "perangkat_komputer" ? "bg-blue-100 text-blue-700" : "text-gray-500 hover:text-blue-700 hover:bg-blue-50"}`}>
-                  <Monitor className="w-4 h-4" /> Data Komputer
+            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isPengamananOpen ? "max-h-[300px] opacity-100" : "max-h-0 opacity-0"}`}>
+              <div className="pl-4 pr-2 py-1 space-y-1 border-l-2 border-slate-200 dark:border-slate-800 ml-6 mt-1">
+                <button onClick={() => handleNavClick("bangunan_sarana")} className={`w-full px-4 py-2 rounded-xl font-medium text-xs flex items-center gap-3 text-left transition-colors ${view === "bangunan_sarana" ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 font-semibold" : "text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800/60"}`}>
+                  <Shield className="w-4 h-4 shrink-0" /> Sarana CCTV & Fisik
                 </button>
-                <button onClick={() => handleNavClick("perangkat_printer")} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "perangkat_printer" ? "bg-green-100 text-green-700" : "text-gray-500 hover:text-green-700 hover:bg-green-50"}`}>
-                  <Printer className="w-4 h-4" /> Data Printer
+                <button onClick={() => handleNavClick("sopp_generator")} className={`w-full px-4 py-2 rounded-xl font-medium text-xs flex items-center gap-3 text-left transition-colors ${view === "sopp_generator" ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 font-semibold" : "text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800/60"}`}>
+                  <FileText className="w-4 h-4 shrink-0" /> Generator SOPP
                 </button>
               </div>
             </div>
           </div>
 
-          {/* ================================================= */}
-          {/* MENU MANAJEMEN USER (HANYA ADMIN)                 */}
-          {/* ================================================= */}
-          {/* MENU MANAJEMEN USER (HANYA ADMIN) */}
-          {userRole === "admin" && (
-            <div className="pt-4 mt-2 border-t border-gray-100 space-y-1">
-              <button onClick={() => handleNavClick("kelola_user")} className={`w-full px-4 py-3 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "kelola_user" ? "bg-red-50 text-red-700" : "text-gray-600 hover:bg-gray-50"}`}>
-                <Shield className="w-5 h-5" /> Manajemen Akses
+          {/* KATEGORI: PERANGKAT IT */}
+          <div className="pt-3 pb-1 border-t border-slate-200 dark:border-slate-800 mt-2">
+            <span className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider px-4">Perangkat IT</span>
+          </div>
+
+          <div className="space-y-1">
+            <button onClick={() => setIsPerangkatOpen(!isPerangkatOpen)} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center justify-between text-left transition-colors ${view.startsWith("perangkat_") ? "bg-slate-100 dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 font-semibold" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-emerald-600 dark:hover:text-emerald-400"}`}>
+              <div className="flex items-center gap-3">
+                <Monitor className="w-5 h-5 shrink-0" /> Data Perangkat
+              </div>
+              <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 shrink-0 ${isPerangkatOpen ? "rotate-180" : ""}`} />
+            </button>
+            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isPerangkatOpen ? "max-h-[300px] opacity-100" : "max-h-0 opacity-0"}`}>
+              <div className="pl-4 pr-2 py-1 space-y-1 border-l-2 border-slate-200 dark:border-slate-800 ml-6 mt-1">
+                <button onClick={() => handleNavClick("perangkat_komputer")} className={`w-full px-4 py-2 rounded-xl font-medium text-xs flex items-center gap-3 text-left transition-colors ${view === "perangkat_komputer" ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 font-semibold" : "text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800/60"}`}>
+                  <Cpu className="w-4 h-4 shrink-0" /> Data Komputer/PC
+                </button>
+                <button onClick={() => handleNavClick("perangkat_printer")} className={`w-full px-4 py-2 rounded-xl font-medium text-xs flex items-center gap-3 text-left transition-colors ${view === "perangkat_printer" ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 font-semibold" : "text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800/60"}`}>
+                  <Printer className="w-4 h-4 shrink-0" /> Data Printer
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* KATEGORI: DATA MASTER */}
+          <div className="pt-3 pb-1 border-t border-slate-200 dark:border-slate-800 mt-2">
+            <span className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider px-4">Master Data</span>
+          </div>
+
+          <div className="space-y-1">
+            <button onClick={() => setIsMasterOpen(!isMasterOpen)} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center justify-between text-left transition-colors ${view.startsWith("master_") ? "bg-slate-100 dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 font-semibold" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-emerald-600 dark:hover:text-emerald-400"}`}>
+              <div className="flex items-center gap-3">
+                <Database className="w-5 h-5 shrink-0" /> Master Data
+              </div>
+              <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-300 shrink-0 ${isMasterOpen ? "rotate-180" : ""}`} />
+            </button>
+            <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isMasterOpen ? "max-h-[300px] opacity-100" : "max-h-0 opacity-0"}`}>
+              <div className="pl-4 pr-2 py-1 space-y-1 border-l-2 border-slate-200 dark:border-slate-800 ml-6 mt-1">
+                <button onClick={() => handleNavClick("master_barang")} className={`w-full px-4 py-2 rounded-xl font-medium text-xs flex items-center gap-3 text-left transition-colors ${view === "master_barang" ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 font-semibold" : "text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800/60"}`}>
+                  <Box className="w-4 h-4 shrink-0" /> Master Barang/Asset
+                </button>
+                <button onClick={() => handleNavClick("master_outlet")} className={`w-full px-4 py-2 rounded-xl font-medium text-xs flex items-center gap-3 text-left transition-colors ${view === "master_outlet" ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 font-semibold" : "text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800/60"}`}>
+                  <Building2 className="w-4 h-4 shrink-0" /> Master Instansi/Outlet
+                </button>
+                <button onClick={() => handleNavClick("master_vendor")} className={`w-full px-4 py-2 rounded-xl font-medium text-xs flex items-center gap-3 text-left transition-colors ${view === "master_vendor" ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 font-semibold" : "text-slate-600 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800/60"}`}>
+                  <Users className="w-4 h-4 shrink-0" /> Master Vendor/Penyedia
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* KELOLA USER (ADMIN ONLY) */}
+          {user?.role === "admin" && (
+            <>
+              <div className="pt-3 pb-1 border-t border-slate-200 dark:border-slate-800 mt-2">
+                <span className="block text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider px-4">Pengaturan System</span>
+              </div>
+              <button onClick={() => handleNavClick("kelola_user")} className={`w-full px-4 py-3 rounded-xl font-semibold text-sm flex items-center gap-3 text-left transition-colors ${view === "kelola_user" ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20" : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-emerald-600 dark:hover:text-emerald-400"}`}>
+                <Users className="w-5 h-5 shrink-0" /> Kelola User & Akses
               </button>
-              {/* TOMBOL LOG AKTIVITAS BARU */}
-              <button onClick={() => handleNavClick("log_aktivitas")} className={`w-full px-4 py-3 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "log_aktivitas" ? "bg-orange-50 text-orange-700" : "text-gray-600 hover:bg-gray-50"}`}>
-                <Activity className="w-5 h-5" /> Log Aktivitas
-              </button>
-            </div>
+            </>
           )}
-
         </nav>
-
-        <div className="p-4 border-t border-gray-100 shrink-0 mt-auto">
-          <button onClick={handleLogout} className="w-full py-2.5 px-4 mb-4 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-colors">
-            <LogOut className="w-4 h-4" /> Keluar Sistem
-          </button>
-          <div className="text-xs text-center text-gray-400 font-medium leading-relaxed">
-            <p>© 2026 Departemen Logistik</p>
-            <p>Developed by Alzi Rahmana Putra</p>
-          </div>
-        </div>
       </aside>
     </>
   );
-};
-
-export default Navbar;
+}

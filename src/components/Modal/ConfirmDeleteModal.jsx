@@ -1,46 +1,40 @@
-// src/components/shared/ConfirmDeleteModal.jsx
-"use client";
+import React from "react";
+import { AlertTriangle } from "lucide-react";
 
-import { Loader2, AlertTriangle } from "lucide-react";
-
-/**
- * Modal konfirmasi hapus yang bisa dipakai di seluruh halaman.
- *
- * @param {boolean}  show        — tampilkan modal atau tidak
- * @param {string}   name        — nama item yang akan dihapus
- * @param {boolean}  isSaving    — status loading saat proses hapus
- * @param {function} onConfirm   — callback saat tombol "YA, HAPUS" diklik
- * @param {function} onCancel    — callback saat tombol "BATAL" diklik
- */
-export default function ConfirmDeleteModal({ show, name, isSaving, onConfirm, onCancel }) {
+export default function ConfirmDeleteModal({ show, name, onConfirm, onCancel }) {
   if (!show) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
-        <div className="p-6 text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertTriangle className="w-8 h-8 text-red-600" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        <div className="flex items-center gap-3 text-rose-400">
+          <div className="p-3 bg-rose-950/80 border border-rose-800/40 rounded-xl">
+            <AlertTriangle className="w-6 h-6" />
           </div>
-          <h3 className="text-xl font-bold mb-2">Konfirmasi Hapus</h3>
-          <p className="text-sm text-gray-500">
-            Yakin hapus <span className="font-bold text-gray-800">{name}</span>?
-          </p>
+          <div>
+            <h3 className="font-bold text-lg text-slate-100">Konfirmasi Hapus Data</h3>
+            <p className="text-xs text-slate-400">Tindakan ini tidak dapat dibatalkan.</p>
+          </div>
         </div>
-        <div className="flex border-t border-gray-100">
+
+        <p className="text-sm text-slate-300">
+          Apakah Anda yakin ingin menghapus data <strong className="text-rose-400">{name}</strong>?
+        </p>
+
+        <div className="flex justify-end gap-3 pt-2">
           <button
+            type="button"
             onClick={onCancel}
-            disabled={isSaving}
-            className="flex-1 px-4 py-4 text-sm font-bold text-gray-500 hover:bg-gray-50 border-r border-gray-100 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors cursor-pointer"
           >
-            BATAL
+            Batal
           </button>
           <button
+            type="button"
             onClick={onConfirm}
-            disabled={isSaving}
-            className="flex-1 px-4 py-4 text-sm font-bold text-red-600 hover:bg-red-50 flex items-center justify-center gap-2 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-semibold text-white bg-rose-600 hover:bg-rose-500 rounded-xl shadow-lg shadow-rose-950/50 transition-colors cursor-pointer"
           >
-            {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : "YA, HAPUS"}
+            Ya, Hapus Data
           </button>
         </div>
       </div>

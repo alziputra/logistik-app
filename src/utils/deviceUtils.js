@@ -1,12 +1,3 @@
-// src/utils/deviceUtils.js
-// Utilitas bersama untuk modul Komputer dan Printer.
-// Menggabungkan komputerUtils.js dan printerUtils.js yang sebelumnya duplikat.
-
-/**
- * Format tanggal ISO ke format pendek bahasa Indonesia, misal: "Jan 2025".
- * @param {string} dateString
- * @returns {string}
- */
 export const formatBulanTahun = (dateString) => {
   if (!dateString) return "-";
   try {
@@ -19,12 +10,6 @@ export const formatBulanTahun = (dateString) => {
   }
 };
 
-/**
- * Hitung selisih bulan dari hari ini ke tanggal selesai.
- * Nilai positif = masih ada sisa, negatif = sudah lewat.
- * @param {string} tanggalSelesai — ISO date string
- * @returns {number|null}
- */
 export const hitungSisaBulan = (tanggalSelesai) => {
   if (!tanggalSelesai) return null;
   const tglSelesai = new Date(tanggalSelesai);
@@ -36,12 +21,17 @@ export const hitungSisaBulan = (tanggalSelesai) => {
   );
 };
 
-/**
- * Hitung status otomatis berdasarkan rentang tanggal sewa.
- * @param {string} startDate — ISO date string
- * @param {string} endDate   — ISO date string
- * @returns {"Inventaris"|"Sewa Berjalan"|"Sewa Habis"}
- */
+export const hitungSisaHari = (tanggalSelesai) => {
+  if (!tanggalSelesai) return null;
+  const hariIni = new Date();
+  hariIni.setHours(0, 0, 0, 0);
+  const tglSelesai = new Date(tanggalSelesai);
+  tglSelesai.setHours(0, 0, 0, 0);
+  if (isNaN(tglSelesai)) return null;
+  const diffTime = tglSelesai.getTime() - hariIni.getTime();
+  return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+};
+
 export const calculateAutoStatus = (startDate, endDate) => {
   if (!startDate || !endDate) return "Inventaris";
   const today = new Date();
@@ -49,11 +39,6 @@ export const calculateAutoStatus = (startDate, endDate) => {
   return new Date(endDate) >= today ? "Sewa Berjalan" : "Sewa Habis";
 };
 
-/**
- * Parse string bulan-tahun bahasa Indonesia (misal: "April 2024") ke "YYYY-MM-01".
- * @param {string} dateStr
- * @returns {string}
- */
 export const parseIndoDateToISO = (dateStr) => {
   if (!dateStr) return "";
   const monthMap = {
@@ -79,29 +64,61 @@ export const parseIndoDateToISO = (dateStr) => {
   return "";
 };
 
-/**
- * Kembalikan class Tailwind untuk badge status perangkat.
- * @param {"Inventaris"|"Sewa Berjalan"|"Sewa Habis"|string} status
- * @returns {string}
- */
+export const parseRobustDate = (dateStr) => {
+  if (!dateStr) return null;
+  const cleanStr = dateStr.trim();
+  
+  if (/^\d{4}-\d{2}-\d{2}$/.test(cleanStr)) {
+    const [y, m, d] = cleanStr.split("-").map(Number);
+    if (m > 12) {
+      return `${y}-${String(d).padStart(2, "0")}-${String(m).padStart(2, "0")}`;
+    }
+    return cleanStr;
+  }
+  
+  const match = cleanStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
+  if (match) {
+    const part1 = Number(match[1]);
+    const part2 = Number(match[2]);
+    const y = match[3];
+    
+    let d = part1;
+    let m = part2;
+    if (part1 > 12) {
+      d = part1;
+      m = part2;
+    } else if (part2 > 12) {
+      d = part2;
+      m = part1;
+    } else {
+      d = part1;
+      m = part2;
+    }
+    return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+  }
+
+  const parsedIndo = parseIndoDateToISO(cleanStr);
+  if (parsedIndo) return parsedIndo;
+
+  return null;
+};
+
 export const getStatusBadge = (status) => {
   switch (status) {
-    case "Inventaris":    return "bg-blue-100 text-blue-700 border-blue-200";
-    case "Sewa Berjalan": return "bg-green-100 text-green-700 border-green-200";
-    case "Sewa Habis":    return "bg-red-100 text-red-700 border-red-200";
-    default:              return "bg-gray-100 text-gray-700 border-gray-200";
+    case "Inventaris":    return "bg-blue-950/80 text-blue-300 border-blue-800/50";
+    case "Sewa Berjalan": return "bg-emerald-950/80 text-emerald-300 border-emerald-800/50";
+    case "Sewa Habis":    return "bg-rose-950/80 text-rose-300 border-rose-800/50";
+    default:              return "bg-slate-800/80 text-slate-300 border-slate-700/50";
   }
 };
 
-/** Nilai awal formData kosong untuk Komputer. */
 export const emptyFormKomputer = {
   idOutlet: "", outlet: "", ipAddress: "", produk: "", sn: "",
   penyedia: "", tanggalMulai: "", tanggalSelesai: "",
   status: "Inventaris", kondisi: "BAIK",
-  deskripsi: "", macAddress: "", ram: "", storage: "", cpu: "", os: "",
+  keterangan: "", macAddress: "", ram: "", storage: "", cpu: "", os: "",
 };
 
-/** Nilai awal formData kosong untuk Printer. */
 export const emptyFormPrinter = {
   idOutlet: "", outlet: "", produk: "", sn: "",
   penyedia: "", tanggalMulai: "", tanggalSelesai: "",

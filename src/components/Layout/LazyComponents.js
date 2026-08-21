@@ -1,50 +1,35 @@
-// src/components/Layout/LazyComponents.js
-// Komponen yang di-load secara dinamis (lazy loading) untuk optimasi performa
-import dynamic from "next/dynamic";
+import DashboardView from "../Dashboard/index.jsx";
+import DataMaster from "../DataMaster/index.jsx";
+import FormView from "../Form/FormView.jsx";
+import PreviewView from "../Form/PreviewView.jsx";
+import DataPrinter from "../DataPerangkat/DataPrinter/index.jsx";
+import DataKomputer from "../DataPerangkat/DataKomputer/index.jsx";
+import KelolaUser from "../Admin/KelolaUser.jsx";
+import RiwayatTransaksi from "../Transaksi/RiwayatTransaksi.jsx";
+import LogAktivitas from "../Admin/LogAktivitas.jsx";
+import BangunanTanah from "../Bangunan/DaftarTanah/index.jsx";
+import BangunanSewa from "../Bangunan/Sewa/index.jsx";
+import BangunanRenovasi from "../Bangunan/Renovasi/index.jsx";
+import BangunanSarana from "../Bangunan/SaranaPengamanan/index.jsx";
+import BangunanSPK from "../Bangunan/SPK/index.jsx";
+import NotificationPageView from "../Notification/NotificationPageView.jsx";
+import SoppGenerator from "../Form/SoppGenerator.jsx";
 
-const loadMsg = (label) => (
-  <div className="p-10 text-center text-gray-500 animate-pulse">
-    Memuat {label}...
-  </div>
-);
-
-export const DashboardView = dynamic(
-  () => import("../Dashboard"),
-  { loading: () => loadMsg("Dashboard") }
-);
-
-export const DataMaster = dynamic(
-  () => import("../DataMaster"),
-  { loading: () => loadMsg("Data Barang") }
-);
-
-export const FormView = dynamic(
-  () => import("../Form/FormView"),
-  { loading: () => loadMsg("Form") }
-);
-
-export const PreviewView = dynamic(
-  () => import("../Form/PreviewView")
-);
-
-export const DataPrinter = dynamic(
-  () => import("../DataPerangkat/DataPrinter"),
-  { loading: () => loadMsg("Modul Printer") }
-);
-
-export const DataKomputer = dynamic(
-  () => import("../DataPerangkat/DataKomputer"),
-  { loading: () => loadMsg("Modul Komputer... (QR & CSV)") }
-);
-
-export const KelolaUser = dynamic(
-  () => import("../Admin/KelolaUser")
-);
-
-export const RiwayatTransaksi = dynamic(
-  () => import("../Transaksi/RiwayatTransaksi")
-);
-
-export const LogAktivitas = dynamic(
-  () => import("../Admin/LogAktivitas")
-);
+export {
+  DashboardView,
+  DataMaster,
+  FormView,
+  PreviewView,
+  DataPrinter,
+  DataKomputer,
+  KelolaUser,
+  RiwayatTransaksi,
+  LogAktivitas,
+  BangunanTanah,
+  BangunanSewa,
+  BangunanRenovasi,
+  BangunanSarana,
+  BangunanSPK,
+  NotificationPageView,
+  SoppGenerator,
+};

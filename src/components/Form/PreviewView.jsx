@@ -1,223 +1,341 @@
-"use client";
-import { ArrowLeft, Save, Printer } from "lucide-react";
+import React from "react";
+import { Printer, CheckCircle2, ArrowLeft, AlertCircle } from "lucide-react";
+
+const formatIndonesianDate = (dateStr) => {
+  if (!dateStr) return "4 Agustus 2026";
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr;
+  const months = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+  ];
+  return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+};
+
+const NOMOR_PATTERN = /^\d{3}\/\d{5}\.\d{2}\/\d{2}\/\d{4}$/;
+
+const checkNomorValid = (nomor) => {
+  if (!nomor || typeof nomor !== "string") return false;
+  if (nomor.startsWith("000/")) return false;
+  return NOMOR_PATTERN.test(nomor);
+};
 
 const PreviewView = ({
-  formData,
-  items,
-  activeTransaction,
-  setView,
-  handleSaveTransaction,
-}) => (
-  <div className="w-full max-w-4xl mx-auto bg-white mt-6 shadow-xl relative print:shadow-none print:m-0 print:p-0 print:max-w-none print:bg-transparent">
-    {/* NAVBAR PREVIEW (Disembunyikan saat print) */}
-    <div className="print:hidden p-4 bg-gray-100 flex justify-between items-center sticky top-0 z-10 border-b">
-      <button
-        onClick={() => setView(activeTransaction ? "riwayat" : "form")}
-        className="flex items-center gap-2 text-gray-700 bg-white px-4 py-2.5 rounded-lg border border-gray-300 hover:bg-gray-50 font-medium transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4" />{" "}
-        {activeTransaction ? "Ke Riwayat" : "Edit Kembali"}
-      </button>
-      <div className="flex gap-3">
-        {!activeTransaction && (
-          <button
-            onClick={handleSaveTransaction}
-            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg font-medium shadow-sm transition-colors"
-          >
-            <Save className="w-4 h-4" /> Simpan Transaksi
-          </button>
-        )}
-        <button
-          onClick={() => window.print()}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-lg font-medium shadow-sm transition-colors"
-        >
-          <Printer className="w-4 h-4" /> Cetak Dokumen
-        </button>
-      </div>
-    </div>
+  formData = {},
+  items = [],
+  activeTransaction = null,
+  setView = () => {},
+  handleSaveTransaction = () => {},
+  isSaving = false,
+  isViewOnly = false,
+}) => {
+  const nomorIsValid = checkNomorValid(formData.nomorSurat);
 
-    {/* AREA CETAK */}
+  const handlePrint = () => {
+    if (!nomorIsValid) {
+      alert("⚠️ Harap masukkan nomor surat terlebih dahulu sebelum mencetak dokumen!");
+      return;
+    }
+    window.print();
+  };
+
+  const handleSave = async (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!nomorIsValid) {
+      alert("⚠️ Harap masukkan nomor surat terlebih dahulu sebelum menyimpan transaksi!");
+      return;
+    }
+    if (handleSaveTransaction) {
+      await handleSaveTransaction();
+    }
+  };
+
+  // Kalo data tujuan kosong (surat baru), tampilkan titik-titik (bukan hardcoded CPS METRO)
+  const tujuanStr =
+    formData.tujuan ||
+    formData.outletTujuan ||
+    formData.pihak2Instansi ||
+    formData.penerimaInstansi ||
+    "........................";
+
+  const renderDocumentContent = () => (
     <div
-      className="p-8 sm:p-12 bg-white print:px-12 print:pt-12 text-sm print:text-[12px] relative"
+      className="p-5 sm:p-8 bg-white text-black flex flex-col justify-between min-h-[900px] sm:min-h-[950px] print:min-h-[270mm] print:max-h-[270mm] w-full min-w-[600px] sm:min-w-0"
       id="printable-area"
     >
-      {/* Konten Utama */}
-      <div className="print:pb-4">
-        {/* Header Surat */}
-        <div className="flex items-center justify-between mb-8 print:mb-6 border-b-[3px] border-black pb-5 print:pb-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/logo-pegadaian.png"
-            alt="Logo Pegadaian"
-            className="h-16 print:h-14 object-contain"
-            onError={(e) => {
-              e.target.onerror = null;
-              e.target.src =
-                "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z'></path><polyline points='3.27 6.96 12 12.01 20.73 6.96'></polyline><line x1='12' y1='22.08' x2='12' y2='12'></line></svg>";
-            }}
-          />
+      <div>
+        {/* Kop Surat Header */}
+        <div className="flex items-center justify-between pb-4 sm:pb-5">
+          {/* Pegadaian Official Logo */}
+          <div className="flex items-center">
+            <img
+              src="/logo-pegadaian.png"
+              alt="Logo Pegadaian"
+              className="h-10 sm:h-12 w-auto object-contain"
+              onError={(e) => {
+                e.target.src = "/logo-pegadaian.svg";
+              }}
+            />
+          </div>
+
+          {/* Department Title */}
           <div className="text-right">
-            <h1 className="text-2xl print:text-[18px] font-bold uppercase tracking-wider text-gray-900 leading-tight">
-              Departemen Logistik
+            <h1 className="text-sm sm:text-base font-extrabold uppercase tracking-wider text-black leading-tight font-sans">
+              DEPARTEMEN LOGISTIK
             </h1>
-            <p className="text-gray-600 print:text-[11px]">
-              Sistem Informasi Manajemen Barang
-            </p>
+            <p className="text-[10px] sm:text-xs text-gray-600 font-medium">Sistem Informasi Manajemen Barang</p>
           </div>
         </div>
 
-        {/* Judul Surat */}
-        <div className="text-center mb-6 print:mb-5">
-          <h2 className="text-xl print:text-[14px] font-bold underline uppercase text-gray-900 leading-tight">
-            Berita Acara Serah Terima {formData.jenisTransaksi}
+        <div className="border-b-[3px] border-black mb-6 sm:mb-8"></div>
+
+        {/* Document Title */}
+        <div className="text-center mb-6 sm:mb-8">
+          <h2 className="text-xs sm:text-sm font-extrabold underline uppercase text-black leading-tight tracking-wide">
+            BERITA ACARA SERAH TERIMA {formData.jenisTransaksi ? formData.jenisTransaksi.toUpperCase() : "BARANG KELUAR"}
           </h2>
-          <p className="text-gray-700 mt-1 print:mt-1 print:text-[11px]">
-            Nomor: {formData.nomorSurat}
+          <p className="text-[11px] sm:text-xs text-black mt-1 font-medium">
+            Nomor: {formData.nomorSurat || "...../00108.00/04/2026"}
           </p>
         </div>
 
-        {/* Teks Pengantar */}
-        <div className="mb-6 print:mb-5 text-gray-800 text-justify">
-          <div className="mb-4 print:mb-3 border-yellow-400 print:bg-yellow-300 print:border-yellow-400">
-            <h1 className="font-semibold inline mr-2 ">Penerima Barang:</h1>
-            {formData.penerimaInstansi && (
-              <strong className="uppercase">{formData.penerimaInstansi}</strong>
-            )}
-          </div>
-          <p className="leading-relaxed print:leading-7">
-            Pada hari ini, tanggal{" "}
-            <strong>
-              {new Date(formData.tanggal).toLocaleDateString("id-ID", {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}
-            </strong>{" "}
-            bertempat di <strong>{formData.lokasi}</strong>, telah dilakukan
-            serah terima barang dengan rincian sebagai berikut:
-          </p>
+        {/* Yellow Banner 1: Penerima Barang */}
+        <div className="bg-[#FFE600] px-3 py-1.5 mb-3.5 text-[11px] sm:text-xs font-bold text-black border border-black flex items-center gap-2">
+          <span>Penerima Barang:</span>
+          <span className="font-extrabold uppercase">{tujuanStr}</span>
         </div>
 
-        {/* Tabel Barang */}
-        <table className="w-full border-collapse">
-          <thead className="bg-gray-100">
-            <tr>
-              <th className="border border-black py-2 px-2 text-center w-[5%]">
-                No
-              </th>
-              <th className="border border-black py-2 px-2 text-left w-[25%]">
-                Nama Barang
-              </th>
-              <th className="border border-black py-2 px-2 text-left w-[15%]">
-                S/N
-              </th>
-              <th className="border border-black py-2 px-2 text-center w-[8%]">
-                Qty
-              </th>
-              <th className="border border-black py-2 px-2 text-center w-[12%]">
-                Satuan
-              </th>
-              <th className="border border-black py-2 px-2 text-left w-[20%]">
-                Outlet Tujuan
-              </th>
-              <th className="border border-black py-2 px-2 text-left w-[15%]">
-                Keterangan
-              </th>
+        {/* Opening Paragraph */}
+        <p className="text-[11px] sm:text-xs text-black leading-relaxed mb-3.5">
+          Pada hari ini, tanggal <strong className="font-bold">{formatIndonesianDate(formData.tanggal)}</strong> bertempat di <strong className="font-bold">{formData.lokasi || "Jakarta"}</strong>, telah dilakukan serah terima barang dengan rincian sebagai berikut:
+        </p>
+
+        {/* Items Table */}
+        <table className="w-full border-collapse mb-3.5 text-[11px] sm:text-xs border border-black">
+          <thead>
+            <tr className="bg-gray-100 font-bold text-black border-b border-black">
+              <th className="border border-black py-1.5 px-1.5 sm:px-2 text-center w-[6%] font-bold">No</th>
+              <th className="border border-black py-1.5 px-1.5 sm:px-2 text-left w-[25%] font-bold">Nama Barang</th>
+              <th className="border border-black py-1.5 px-1.5 sm:px-2 text-left w-[15%] font-bold">S/N</th>
+              <th className="border border-black py-1.5 px-1.5 sm:px-2 text-center w-[8%] font-bold">Qty</th>
+              <th className="border border-black py-1.5 px-1.5 sm:px-2 text-center w-[10%] font-bold">Satuan</th>
+              <th className="border border-black py-1.5 px-1.5 sm:px-2 text-left w-[18%] font-bold">Outlet Tujuan</th>
+              <th className="border border-black py-1.5 px-1.5 sm:px-2 text-left w-[18%] font-bold">Keterangan</th>
             </tr>
           </thead>
           <tbody>
             {items.map((item, index) => (
-              <tr key={item.id} className="break-inside-avoid">
-                <td className="border border-black py-1 px-2 text-center">
-                  {index + 1}
-                </td>
-                <td className="border border-black py-1 px-2">{item.nama}</td>
-                <td className="border border-black py-1 px-2 break-all">
-                  {item.sn}
-                </td>
-                <td className="border border-black py-1 px-2 text-center">
-                  {item.kuantitas}
-                </td>
-                <td className="border border-black py-1 px-2 text-center">
-                  {item.satuan}
-                </td>
-                <td className="border border-black py-1 px-2">{item.outlet}</td>
-                <td className="border border-black py-1 px-2">
-                  {item.keterangan}
-                </td>
+              <tr key={item.id || index} className="text-black">
+                <td className="border border-black py-1.5 px-1.5 sm:px-2 text-center">{index + 1}</td>
+                <td className="border border-black py-1.5 px-1.5 sm:px-2 font-medium">{item.namaBarang || item.nama}</td>
+                <td className="border border-black py-1.5 px-1.5 sm:px-2 font-mono text-[10px] sm:text-[11px]">{item.sn || "-"}</td>
+                <td className="border border-black py-1.5 px-1.5 sm:px-2 text-center font-bold">{item.jumlah || item.kuantitas}</td>
+                <td className="border border-black py-1.5 px-1.5 sm:px-2 text-center">{item.satuan || "Unit"}</td>
+                <td className="border border-black py-1.5 px-1.5 sm:px-2 uppercase">{item.outlet || (tujuanStr !== "........................" ? tujuanStr : "-")}</td>
+                <td className="border border-black py-1.5 px-1.5 sm:px-2">{item.keterangan || "-"}</td>
               </tr>
             ))}
           </tbody>
         </table>
-        {/* Teks Penutup */}
-        <div className="text-gray-800 mb-6 print:mb-4 text-justify">
-          <p className="leading-relaxed print:leading-7">
-            Demikian Berita Acara Serah Terima Barang ini dibuat dengan
-            sebenarnya dalam keadaan sadar dan tanpa paksaan dari pihak manapun,
-            untuk dapat dipergunakan sebagaimana mestinya.
-          </p>
-        </div>
-        <div className="mb-8 print:mb-6">
-          <p className="font-semibold mb-4 print:mb-3 border-yellow-400 print:bg-yellow-300 print:border-yellow-400">
-            NOTE : MOHON UNTUK DISIMPAN SEBAGAI BUKTI SAH SERAH TERIMA BARANG
-          </p>
+
+        {/* Closing Paragraph */}
+        <p className="text-[11px] sm:text-xs text-black leading-relaxed mb-3.5">
+          Demikian Berita Acara Serah Terima Barang ini dibuat dengan sebenarnya dalam keadaan sadar dan tanpa paksaan dari pihak manapun, untuk dapat dipergunakan sebagaimana mestinya.
+        </p>
+
+        {/* Yellow Banner 2: NOTE */}
+        <div className="bg-[#FFE600] px-3 py-1.5 mb-4 sm:mb-6 text-[11px] sm:text-xs font-bold text-black border border-black">
+          NOTE : MOHON UNTUK DISIMPAN SEBAGAI BUKTI SAH SERAH TERIMA BARANG
         </div>
 
-        {/* Tanda Tangan */}
-        <div className="grid grid-cols-3 mt-8 print:mt-6 text-center text-gray-900 w-full break-inside-avoid">
-          <div className="flex flex-col items-start">
-            <p className="mb-20 print:mb-12">Yang Menerima,</p>
-            <div className="h-10 flex flex-col items-start justify-end w-full">
-              <p className="font-bold underline uppercase">
-                {formData.penerimaNama || "( ........................ )"}
-              </p>
-              <p className="text-sm print:text-[11px] mt-1 text-left">
-                {formData.penerimaJabatan}
-              </p>
-            </div>
+        {/* Signature Section (Yang Menerima | Yang Menyerahkan | Mengetahui) */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 text-[10px] sm:text-xs text-black mb-4 sm:mb-6 print:flex print:justify-between print:gap-4">
+          <div className="print:w-1/3">
+            <p className="font-semibold mb-12 sm:mb-16">Yang Menerima,</p>
+            <p className="font-bold underline uppercase text-black break-words">
+              {formData.pihak2Nama || formData.penerimaNama || "........................"}
+            </p>
+            <p className="text-[9px] sm:text-[11px] text-gray-700 leading-tight">
+              {formData.pihak2Jabatan || formData.penerimaJabatan || ""}
+            </p>
           </div>
 
-          <div className="flex flex-col items-center">
-            <p className="mb-20 print:mb-12">Yang Menyerahkan,</p>
-            <div className="h-10 flex flex-col items-center justify-end w-full">
-              <p className="font-bold underline uppercase">
-                {formData.pengirimNama || "( ........................ )"}
-              </p>
-              <p className="text-sm print:text-[11px] mt-1">
-                {formData.pengirimJabatan}
-              </p>
-            </div>
+          <div className="print:w-1/3">
+            <p className="font-semibold mb-12 sm:mb-16">Yang Menyerahkan,</p>
+            <p className="font-bold underline uppercase text-black break-words">
+              {formData.pihak1Nama || formData.pengirimNama || "AHMAD DENDY SYAPUTRA"}
+            </p>
+            <p className="text-[9px] sm:text-[11px] text-gray-700 leading-tight">
+              {formData.pihak1Jabatan || formData.pengirimJabatan || "Staff Pengadaan dan Logistik"}
+            </p>
           </div>
 
-          <div className="flex flex-col items-end">
-            <p className="mb-20 print:mb-12">Mengetahui,</p>
-            <div className="h-10 flex flex-col items-end justify-end w-full">
-              <p className="font-bold underline uppercase">
-                {formData.mengetahuiNama || "( ........................ )"}
-              </p>
-              <p className="text-sm print:text-[11px] mt-1 text-right">
-                {formData.mengetahuiJabatan}
-              </p>
-            </div>
+          <div className="print:w-1/3">
+            <p className="font-semibold mb-12 sm:mb-16">Mengetahui,</p>
+            <p className="font-bold underline uppercase text-black break-words">
+              {formData.pihakMengetahuiNama || formData.mengetahuiNama || "ZONI RAHMAWAN PUTRA"}
+            </p>
+            <p className="text-[9px] sm:text-[11px] text-gray-600 leading-tight">
+              {formData.pihakMengetahuiJabatan || formData.mengetahuiJabatan || "Kabag Pengadaan dan Logistik"}
+            </p>
           </div>
         </div>
       </div>
 
-      {/* FOOTER */}
-      <div className="mt-8 print:mt-0 print:fixed print:bottom-4 print:left-12 print:right-12 print:bg-white text-left text-[11px] text-gray-800 border-t-[2px] border-black pt-4 print:pt-2 print:text-[10px]">
-        <p className="font-bold text-[12px] print:text-[11px] text-gray-900 leading-tight">
-          PT. PEGADAIAN
-        </p>
-        <p className="leading-tight mt-0.5">Kantor Wilayah VIII Jakarta 1</p>
-        <p className="leading-tight mt-0.5">
-          Jl. Senen Raya No. 36 Jakarta Pusat 10410
-        </p>
-        <p className="leading-tight mt-0.5">
-          Telp : (021) 3840229 &nbsp;&nbsp;&nbsp; Fax : (021) 3454116
-        </p>
+      {/* Official Footer PT PEGADAIAN - Pinned to bottom of A4 paper */}
+      <div className="official-footer pt-1.5 border-t-2 border-black text-black mt-auto pb-0.5">
+        <p className="font-bold text-xs uppercase mb-0.5">PT. PEGADAIAN</p>
+        <p className="text-[10px] sm:text-[11px] text-gray-700 leading-tight">Kantor Wilayah VIII Jakarta 1</p>
+        <p className="text-[10px] sm:text-[11px] text-gray-700 leading-tight">Jl. Senen Raya No. 36 Jakarta Pusat 10410</p>
+        <p className="text-[10px] sm:text-[11px] text-gray-700 leading-tight">Telp : (021) 3840229 &nbsp;&nbsp;&nbsp;&nbsp; Fax : (021) 3454116</p>
       </div>
     </div>
-  </div>
-);
+  );
+
+  return (
+    <div className="w-full pt-5 sm:pt-2 pb-6 print:p-0">
+      
+      {/* Strict A4 Single-Page Print Specific CSS Overrides */}
+      <style>{`
+        @media print {
+          @page {
+            size: A4 portrait;
+            margin: 5mm 8mm 8mm 8mm;
+          }
+          html, body, #root, main, section, article {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: #ffffff !important;
+          }
+          body * {
+            visibility: hidden !important;
+          }
+          .print\\:hidden {
+            display: none !important;
+          }
+          #printable-area, #printable-area * {
+            visibility: visible !important;
+          }
+          #printable-area {
+            position: fixed !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            height: 100% !important;
+            max-height: 100% !important;
+            margin: 0 !important;
+            padding: 15px 25px 12px 25px !important;
+            box-shadow: none !important;
+            border: none !important;
+            border-radius: 0 !important;
+            background: #ffffff !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+            box-sizing: border-box !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+          .bg-\\[\\#FFE600\\] {
+            background-color: #FFE600 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          .bg-gray-100 {
+            background-color: #F3F4F6 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          table, tr, td, th {
+            page-break-inside: avoid !important;
+          }
+          .official-footer {
+            margin-top: auto !important;
+            padding-top: 4px !important;
+            padding-bottom: 0px !important;
+            border-top: 2px solid #000000 !important;
+            page-break-inside: avoid !important;
+            break-inside: avoid !important;
+          }
+        }
+      `}</style>
+
+      {/* Warning Banner if Nomor Surat is missing or invalid */}
+      {!nomorIsValid && !isViewOnly && (
+        <div className="print:hidden mb-2.5 px-3.5 py-2.5 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-center gap-2 text-amber-500 dark:text-amber-400 text-xs font-semibold shadow-sm">
+          <AlertCircle className="w-4 h-4 shrink-0 text-amber-500 dark:text-amber-400" />
+          <span>Nomor surat belum diisi! Harap masukkan nomor surat terlebih dahulu untuk mencetak atau menyimpan transaksi.</span>
+        </div>
+      )}
+
+      {/* Top Action Bar (Dedicated Toolbar Card - Clean Light & Dark Mode Styling) */}
+      <div className="print:hidden mb-3 p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm dark:shadow-md flex flex-wrap items-center justify-between gap-2.5 transition-colors">
+        <div className="flex items-center gap-2">
+          {/* Tombol Kembali ke Riwayat (jika Mode Lihat Surat) atau Edit Kembali (jika di Mobile) */}
+          {isViewOnly ? (
+            <button
+              type="button"
+              onClick={() => setView("riwayat")}
+              className="flex items-center gap-1.5 text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 font-bold text-xs transition-colors cursor-pointer shrink-0 active:scale-95 shadow-sm"
+            >
+              <ArrowLeft className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <span>Kembali ke Riwayat</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setView("form")}
+              className="lg:hidden flex items-center gap-1.5 text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 font-semibold text-xs transition-colors cursor-pointer shrink-0"
+            >
+              <ArrowLeft className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <span>Edit Kembali</span>
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          {/* Tombol Cetak Surat */}
+          <button
+            type="button"
+            onClick={handlePrint}
+            className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl border font-bold text-xs transition-all cursor-pointer shrink-0 shadow-sm active:scale-95 ${
+              nomorIsValid
+                ? "bg-blue-600 hover:bg-blue-500 text-white border-blue-600 shadow-blue-600/20"
+                : "bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-300 dark:border-slate-700 cursor-not-allowed opacity-75"
+            }`}
+            title="Cetak Surat (A4)"
+          >
+            <Printer className="w-4 h-4" />
+            <span>Cetak</span>
+          </button>
+
+          {!isViewOnly && (
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={isSaving}
+              className={`flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer disabled:opacity-70 active:scale-95 shrink-0 ${
+                nomorIsValid
+                  ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20"
+                  : "bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border border-slate-300 dark:border-slate-700 cursor-not-allowed opacity-75"
+              }`}
+            >
+              <CheckCircle2 className="w-4 h-4" />
+              <span>{isSaving ? "Menyimpan..." : "Simpan Transaksi"}</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Printable Area Container Card */}
+      <div className="print-wrapper w-full bg-white shadow-xl print:shadow-none relative text-slate-900 rounded-2xl print:rounded-none overflow-hidden print:overflow-visible border border-slate-200 print:border-none">
+        <div className="overflow-x-auto bg-white">
+          {renderDocumentContent()}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default PreviewView;

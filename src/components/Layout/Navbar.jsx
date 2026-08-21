@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import {
-  Package, LayoutDashboard, Menu, X, LogOut, ChevronDown, Box, Building2, Database, 
+  Package, LayoutDashboard, Menu, X, LogOut, ChevronDown, Box, Building2, Database,
   ArrowRightLeft, History, FileText, Server, Monitor, Printer, Bell, Shield, Activity
 } from "lucide-react";
 
 const Navbar = ({ view, setView, startNewDocument, handleLogout, notifCount = 0, userRole }) => {
   const [isOpen, setIsOpen] = useState(false);
-  
+
   // State untuk mengontrol dropdown
   const [isMasterOpen, setIsMasterOpen] = useState(view.startsWith("master_"));
   const [isTransaksiOpen, setIsTransaksiOpen] = useState(view === "riwayat" || view === "form");
@@ -59,7 +59,7 @@ const Navbar = ({ view, setView, startNewDocument, handleLogout, notifCount = 0,
             </div>
             <span className="font-bold text-lg md:text-xl text-gray-900 tracking-tight">LogistikKu</span>
           </div>
-          <button 
+          <button
             onClick={() => handleNavClick("dashboard")}
             title="Lihat Peringatan di Dashboard"
             className="hidden md:flex relative p-2 text-gray-500 hover:bg-blue-50 hover:text-blue-600 rounded-lg transition-colors"
@@ -78,7 +78,7 @@ const Navbar = ({ view, setView, startNewDocument, handleLogout, notifCount = 0,
         </div>
 
         <nav className="flex-1 px-4 space-y-2 overflow-y-auto mt-6 custom-scrollbar pb-6">
-          
+
           {/* MENU DASHBOARD */}
           <button onClick={() => handleNavClick("dashboard")} className={`w-full px-4 py-3 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "dashboard" ? "bg-blue-50 text-blue-700" : "text-gray-600 hover:bg-gray-50"}`}>
             <LayoutDashboard className="w-5 h-5" /> Dashboard Informasi
@@ -120,7 +120,7 @@ const Navbar = ({ view, setView, startNewDocument, handleLogout, notifCount = 0,
                   <Box className="w-4 h-4" /> Master Barang
                 </button>
                 <button onClick={() => handleNavClick("master_outlet")} className={`w-full px-4 py-2.5 rounded-xl font-medium text-sm flex items-center gap-3 transition-colors ${view === "master_outlet" ? "bg-purple-100 text-purple-700" : "text-gray-500 hover:text-purple-700 hover:bg-purple-50"}`}>
-                  <Building2 className="w-4 h-4" /> Master Instansi
+                  <Building2 className="w-4 h-4" /> Master Outlet
                 </button>
               </div>
             </div>

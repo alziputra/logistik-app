@@ -27,10 +27,6 @@ export function useTransaksi({
   showNotif,
   navigateTo,   // fungsi (viewId) => void, untuk navigasi setelah aksi
 }) {
-  const safeAppId = appId || "logistikku_app_01";
-  const base      = ["artifacts", safeAppId, "public", "data"];
-  const col       = (name) => collection(db, ...base, name);
-
   const [formData, setFormData]               = useState(() => createInitialFormData());
   const [items, setItems]                     = useState(() => [createInitialItem()]);
   const [activeTransaction, setActiveTransaction] = useState(null);
@@ -46,7 +42,7 @@ export function useTransaksi({
         keterangan,
         timestamp: new Date().toISOString(),
       };
-      const docRef = await addDoc(col("activity_logs"), newLogData);
+      const docRef = await addDoc(collection(db, "logistik", "operations", "activity_logs"), newLogData);
       setActivityLogs((prev) => [{ id: docRef.id, ...newLogData }, ...prev]);
     } catch (e) {
       console.error("Gagal mencatat log:", e);
@@ -102,7 +98,7 @@ export function useTransaksi({
         createdAt: new Date().toISOString(),
       };
 
-      const docRefTrx = await addDoc(col("transactions"), newTrx);
+      const docRefTrx = await addDoc(collection(db, "logistik", "operations", "transactions"), newTrx);
       setTransactions((prev) => [{ id: docRefTrx.id, ...newTrx }, ...prev]);
 
       await logActivity(
@@ -134,12 +130,12 @@ export function useTransaksi({
 
         if (invIdx !== -1) {
           const invItem = updatedInv[invIdx];
-          const itemRef = doc(db, ...base, "inventory", invItem.id);
+          const itemRef = doc(db, "logistik", "master", "inventory", invItem.id);
           await updateDoc(itemRef, { stok: increment(diff) });
           updatedInv[invIdx] = { ...invItem, stok: invItem.stok + diff };
         } else {
           const newInvItem = { nama: item.nama, stok: diff, satuan: item.satuan };
-          const docRefInv  = await addDoc(col("inventory"), newInvItem);
+          const docRefInv  = await addDoc(collection(db, "logistik", "master", "inventory"), newInvItem);
           updatedInv.push({ id: docRefInv.id, ...newInvItem });
         }
       }

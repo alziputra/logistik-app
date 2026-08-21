@@ -29,7 +29,7 @@ export function useAuth(onLogout, showNotif) {
       if (currentUser) {
         setUser(currentUser);
         try {
-          const userRef  = doc(db, "users", currentUser.uid);
+          const userRef  = doc(db, "logistik", "auth", "users", currentUser.uid);
           const userSnap = await getDoc(userRef);
 
           if (userSnap.exists()) {

@@ -172,7 +172,7 @@ export default function MasterBarang({ inventory, userRole }) {
           }
 
           const newItems = [];
-          const colRef = collection(db, "artifacts", appId, "public", "data", "inventory");
+          const colRef = collection(db, "logistik", "master", "inventory");
 
           for (const row of rows) {
             const nama = row["Nama Barang"] || row["nama"] || row["Nama"] || "";
@@ -226,7 +226,7 @@ export default function MasterBarang({ inventory, userRole }) {
   const confirmDeleteAction = async () => {
     setIsSaving(true);
     try {
-      await deleteDoc(doc(db, "artifacts", appId, "public", "data", "inventory", deleteConfirm.id));
+      await deleteDoc(doc(db, "logistik", "master", "inventory", deleteConfirm.id));
       setLocalInventory((prev) => prev.filter((item) => item.id !== deleteConfirm.id));
       showNotif("Barang berhasil dihapus!");
     } catch {
@@ -256,13 +256,13 @@ export default function MasterBarang({ inventory, userRole }) {
     };
     try {
       if (editingInv) {
-        await updateDoc(doc(db, "artifacts", appId, "public", "data", "inventory", editingInv.id), payload);
+        await updateDoc(doc(db, "logistik", "master", "inventory", editingInv.id), payload);
         setLocalInventory((prev) =>
           prev.map((item) => item.id === editingInv.id ? { id: editingInv.id, ...payload } : item)
         );
         showNotif("Data barang berhasil diperbarui!");
       } else {
-        const docRef = await addDoc(collection(db, "artifacts", appId, "public", "data", "inventory"), payload);
+        const docRef = await addDoc(collection(db, "logistik", "master", "inventory"), payload);
         setLocalInventory((prev) => [{ id: docRef.id, ...payload }, ...prev]);
         showNotif("Barang baru berhasil ditambahkan!");
       }

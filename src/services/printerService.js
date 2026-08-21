@@ -6,30 +6,30 @@ import {
 import { db } from "../lib/firebase";
 import { parseIndoDateToISO, calculateAutoStatus } from "../utils/deviceUtils";
 
-const getBaseRef = (appId) => {
-  const id = appId || process.env.NEXT_PUBLIC_APP_ID || "logistikku_app_01";
-  return `artifacts/${id}/public/data`;
-};
+const getPrinterRef = () => collection(db, "logistik", "devices", "printers");
+const getPrinterDocRef = (id) => doc(db, "logistik", "devices", "printers", id);
+const getOutletsRef = () => collection(db, "logistik", "master", "outlets");
+const getInventoryRef = () => collection(db, "logistik", "master", "inventory");
+const getTrxRef = () => collection(db, "logistik", "operations", "transactions");
 
 // ─── READ ──────────────────────────────────────────────────────────────────
 
 /**
  * Ambil semua data printer dari Firestore.
  */
-export const fetchPrinter = async (appId) => {
-  const snap = await getDocs(collection(db, getBaseRef(appId), "printers"));
+export const fetchPrinter = async () => {
+  const snap = await getDocs(getPrinterRef());
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 };
 
 /**
  * Ambil dropdown outlet, inventory, dan SN dari transaksi sekaligus.
  */
-export const fetchDropdowns = async (appId) => {
-  const base = getBaseRef(appId);
+export const fetchDropdowns = async () => {
   const [outSnap, invSnap, trxSnap] = await Promise.all([
-    getDocs(collection(db, base, "outlets")),
-    getDocs(collection(db, base, "inventory")),
-    getDocs(collection(db, base, "transactions")),
+    getDocs(getOutletsRef()),
+    getDocs(getInventoryRef()),
+    getDocs(getTrxRef()),
   ]);
 
   // Kumpulkan SN unik dari koleksi transactions
@@ -53,26 +53,29 @@ export const fetchDropdowns = async (appId) => {
 
 /**
  * Tambah satu data printer.
- * @returns dokumen baru lengkap dengan id
  */
 export const addPrinter = async (appId, formData) => {
+  const data = typeof appId === "object" ? appId : formData;
   const ref = await addDoc(
-    collection(db, getBaseRef(appId), "printers"),
-    formData
+    getPrinterRef(),
+    data
   );
-  return { id: ref.id, ...formData };
+  return { id: ref.id, ...data };
 };
 
 // ─── UPDATE ────────────────────────────────────────────────────────────────
 
 export const updatePrinter = async (appId, id, formData) => {
-  await updateDoc(doc(db, getBaseRef(appId), "printers", id), formData);
+  const targetId = typeof appId === "string" && formData ? id : appId;
+  const data = typeof appId === "string" && formData ? formData : id;
+  await updateDoc(getPrinterDocRef(targetId), data);
 };
 
 // ─── DELETE ────────────────────────────────────────────────────────────────
 
 export const deletePrinter = async (appId, id) => {
-  await deleteDoc(doc(db, getBaseRef(appId), "printers", id));
+  const targetId = id || appId;
+  await deleteDoc(getPrinterDocRef(targetId));
 };
 
 // ─── IMPORT CSV / EXCEL (BATCH) ────────────────────────────────────────────
@@ -82,9 +85,10 @@ export const deletePrinter = async (appId, id) => {
  * @returns {Promise<number>} jumlah baris yang berhasil di-import
  */
 export const importPrinterCSV = async (appId, rows) => {
-  if (!rows || rows.length === 0) throw new Error("File CSV/Excel kosong");
+  const dataRows = Array.isArray(appId) ? appId : rows;
+  if (!dataRows || dataRows.length === 0) throw new Error("File CSV/Excel kosong");
 
-  const printerRef = collection(db, getBaseRef(appId), "printers");
+  const printerRef = getPrinterRef();
   const promises   = [];
   let batch        = writeBatch(db);
   let count        = 0;

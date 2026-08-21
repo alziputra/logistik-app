@@ -6,13 +6,10 @@ import {
 import { db } from "../lib/firebase";
 import { parseIndoDateToISO } from "../utils/deviceUtils";
 
-/**
- * Path koleksi Firestore yang dipakai di seluruh service ini.
- */
-const getBaseRef = (appId) => {
-  const id = appId || process.env.NEXT_PUBLIC_APP_ID || "logistikku_app_01";
-  return `artifacts/${id}/public/data`;
-};
+const getCompRef = () => collection(db, "logistik", "devices", "computers");
+const getCompDocRef = (id) => doc(db, "logistik", "devices", "computers", id);
+const getOutletsRef = () => collection(db, "logistik", "master", "outlets");
+const getInventoryRef = () => collection(db, "logistik", "master", "inventory");
 
 // ─── READ ──────────────────────────────────────────────────────────────────
 
@@ -20,8 +17,8 @@ const getBaseRef = (appId) => {
  * Ambil semua data komputer dari Firestore.
  * @returns {Promise<Array>}
  */
-export const fetchKomputer = async (appId) => {
-  const snap = await getDocs(collection(db, getBaseRef(appId), "computers"));
+export const fetchKomputer = async () => {
+  const snap = await getDocs(getCompRef());
   return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 };
 
@@ -29,11 +26,10 @@ export const fetchKomputer = async (appId) => {
  * Ambil data dropdown outlet & inventory sekaligus.
  * @returns {Promise<{ outlets: Array, inventory: Array }>}
  */
-export const fetchDropdowns = async (appId) => {
-  const base = getBaseRef(appId);
+export const fetchDropdowns = async () => {
   const [outSnap, invSnap] = await Promise.all([
-    getDocs(collection(db, base, "outlets")),
-    getDocs(collection(db, base, "inventory")),
+    getDocs(getOutletsRef()),
+    getDocs(getInventoryRef()),
   ]);
   return {
     outlets:   outSnap.docs.map((d) => ({ id: d.id, ...d.data() })),
@@ -45,36 +41,38 @@ export const fetchDropdowns = async (appId) => {
 
 /**
  * Tambah satu data komputer.
+ * @param {string} appId - deprecated / optional
  * @param {object} formData
  * @returns {Promise<{ id: string } & object>} dokumen baru lengkap dengan id
  */
 export const addKomputer = async (appId, formData) => {
+  const data = typeof appId === "object" ? appId : formData;
   const ref = await addDoc(
-    collection(db, getBaseRef(appId), "computers"),
-    formData
+    getCompRef(),
+    data
   );
-  return { id: ref.id, ...formData };
+  return { id: ref.id, ...data };
 };
 
 // ─── UPDATE ────────────────────────────────────────────────────────────────
 
 /**
  * Perbarui data komputer berdasarkan id.
- * @param {string} id
- * @param {object} formData
  */
 export const updateKomputer = async (appId, id, formData) => {
-  await updateDoc(doc(db, getBaseRef(appId), "computers", id), formData);
+  const targetId = typeof appId === "string" && formData ? id : appId;
+  const data = typeof appId === "string" && formData ? formData : id;
+  await updateDoc(getCompDocRef(targetId), data);
 };
 
 // ─── DELETE ────────────────────────────────────────────────────────────────
 
 /**
  * Hapus data komputer berdasarkan id.
- * @param {string} id
  */
 export const deleteKomputer = async (appId, id) => {
-  await deleteDoc(doc(db, getBaseRef(appId), "computers", id));
+  const targetId = id || appId;
+  await deleteDoc(getCompDocRef(targetId));
 };
 
 // ─── IMPORT CSV (BATCH) ────────────────────────────────────────────────────
@@ -82,15 +80,12 @@ export const deleteKomputer = async (appId, id) => {
 /**
  * Import massal dari array hasil parsing PapaParse.
  * Tiap batch maksimal 490 dokumen (batas Firestore 500).
- *
- * @param {string}   appId
- * @param {Array}    rows   — hasil `results.data` dari Papa.parse
- * @returns {Promise<number>} jumlah baris yang berhasil di-import
  */
 export const importKomputerCSV = async (appId, rows) => {
-  if (!rows || rows.length === 0) throw new Error("File CSV kosong");
+  const dataRows = Array.isArray(appId) ? appId : rows;
+  if (!dataRows || dataRows.length === 0) throw new Error("File CSV kosong");
 
-  const compRef  = collection(db, getBaseRef(appId), "computers");
+  const compRef  = getCompRef();
   const promises = [];
   let batch      = writeBatch(db);
   let count      = 0;

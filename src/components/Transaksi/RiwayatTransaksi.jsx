@@ -150,7 +150,7 @@ export default function RiwayatTransaksi({ transactions, setFormData, setItems, 
             return;
           }
 
-          const colRef = collection(db, "artifacts", appId, "public", "data", "transactions");
+          const colRef = collection(db, "logistik", "operations", "transactions");
           let count = 0;
 
           for (const row of rows) {

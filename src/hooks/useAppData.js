@@ -35,34 +35,30 @@ export function useAppData(user, appId) {
   useEffect(() => {
     if (!user || !db) return;
 
-    const safeAppId = appId || "logistikku_app_01";
-    const base      = ["artifacts", safeAppId, "public", "data"];
-    const col       = (name) => collection(db, ...base, name);
-
     const fetchAll = async () => {
       try {
-        // Inventory
-        const invSnap = await getDocs(col("inventory"));
+        // Inventory (master)
+        const invSnap = await getDocs(collection(db, "logistik", "master", "inventory"));
         setInventory(invSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
 
-        // Transactions
-        const trxSnap = await getDocs(col("transactions"));
+        // Transactions (operations)
+        const trxSnap = await getDocs(collection(db, "logistik", "operations", "transactions"));
         setTransactions(
           trxSnap.docs
             .map((d) => ({ id: d.id, ...d.data() }))
             .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
         );
 
-        // Outlets
-        const outSnap = await getDocs(col("outlets"));
+        // Outlets (master)
+        const outSnap = await getDocs(collection(db, "logistik", "master", "outlets"));
         setOutlets(
           outSnap.docs
             .map((d) => ({ id: d.id, ...d.data() }))
             .sort((a, b) => a.nama.localeCompare(b.nama))
         );
 
-        // Printers + notif sewa
-        const printerSnap = await getDocs(col("printers"));
+        // Printers + notif sewa (devices)
+        const printerSnap = await getDocs(collection(db, "logistik", "devices", "printers"));
         const printerData = printerSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
         setPrinters(printerData);
         setNotifSewa(
@@ -73,8 +69,8 @@ export function useAppData(user, appId) {
             .sort((a, b) => a.sisaBulan - b.sisaBulan)
         );
 
-        // Computers + notif sewa
-        const compSnap = await getDocs(col("computers"));
+        // Computers + notif sewa (devices)
+        const compSnap = await getDocs(collection(db, "logistik", "devices", "computers"));
         const compData = compSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
         setComputers(compData);
         setNotifSewaKomputer(
@@ -85,12 +81,12 @@ export function useAppData(user, appId) {
             .sort((a, b) => a.sisaBulan - b.sisaBulan)
         );
 
-        // Users
-        const usersSnap = await getDocs(collection(db, "users"));
+        // Users (auth)
+        const usersSnap = await getDocs(collection(db, "logistik", "auth", "users"));
         setUsersList(usersSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
 
-        // Activity logs
-        const logsSnap = await getDocs(col("activity_logs"));
+        // Activity logs (operations)
+        const logsSnap = await getDocs(collection(db, "logistik", "operations", "activity_logs"));
         setActivityLogs(
           logsSnap.docs
             .map((d) => ({ id: d.id, ...d.data() }))

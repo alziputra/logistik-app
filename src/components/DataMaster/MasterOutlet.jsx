@@ -79,17 +79,7 @@ export default function MasterOutlet({ outlets, userRole }) {
   const confirmDeleteAction = async () => {
     setIsSaving(true);
     try {
-      await deleteDoc(
-        doc(
-          db,
-          "artifacts",
-          appId,
-          "public",
-          "data",
-          "outlets",
-          deleteConfirm.id,
-        ),
-      );
+      await deleteDoc(doc(db, "logistik", "master", "outlets", deleteConfirm.id));
       setLocalOutlets((prev) =>
         prev.filter((item) => item.id !== deleteConfirm.id),
       );
@@ -113,15 +103,7 @@ export default function MasterOutlet({ outlets, userRole }) {
           nama: form.get("nama"),
         };
         await updateDoc(
-          doc(
-            db,
-            "artifacts",
-            appId,
-            "public",
-            "data",
-            "outlets",
-            editingOutlet.id,
-          ),
+          doc(db, "logistik", "master", "outlets", editingOutlet.id),
           updatedOutlet,
         );
         setLocalOutlets((prev) =>
@@ -147,7 +129,7 @@ export default function MasterOutlet({ outlets, userRole }) {
           nama: form.get("nama"),
         };
         const docRef = await addDoc(
-          collection(db, "artifacts", appId, "public", "data", "outlets"),
+          collection(db, "logistik", "master", "outlets"),
           newOutlet,
         );
         setLocalOutlets((prev) => [...prev, { id: docRef.id, ...newOutlet }]);
@@ -221,7 +203,7 @@ export default function MasterOutlet({ outlets, userRole }) {
           }
 
           const newOutlets = [];
-          const colRef = collection(db, "artifacts", appId, "public", "data", "outlets");
+          const colRef = collection(db, "logistik", "master", "outlets");
 
           for (const row of rows) {
             const nama = row["Nama Outlet / Instansi"] || row["Nama Outlet"] || row["nama"] || row["Nama"] || "";
@@ -388,7 +370,7 @@ export default function MasterOutlet({ outlets, userRole }) {
                       colSpan={userRole === "admin" ? "4" : "3"}
                       className="py-12 text-center text-gray-400 text-sm"
                     >
-                      Belum ada data instansi.
+                      Belum ada data instansi/outlet.
                     </td>
                   </tr>
                 ) : (

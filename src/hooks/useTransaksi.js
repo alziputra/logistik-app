@@ -2,27 +2,24 @@ import { useState } from "react";
 import { addTransaksi, updateTransaksi } from "../services/transaksiService";
 import { createInitialFormData, createInitialItem } from "../constants";
 
-export function useTransaksi({
-  user,
-  transactions = [],
-  inventory = [],
-  setTransactions = () => {},
-  setInventory = () => {},
-  setActivityLogs = () => {},
-  showNotif = () => {},
-  navigateTo = () => {},
-  loadAllData = () => {},
-}) {
+export function useTransaksi({ user, transactions = [], inventory = [], setTransactions = () => {}, setInventory = () => {}, setActivityLogs = () => {}, showNotif = () => {}, navigateTo = () => {}, loadAllData = () => {} }) {
   const [formData, setFormData] = useState(() => createInitialFormData());
   const [items, setItems] = useState(() => [createInitialItem()]);
   const [activeTransaction, setActiveTransaction] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const startNewDocument = (jenis = "Barang Keluar") => {
+    const isMasuk = jenis === "Barang Masuk";
     setFormData({
       ...createInitialFormData(),
       nomorSurat: "",
       jenisTransaksi: jenis,
+      tujuan: isMasuk ? "Logistik Kanwil VIII" : "",
+      outletTujuan: isMasuk ? "Logistik Kanwil VIII" : "",
+      pihak2Instansi: isMasuk ? "Logistik Kanwil VIII" : "",
+      penerimaInstansi: isMasuk ? "Logistik Kanwil VIII" : "",
+      asalOutlet: "",
+      kodeOutlet: "",
     });
     setItems([createInitialItem()]);
     setActiveTransaction(null);
@@ -31,6 +28,7 @@ export function useTransaksi({
 
   const editDocument = (trx) => {
     if (!trx) return;
+    const isMasuk = trx.jenisTransaksi === "Barang Masuk";
     setActiveTransaction(trx);
     setFormData({
       id: trx.id,
@@ -38,13 +36,16 @@ export function useTransaksi({
       jenisTransaksi: trx.jenisTransaksi || "Barang Keluar",
       tanggal: trx.tanggal || new Date().toISOString().split("T")[0],
       lokasi: trx.lokasi || "Jakarta",
-      tujuan: trx.tujuan || trx.outletTujuan || trx.penerimaInstansi || "",
-      outletTujuan: trx.outletTujuan || trx.tujuan || trx.penerimaInstansi || "",
+      tujuan: isMasuk ? trx.tujuan || "Logistik Kanwil VIII" : trx.tujuan || trx.outletTujuan || trx.penerimaInstansi || "",
+      outletTujuan: isMasuk ? trx.outletTujuan || "Logistik Kanwil VIII" : trx.outletTujuan || trx.tujuan || trx.penerimaInstansi || "",
+      asalOutlet: trx.asalOutlet || trx.outletAsal || "",
+      kodeOutlet: trx.kodeOutlet || "",
       pihak1Nama: trx.pengirimNama || trx.pihak1Nama || "",
       pengirimNama: trx.pengirimNama || trx.pihak1Nama || "",
       pihak1Jabatan: trx.pengirimJabatan || trx.pihak1Jabatan || "",
       pengirimJabatan: trx.pengirimJabatan || trx.pihak1Jabatan || "",
       pihak1Instansi: trx.pengirimInstansi || trx.pihak1Instansi || "",
+      pengirimInstansi: trx.pengirimInstansi || trx.pihak1Instansi || "",
       pihakMengetahuiNama: trx.mengetahuiNama || trx.pihakMengetahuiNama || "",
       mengetahuiNama: trx.mengetahuiNama || trx.pihakMengetahuiNama || "",
       pihakMengetahuiJabatan: trx.mengetahuiJabatan || trx.pihakMengetahuiJabatan || "",
@@ -53,8 +54,8 @@ export function useTransaksi({
       penerimaNama: trx.penerimaNama || trx.pihak2Nama || "",
       pihak2Jabatan: trx.penerimaJabatan || trx.pihak2Jabatan || "",
       penerimaJabatan: trx.penerimaJabatan || trx.pihak2Jabatan || "",
-      pihak2Instansi: trx.penerimaInstansi || trx.pihak2Instansi || trx.tujuan || "",
-      penerimaInstansi: trx.penerimaInstansi || trx.pihak2Instansi || trx.tujuan || "",
+      pihak2Instansi: isMasuk ? "Logistik Kanwil VIII" : trx.penerimaInstansi || trx.pihak2Instansi || trx.tujuan || "",
+      penerimaInstansi: isMasuk ? "Logistik Kanwil VIII" : trx.penerimaInstansi || trx.pihak2Instansi || trx.tujuan || "",
     });
 
     const rawItems = trx.items && trx.items.length > 0 ? trx.items : [createInitialItem()];
@@ -141,7 +142,7 @@ export function useTransaksi({
           if (found) updated.satuan = found.satuan;
         }
         return updated;
-      })
+      }),
     );
   };
 
@@ -150,9 +151,7 @@ export function useTransaksi({
 
     // 1. Cek duplikasi nomor surat di state lokal transaksi sebelum mengirim ke server
     if (formData.nomorSurat) {
-      const isDuplicate = transactions.some(
-        (t) => t.nomorSurat?.trim() === formData.nomorSurat.trim() && t.id !== formData.id
-      );
+      const isDuplicate = transactions.some((t) => t.nomorSurat?.trim() === formData.nomorSurat.trim() && t.id !== formData.id);
 
       if (isDuplicate) {
         showNotif(`Nomor Surat "${formData.nomorSurat}" sudah terdaftar pada sistem!`, "error");
@@ -162,13 +161,18 @@ export function useTransaksi({
 
     setIsSaving(true);
     try {
+      const isMasuk = formData.jenisTransaksi === "Barang Masuk";
       const payload = {
         nomorSurat: formData.nomorSurat,
         tanggal: formData.tanggal,
         jenisTransaksi: formData.jenisTransaksi,
+        tujuan: isMasuk ? "Logistik Kanwil VIII" : formData.tujuan || formData.outletTujuan || "",
+        outletTujuan: isMasuk ? "Logistik Kanwil VIII" : formData.outletTujuan || formData.tujuan || "",
+        asalOutlet: formData.asalOutlet || "",
+        kodeOutlet: formData.kodeOutlet || "",
         penerimaNama: formData.pihak2Nama || formData.penerimaNama || "",
         penerimaJabatan: formData.pihak2Jabatan || formData.penerimaJabatan || "",
-        penerimaInstansi: formData.tujuan || formData.outletTujuan || formData.pihak2Instansi || formData.penerimaInstansi || "",
+        penerimaInstansi: isMasuk ? "Logistik Kanwil VIII" : formData.tujuan || formData.outletTujuan || formData.pihak2Instansi || formData.penerimaInstansi || "",
         pengirimNama: formData.pihak1Nama || formData.pengirimNama || "",
         pengirimJabatan: formData.pihak1Jabatan || formData.pengirimJabatan || "",
         pengirimInstansi: formData.pihak1Instansi || formData.pengirimInstansi || "",
@@ -181,7 +185,7 @@ export function useTransaksi({
           satuan: item.satuan || "Pcs",
           sn: item.sn || null,
           keterangan: item.keterangan || null,
-          outlet: item.outlet || formData.tujuan || null,
+          outlet: item.outlet || (isMasuk ? formData.asalOutlet || "Logistik Kanwil VIII" : formData.tujuan) || null,
         })),
       };
 

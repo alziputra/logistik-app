@@ -1,34 +1,39 @@
-export const createInitialFormData = () => ({
-  nomorSurat: "",
-  tanggal: new Date().toISOString().split("T")[0],
-  jenisTransaksi: "Barang Keluar",
-  lokasi: "Jakarta",
-  tujuan: "",
-  outletTujuan: "",
-  // Standard Pihak 1 (Yang Menyerahkan)
-  pihak1Nama: "Ahmad Dendy Syaputra",
-  pihak1Jabatan: "Staff Pengadaan dan Logistik",
-  pihak1Instansi: "PT Pegadaian (Persero)",
-  // Standard Pihak Mengetahui
-  pihakMengetahuiNama: "Zoni Rahmawan Putra",
-  pihakMengetahuiJabatan: "Kabag Pengadaan dan Logistik",
-  pihakMengetahuiInstansi: "PT Pegadaian (Persero)",
-  // Standard Pihak 2 (Yang Menerima)
-  pihak2Nama: "",
-  pihak2Jabatan: "",
-  pihak2Instansi: "",
+export const createInitialFormData = (jenis = "Barang Keluar") => {
+  const isMasuk = jenis === "Barang Masuk";
+  return {
+    nomorSurat: "",
+    tanggal: new Date().toISOString().split("T")[0],
+    jenisTransaksi: jenis,
+    lokasi: "Jakarta",
+    tujuan: isMasuk ? "Logistik Kanwil VIII" : "",
+    outletTujuan: isMasuk ? "Logistik Kanwil VIII" : "",
+    asalOutlet: "",
+    kodeOutlet: "",
+    // Pihak 1 (Yang Menyerahkan)
+    pihak1Nama: isMasuk ? "" : "Ahmad Dendy Syaputra",
+    pihak1Jabatan: isMasuk ? "" : "Staff Pengadaan dan Logistik",
+    pihak1Instansi: isMasuk ? "" : "PT Pegadaian (Persero)",
+    // Pihak Mengetahui (Hanya untuk Surat Keluar)
+    pihakMengetahuiNama: isMasuk ? "" : "Zoni Rahmawan Putra",
+    pihakMengetahuiJabatan: isMasuk ? "" : "Kabag Pengadaan dan Logistik",
+    pihakMengetahuiInstansi: isMasuk ? "" : "PT Pegadaian (Persero)",
+    // Pihak 2 (Yang Menerima)
+    pihak2Nama: "",
+    pihak2Jabatan: "",
+    pihak2Instansi: isMasuk ? "Logistik Kanwil VIII" : "",
 
-  // Aliases for compatibility
-  pengirimNama: "Ahmad Dendy Syaputra",
-  pengirimJabatan: "Staff Pengadaan dan Logistik",
-  pengirimInstansi: "PT Pegadaian (Persero)",
-  mengetahuiNama: "Zoni Rahmawan Putra",
-  mengetahuiJabatan: "Kabag Pengadaan dan Logistik",
-  mengetahuiInstansi: "PT Pegadaian (Persero)",
-  penerimaNama: "",
-  penerimaJabatan: "",
-  penerimaInstansi: "",
-});
+    // Aliases for compatibility
+    pengirimNama: isMasuk ? "" : "Ahmad Dendy Syaputra",
+    pengirimJabatan: isMasuk ? "" : "Staff Pengadaan dan Logistik",
+    pengirimInstansi: isMasuk ? "" : "PT Pegadaian (Persero)",
+    mengetahuiNama: isMasuk ? "" : "Zoni Rahmawan Putra",
+    mengetahuiJabatan: isMasuk ? "" : "Kabag Pengadaan dan Logistik",
+    mengetahuiInstansi: isMasuk ? "" : "PT Pegadaian (Persero)",
+    penerimaNama: "",
+    penerimaJabatan: "",
+    penerimaInstansi: isMasuk ? "Logistik Kanwil VIII" : "",
+  };
+};
 
 export const createInitialItem = () => ({
   id: Date.now().toString(),

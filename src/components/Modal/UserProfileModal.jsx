@@ -1,7 +1,5 @@
 import React, { useState } from "react";
-import {
-  X, User, Lock, ShieldCheck, Key, Info, CheckCircle2, AlertCircle, Loader2, Sparkles, Building2
-} from "lucide-react";
+import { X, User, Lock, ShieldCheck, Key, Info, CheckCircle2, AlertCircle, Loader2, Sparkles, Building2 } from "lucide-react";
 import { auth } from "../../config/firebase";
 import { updatePassword } from "firebase/auth";
 import { useNotification } from "../../context/NotificationContext";
@@ -41,10 +39,7 @@ export default function UserProfileModal({ isOpen, onClose, user }) {
       setActiveTab("info");
     } catch (err) {
       console.error("Gagal mengubah password:", err);
-      showError(
-        "Gagal Mengubah Password",
-        err.message || "Password tidak dapat diperbarui. Pastikan Anda telah login ulang baru-baru ini."
-      );
+      showError("Gagal Mengubah Password", err.message || "Password tidak dapat diperbarui. Pastikan Anda telah login ulang baru-baru ini.");
     } finally {
       setIsSavingPassword(false);
     }
@@ -53,7 +48,6 @@ export default function UserProfileModal({ isOpen, onClose, user }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 print:hidden">
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col transition-colors">
-        
         {/* Header Modal */}
         <div className="px-6 py-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -65,10 +59,7 @@ export default function UserProfileModal({ isOpen, onClose, user }) {
               <p className="text-xs text-slate-500 dark:text-slate-400">Informasi detail akun pengguna dan keamanan.</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-2 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
-          >
+          <button onClick={onClose} className="p-2 text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -78,9 +69,7 @@ export default function UserProfileModal({ isOpen, onClose, user }) {
           <button
             onClick={() => setActiveTab("info")}
             className={`pb-3 px-3 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
-              activeTab === "info"
-                ? "border-emerald-500 text-emerald-600 dark:text-emerald-400"
-                : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+              activeTab === "info" ? "border-emerald-500 text-emerald-600 dark:text-emerald-400" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
             }`}
           >
             <User className="w-3.5 h-3.5" /> Detail Profil
@@ -88,9 +77,7 @@ export default function UserProfileModal({ isOpen, onClose, user }) {
           <button
             onClick={() => setActiveTab("security")}
             className={`pb-3 px-3 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
-              activeTab === "security"
-                ? "border-emerald-500 text-emerald-600 dark:text-emerald-400"
-                : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+              activeTab === "security" ? "border-emerald-500 text-emerald-600 dark:text-emerald-400" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
             }`}
           >
             <Key className="w-3.5 h-3.5" /> Keamanan & Password
@@ -98,9 +85,7 @@ export default function UserProfileModal({ isOpen, onClose, user }) {
           <button
             onClick={() => setActiveTab("app")}
             className={`pb-3 px-3 text-xs font-bold border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
-              activeTab === "app"
-                ? "border-emerald-500 text-emerald-600 dark:text-emerald-400"
-                : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+              activeTab === "app" ? "border-emerald-500 text-emerald-600 dark:text-emerald-400" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
             }`}
           >
             <Info className="w-3.5 h-3.5" /> Info Aplikasi
@@ -109,13 +94,12 @@ export default function UserProfileModal({ isOpen, onClose, user }) {
 
         {/* Modal Body */}
         <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
-          
           {/* TAB 1: INFORMASI PROFIL */}
           {activeTab === "info" && (
             <div className="space-y-4 animate-in fade-in duration-200">
               {/* User Avatar Card */}
               <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/80 dark:border-slate-800">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-600 to-teal-500 text-white font-extrabold text-xl flex items-center justify-center shadow-md">
+                <div className="w-14 h-14 rounded-2xl bg-linear-to-tr from-emerald-600 to-teal-500 text-white font-extrabold text-xl flex items-center justify-center shadow-md">
                   {(user.name || user.email || "U").substring(0, 2).toUpperCase()}
                 </div>
                 <div>
@@ -166,9 +150,7 @@ export default function UserProfileModal({ isOpen, onClose, user }) {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Password Saat Ini
-                </label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Password Saat Ini</label>
                 <input
                   type="password"
                   required
@@ -180,9 +162,7 @@ export default function UserProfileModal({ isOpen, onClose, user }) {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Password Baru
-                </label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Password Baru</label>
                 <input
                   type="password"
                   required
@@ -195,9 +175,7 @@ export default function UserProfileModal({ isOpen, onClose, user }) {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
-                  Konfirmasi Password Baru
-                </label>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Konfirmasi Password Baru</label>
                 <input
                   type="password"
                   required
@@ -212,7 +190,7 @@ export default function UserProfileModal({ isOpen, onClose, user }) {
                 <button
                   type="submit"
                   disabled={isSavingPassword}
-                  className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-emerald-600/20 transition-all cursor-pointer disabled:opacity-70"
+                  className="flex items-center gap-2 bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-emerald-600/20 transition-all cursor-pointer disabled:opacity-70"
                 >
                   {isSavingPassword ? (
                     <>
@@ -259,10 +237,7 @@ export default function UserProfileModal({ isOpen, onClose, user }) {
 
         {/* Footer Modal */}
         <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-5 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold transition-all cursor-pointer"
-          >
+          <button onClick={onClose} className="px-5 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-bold transition-all cursor-pointer">
             Tutup
           </button>
         </div>

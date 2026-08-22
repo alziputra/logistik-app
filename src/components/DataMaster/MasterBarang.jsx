@@ -1,7 +1,5 @@
 import React, { useState } from "react";
-import {
-  Database, Plus, Search, Edit, Trash2, Box, CheckCircle2, Clock, XCircle
-} from "lucide-react";
+import { Database, Plus, Search, Edit, Trash2, Box, CheckCircle2, Clock, XCircle } from "lucide-react";
 import { addInventory, updateInventory, deleteInventory } from "../../services/inventoryService";
 import BarangFormModal from "./BarangFormModal";
 import { useNotification } from "../../context/NotificationContext";
@@ -18,13 +16,7 @@ export default function MasterBarang({ inventory = [], vendors = [], userRole = 
   const filteredInventory = inventory.filter((item) => {
     const q = searchQuery.toLowerCase();
     const vendorName = item.vendor_nama || item.vendor?.nama || "-";
-    return (
-      item.nama?.toLowerCase().includes(q) ||
-      vendorName.toLowerCase().includes(q) ||
-      item.no_spk?.toLowerCase().includes(q) ||
-      item.no_pks?.toLowerCase().includes(q) ||
-      item.status?.toLowerCase().includes(q)
-    );
+    return item.nama?.toLowerCase().includes(q) || vendorName.toLowerCase().includes(q) || item.no_spk?.toLowerCase().includes(q) || item.no_pks?.toLowerCase().includes(q) || item.status?.toLowerCase().includes(q);
   });
 
   const handleOpenAdd = () => {
@@ -43,7 +35,7 @@ export default function MasterBarang({ inventory = [], vendors = [], userRole = 
     const form = new FormData(e.target);
     const rawVendorNama = (form.get("vendor_nama") || "").trim();
     const vendorNamaVal = rawVendorNama === "" ? "-" : rawVendorNama;
-    const matchingVendor = vendors.find(v => v.nama?.toLowerCase() === vendorNamaVal.toLowerCase());
+    const matchingVendor = vendors.find((v) => v.nama?.toLowerCase() === vendorNamaVal.toLowerCase());
 
     const payload = {
       nama: form.get("nama"),
@@ -72,10 +64,7 @@ export default function MasterBarang({ inventory = [], vendors = [], userRole = 
       if (loadAllData) loadAllData();
     } catch (err) {
       console.error("Gagal menyimpan data barang:", err);
-      showError(
-        "Gagal Menyimpan Data",
-        err.response?.data?.message || err.message || "Terjadi kesalahan saat menyimpan data barang."
-      );
+      showError("Gagal Menyimpan Data", err.response?.data?.message || err.message || "Terjadi kesalahan saat menyimpan data barang.");
     } finally {
       setIsSaving(false);
     }
@@ -128,11 +117,7 @@ export default function MasterBarang({ inventory = [], vendors = [], userRole = 
         </span>
       );
     }
-    return (
-      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
-        {s}
-      </span>
-    );
+    return <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-slate-800 text-slate-300 border border-slate-700">{s}</span>;
   };
 
   return (
@@ -201,7 +186,7 @@ export default function MasterBarang({ inventory = [], vendors = [], userRole = 
           {userRole === "admin" && (
             <button
               onClick={handleOpenAdd}
-              className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-lg shadow-emerald-600/20 transition-all cursor-pointer shrink-0"
+              className="flex items-center gap-2 bg-linear-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-500 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-lg shadow-emerald-600/20 transition-all cursor-pointer shrink-0"
             >
               <Plus className="w-4 h-4" /> Tambah Barang
             </button>
@@ -240,17 +225,11 @@ export default function MasterBarang({ inventory = [], vendors = [], userRole = 
                   <tr key={item.id || idx} className="hover:bg-slate-800/40 transition-colors">
                     <td className="px-6 py-4 text-center text-slate-500 font-mono">{idx + 1}</td>
                     <td className="px-6 py-4 font-bold text-slate-100">{item.nama || "-"}</td>
-                    <td className="px-6 py-4 text-center font-bold text-emerald-400 font-mono">
-                      {item.kuantitas !== undefined ? item.kuantitas : (item.stok || 0)}
-                    </td>
+                    <td className="px-6 py-4 text-center font-bold text-emerald-400 font-mono">{item.kuantitas !== undefined ? item.kuantitas : item.stok || 0}</td>
                     <td className="px-6 py-4 text-slate-300">{item.satuan || "Pcs"}</td>
                     <td className="px-6 py-4 text-slate-300 font-medium">{item.vendor_nama || item.vendor?.nama || "-"}</td>
-                    <td className="px-6 py-4 text-slate-400 font-mono text-[11px]">
-                      {item.no_spk || item.no_pks || "-"}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      {renderStatusBadge(item.status)}
-                    </td>
+                    <td className="px-6 py-4 text-slate-400 font-mono text-[11px]">{item.no_spk || item.no_pks || "-"}</td>
+                    <td className="px-6 py-4 text-center">{renderStatusBadge(item.status)}</td>
                     {userRole === "admin" && (
                       <td className="px-6 py-4 text-center">
                         <div className="flex justify-center items-center gap-1.5">
@@ -280,14 +259,7 @@ export default function MasterBarang({ inventory = [], vendors = [], userRole = 
       </div>
 
       {/* Modal Form Tambah / Edit */}
-      <BarangFormModal
-        isOpen={isModalOpen}
-        editingInv={editingInv}
-        isSaving={isSaving}
-        vendors={vendors}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleSubmit}
-      />
+      <BarangFormModal isOpen={isModalOpen} editingInv={editingInv} isSaving={isSaving} vendors={vendors} onClose={() => setIsModalOpen(false)} onSubmit={handleSubmit} />
     </div>
   );
 }

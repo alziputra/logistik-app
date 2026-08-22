@@ -1,14 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { X, Edit, Database, Plus, Loader2, Package, Calendar, Building2 } from "lucide-react";
 
-export default function BarangFormModal({
-  isOpen,
-  editingInv,
-  isSaving,
-  vendors = [],
-  onClose,
-  onSubmit,
-}) {
+export default function BarangFormModal({ isOpen, editingInv, isSaving, vendors = [], onClose, onSubmit }) {
   const [vendorNama, setVendorNama] = useState("");
   const [tglMulai, setTglMulai] = useState("");
   const [tglSelesai, setTglSelesai] = useState("");
@@ -72,27 +65,16 @@ export default function BarangFormModal({
   return (
     <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
       <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col max-h-[90vh] overflow-hidden transform transition-all animate-in zoom-in-95 duration-200">
-        
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/90 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-500/20 text-emerald-400">
-              {editingInv ? <Edit className="w-5 h-5" /> : <Database className="w-5 h-5" />}
-            </div>
+            <div className="bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-500/20 text-emerald-400">{editingInv ? <Edit className="w-5 h-5" /> : <Database className="w-5 h-5" />}</div>
             <div>
-              <h3 className="font-bold text-lg text-slate-100">
-                {editingInv ? "Edit Data Barang / Asset" : "Tambah Master Barang / Asset"}
-              </h3>
-              <p className="text-xs text-slate-400">
-                {editingInv ? "Perbarui informasi rincian katalog barang" : "Masukkan informasi barang baru ke dalam database master"}
-              </p>
+              <h3 className="font-bold text-lg text-slate-100">{editingInv ? "Edit Data Barang / Asset" : "Tambah Master Barang / Asset"}</h3>
+              <p className="text-xs text-slate-400">{editingInv ? "Perbarui informasi rincian katalog barang" : "Masukkan informasi barang baru ke dalam database master"}</p>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            disabled={isSaving}
-            className="text-slate-400 hover:text-slate-200 hover:bg-slate-800 p-2 rounded-xl cursor-pointer transition-colors disabled:opacity-50"
-          >
+          <button onClick={onClose} disabled={isSaving} className="text-slate-400 hover:text-slate-200 hover:bg-slate-800 p-2 rounded-xl cursor-pointer transition-colors disabled:opacity-50">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -100,7 +82,6 @@ export default function BarangFormModal({
         {/* Body Form */}
         <div className="p-6 overflow-y-auto custom-scrollbar">
           <form id="formBarang" onSubmit={onSubmit} className="space-y-6">
-            
             {/* Section 1: Informasi Utama */}
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 uppercase tracking-wider">
@@ -127,7 +108,7 @@ export default function BarangFormModal({
                   <input
                     name="kuantitas"
                     type="number"
-                    defaultValue={editingInv?.kuantitas !== undefined ? editingInv.kuantitas : (editingInv?.stok || 0)}
+                    defaultValue={editingInv?.kuantitas !== undefined ? editingInv.kuantitas : editingInv?.stok || 0}
                     min="0"
                     required
                     className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs text-slate-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 transition-all"
@@ -246,24 +227,14 @@ export default function BarangFormModal({
                     readOnly
                     value={statusVal}
                     className={`w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-bold cursor-not-allowed transition-all ${
-                      statusVal === "Sewa Selesai"
-                        ? "text-amber-400"
-                        : statusVal === "Sewa Dibatalkan"
-                        ? "text-rose-400"
-                        : "text-emerald-400"
+                      statusVal === "Sewa Selesai" ? "text-amber-400" : statusVal === "Sewa Dibatalkan" ? "text-rose-400" : "text-emerald-400"
                     }`}
                   />
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1.5">Masa Sewa (Bulan)</label>
-                  <input
-                    name="masa_sewa_bulan"
-                    type="number"
-                    readOnly
-                    value={masaSewa}
-                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 font-bold cursor-not-allowed"
-                  />
+                  <input name="masa_sewa_bulan" type="number" readOnly value={masaSewa} className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 font-bold cursor-not-allowed" />
                 </div>
               </div>
               {!isVendorFilled && (
@@ -275,18 +246,13 @@ export default function BarangFormModal({
 
             {/* Footer Actions */}
             <div className="flex justify-end gap-3 pt-4 border-t border-slate-800 shrink-0">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={isSaving}
-                className="px-5 py-2.5 text-xs font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-xl transition-all cursor-pointer disabled:opacity-50"
-              >
+              <button type="button" onClick={onClose} disabled={isSaving} className="px-5 py-2.5 text-xs font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-xl transition-all cursor-pointer disabled:opacity-50">
                 Batal
               </button>
               <button
                 type="submit"
                 disabled={isSaving}
-                className="px-6 py-2.5 text-xs font-semibold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-xl flex items-center gap-2 shadow-lg shadow-emerald-600/20 transition-all cursor-pointer disabled:opacity-50"
+                className="px-6 py-2.5 text-xs font-semibold text-white bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-xl flex items-center gap-2 shadow-lg shadow-emerald-600/20 transition-all cursor-pointer disabled:opacity-50"
               >
                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 {editingInv ? "Simpan Perubahan" : "Tambah Barang"}

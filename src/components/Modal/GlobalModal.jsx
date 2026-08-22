@@ -32,13 +32,7 @@ export default function GlobalModal({
       <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all animate-in zoom-in-95 duration-200">
         {/* Top Gradient Decorative Bar */}
         <div
-          className={`h-1.5 w-full ${
-            isSuccess
-              ? "bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-600"
-              : isError
-              ? "bg-gradient-to-r from-rose-500 via-red-500 to-rose-600"
-              : "bg-gradient-to-r from-rose-600 via-amber-500 to-red-500"
-          }`}
+          className={`h-1.5 w-full ${isSuccess ? "bg-linear-to-r from-emerald-500 via-teal-400 to-emerald-600" : isError ? "bg-linear-to-r from-rose-500 via-red-500 to-rose-600" : "bg-linear-to-r from-rose-600 via-amber-500 to-red-500"}`}
         />
 
         <div className="p-6">
@@ -62,53 +56,34 @@ export default function GlobalModal({
               )}
 
               <div>
-                <h3 className="text-lg font-bold text-slate-100">
-                  {title || (isSuccess ? "Berhasil!" : isError ? "Terjadi Kesalahan!" : "Konfirmasi Hapus")}
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  {isConfirmDelete ? "Tindakan ini membutuhkan persetujuan Anda." : "Respon status sistem logistik."}
-                </p>
+                <h3 className="text-lg font-bold text-slate-100">{title || (isSuccess ? "Berhasil!" : isError ? "Terjadi Kesalahan!" : "Konfirmasi Hapus")}</h3>
+                <p className="text-xs text-slate-400 mt-0.5">{isConfirmDelete ? "Tindakan ini membutuhkan persetujuan Anda." : "Respon status sistem logistik."}</p>
               </div>
             </div>
 
-            <button
-              onClick={onClose}
-              disabled={isProcessing}
-              className="text-slate-400 hover:text-slate-200 hover:bg-slate-800 p-1.5 rounded-xl transition-colors cursor-pointer disabled:opacity-50"
-            >
+            <button onClick={onClose} disabled={isProcessing} className="text-slate-400 hover:text-slate-200 hover:bg-slate-800 p-1.5 rounded-xl transition-colors cursor-pointer disabled:opacity-50">
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Body Content */}
           <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4 my-4">
-            <p className="text-xs text-slate-300 leading-relaxed">
-              {message}
-            </p>
-            {itemName && (
-              <div className="mt-2.5 px-3.5 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs font-semibold text-rose-300 truncate">
-                "{itemName}"
-              </div>
-            )}
+            <p className="text-xs text-slate-300 leading-relaxed">{message}</p>
+            {itemName && <div className="mt-2.5 px-3.5 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs font-semibold text-rose-300 truncate">"{itemName}"</div>}
           </div>
 
           {/* Action Buttons */}
           <div className="flex items-center justify-end gap-3 mt-5">
             {isConfirmDelete ? (
               <>
-                <button
-                  type="button"
-                  onClick={onClose}
-                  disabled={isProcessing}
-                  className="px-4 py-2.5 text-xs font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700/80 rounded-xl transition-all cursor-pointer disabled:opacity-50"
-                >
+                <button type="button" onClick={onClose} disabled={isProcessing} className="px-4 py-2.5 text-xs font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700/80 rounded-xl transition-all cursor-pointer disabled:opacity-50">
                   Batal
                 </button>
                 <button
                   type="button"
                   onClick={onConfirm}
                   disabled={isProcessing}
-                  className="px-5 py-2.5 text-xs font-semibold text-white bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 rounded-xl shadow-lg shadow-rose-600/20 transition-all cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2.5 text-xs font-semibold text-white bg-linear-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 rounded-xl shadow-lg shadow-rose-600/20 transition-all cursor-pointer disabled:opacity-50"
                 >
                   {isProcessing ? "Memproses..." : "Ya, Hapus Data"}
                 </button>
@@ -118,9 +93,7 @@ export default function GlobalModal({
                 type="button"
                 onClick={onClose}
                 className={`w-full py-2.5 px-4 rounded-xl text-xs font-semibold text-white transition-all shadow-lg cursor-pointer ${
-                  isSuccess
-                    ? "bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-600/20"
-                    : "bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 shadow-rose-600/20"
+                  isSuccess ? "bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-emerald-600/20" : "bg-linear-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 shadow-rose-600/20"
                 }`}
               >
                 OK, Mengerti

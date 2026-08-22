@@ -1,29 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Package, Lock, Mail, LogIn, AlertCircle, Sun, Moon } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
-import ServerStatusPill from '../components/Notification/ServerStatusPill';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Package, Lock, Mail, LogIn, AlertCircle, Sun, Moon } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
+import ServerStatusPill from "../components/Notification/ServerStatusPill";
 
 const sanitizeFrontendError = (msg) => {
   if (!msg || typeof msg !== "string") return "Gagal terhubung ke server database.";
-  if (
-    msg.includes("supabase") ||
-    msg.includes("ENOTFOUND") ||
-    msg.includes("ECONNREFUSED") ||
-    msg.includes("ETIMEDOUT") ||
-    msg.includes("getaddrinfo") ||
-    msg.includes("Sequelize")
-  ) {
+  if (msg.includes("supabase") || msg.includes("ENOTFOUND") || msg.includes("ECONNREFUSED") || msg.includes("ETIMEDOUT") || msg.includes("getaddrinfo") || msg.includes("Sequelize")) {
     return "Gagal terhubung ke Server Database Logistik. Silakan periksa jaringan koneksi Anda atau hubungi Administrator.";
   }
   return msg;
 };
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
   const { login, isAuthenticated } = useAuth();
@@ -32,22 +25,22 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard', { replace: true });
+      navigate("/dashboard", { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorMsg('');
+    setErrorMsg("");
     setLoading(true);
 
     const result = await login(email, password);
     setLoading(false);
 
     if (result.success) {
-      navigate('/dashboard', { replace: true });
+      navigate("/dashboard", { replace: true });
     } else {
-      setErrorMsg(sanitizeFrontendError(result.message) || 'Login gagal, periksa email dan password Anda');
+      setErrorMsg(sanitizeFrontendError(result.message) || "Login gagal, periksa email dan password Anda");
     }
   };
 
@@ -67,9 +60,7 @@ export default function LoginPage() {
           onClick={toggleTheme}
           title={theme === "dark" ? "Ganti ke Mode Terang" : "Ganti ke Mode Gelap"}
           className={`px-3.5 py-1.5 rounded-full border shadow-sm transition-all cursor-pointer flex items-center gap-2 text-xs font-semibold ${
-            theme === "dark"
-              ? "bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-800"
-              : "bg-white hover:bg-slate-50 text-slate-700 border-slate-200"
+            theme === "dark" ? "bg-slate-900 hover:bg-slate-800 text-slate-200 border-slate-800" : "bg-white hover:bg-slate-50 text-slate-700 border-slate-200"
           }`}
         >
           {theme === "dark" ? (
@@ -89,15 +80,11 @@ export default function LoginPage() {
       {/* Konten Utama */}
       <div className="relative z-10 w-full sm:max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex bg-gradient-to-tr from-emerald-600 to-teal-500 p-4 rounded-3xl mb-4 shadow-xl shadow-emerald-600/20 ring-1 ring-emerald-400/30">
+          <div className="inline-flex bg-linear-to-tr from-emerald-600 to-teal-500 p-4 rounded-3xl mb-4 shadow-xl shadow-emerald-600/20 ring-1 ring-emerald-400/30">
             <Package className="w-10 h-10 text-white" />
           </div>
-          <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            Logistik Pegadaian
-          </h2>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 font-medium">
-            Sistem Informasi Manajemen Aset & Logistik
-          </p>
+          <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Logistik Pegadaian</h2>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400 font-medium">Sistem Informasi Manajemen Aset & Logistik</p>
         </div>
 
         {/* Kartu Form */}
@@ -111,9 +98,7 @@ export default function LoginPage() {
 
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
-                Email
-              </label>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Email</label>
               <div className="relative rounded-2xl shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                   <Mail className="h-5 w-5 text-slate-400" />
@@ -130,9 +115,7 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">
-                Password
-              </label>
+              <label className="block text-sm font-semibold text-slate-700 dark:text-slate-200 mb-2">Password</label>
               <div className="relative rounded-2xl shadow-sm">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
                   <Lock className="h-5 w-5 text-slate-400" />

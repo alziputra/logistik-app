@@ -191,7 +191,7 @@ export default function DashboardPage() {
       />
 
       {/* Main Content Area */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "md:pl-64" : "pl-0"}`}>
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "md:pl-[336px]" : "md:pl-20"}`}>
         <AppHeader
           user={user}
           title={activeTab.replace("_", " ").toUpperCase()}

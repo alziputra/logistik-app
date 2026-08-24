@@ -17,8 +17,27 @@ export default function RiwayatTransaksi({
 }) {
   const [search, setSearch] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [activeTabFilter, setActiveTabFilter] = useState("all"); // "all" | "masuk" | "keluar"
+
+  const countAll = transactions.length;
+  const countMasuk = transactions.filter(
+    (t) => t.jenisTransaksi === "Barang Masuk" || t.jenisTransaksi === "Surat Masuk"
+  ).length;
+  const countKeluar = transactions.filter(
+    (t) => t.jenisTransaksi === "Barang Keluar" || t.jenisTransaksi === "Surat Keluar"
+  ).length;
 
   const filtered = transactions.filter((t) => {
+    // 1. Tab Filter
+    if (activeTabFilter === "masuk") {
+      const isMasuk = t.jenisTransaksi === "Barang Masuk" || t.jenisTransaksi === "Surat Masuk";
+      if (!isMasuk) return false;
+    } else if (activeTabFilter === "keluar") {
+      const isKeluar = t.jenisTransaksi === "Barang Keluar" || t.jenisTransaksi === "Surat Keluar";
+      if (!isKeluar) return false;
+    }
+
+    // 2. Search Query Filter
     const q = search.toLowerCase();
     const itemNames = (t.items || []).map((i) => (i.namaBarang || i.nama || "").toLowerCase()).join(" ");
     return (
@@ -165,6 +184,69 @@ export default function RiwayatTransaksi({
         </div>
       </div>
 
+      {/* Tab Filter (Semua, Surat Masuk, Surat Keluar) */}
+      <div className="flex items-center gap-2 mb-6 p-1.5 bg-slate-900 border border-slate-800 rounded-2xl w-full sm:w-fit overflow-x-auto">
+        <button
+          type="button"
+          onClick={() => setActiveTabFilter("all")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+            activeTabFilter === "all"
+              ? "bg-emerald-600 text-white shadow-md shadow-emerald-900/30"
+              : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+          }`}
+        >
+          <History className="w-3.5 h-3.5" />
+          <span>Semua Surat</span>
+          <span
+            className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+              activeTabFilter === "all" ? "bg-emerald-700/80 text-white" : "bg-slate-800 text-slate-400"
+            }`}
+          >
+            {countAll}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTabFilter("masuk")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+            activeTabFilter === "masuk"
+              ? "bg-emerald-600 text-white shadow-md shadow-emerald-900/30"
+              : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+          }`}
+        >
+          <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span>Surat Masuk (Barang Masuk)</span>
+          <span
+            className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+              activeTabFilter === "masuk" ? "bg-emerald-700/80 text-white" : "bg-slate-800 text-slate-400"
+            }`}
+          >
+            {countMasuk}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTabFilter("keluar")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
+            activeTabFilter === "keluar"
+              ? "bg-amber-600 text-white shadow-md shadow-amber-900/30"
+              : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+          }`}
+        >
+          <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span>Surat Keluar (Barang Keluar)</span>
+          <span
+            className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+              activeTabFilter === "keluar" ? "bg-amber-700/80 text-white" : "bg-slate-800 text-slate-400"
+            }`}
+          >
+            {countKeluar}
+          </span>
+        </button>
+      </div>
+
       <div className="bg-slate-900 rounded-2xl shadow-xl border border-slate-800 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs whitespace-nowrap">
@@ -173,7 +255,6 @@ export default function RiwayatTransaksi({
                 <th className="px-5 py-4 w-12 text-center">No</th>
                 <th className="px-5 py-4">Nomor Surat</th>
                 <th className="px-5 py-4">Tanggal</th>
-                <th className="px-5 py-4">Jenis Transaksi</th>
                 <th className="px-5 py-4">Pengirim ➔ Penerima</th>
                 <th className="px-5 py-4">Rincian Barang</th>
                 <th className="px-5 py-4 text-center w-28">Aksi</th>
@@ -182,8 +263,12 @@ export default function RiwayatTransaksi({
             <tbody className="divide-y divide-slate-800">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-6 py-8 text-center text-slate-500 italic">
-                    Belum ada riwayat transaksi ditemukan.
+                  <td colSpan="6" className="px-6 py-8 text-center text-slate-500 italic">
+                    {activeTabFilter === "masuk"
+                      ? "Belum ada riwayat surat masuk ditemukan."
+                      : activeTabFilter === "keluar"
+                      ? "Belum ada riwayat surat keluar ditemukan."
+                      : "Belum ada riwayat transaksi ditemukan."}
                   </td>
                 </tr>
               ) : (
@@ -192,11 +277,6 @@ export default function RiwayatTransaksi({
                     <td className="px-5 py-4 text-center text-slate-400 font-mono">{idx + 1}</td>
                     <td className="px-5 py-4 font-bold text-slate-100 font-mono">{trx.nomorSurat}</td>
                     <td className="px-5 py-4 text-slate-300">{trx.tanggal}</td>
-                    <td className="px-5 py-4">
-                      <span className={`px-2.5 py-1 rounded-md text-[10px] font-bold border ${trx.jenisTransaksi === "Barang Masuk" ? "bg-emerald-950/80 text-emerald-400 border-emerald-800/40" : "bg-amber-950/80 text-amber-400 border-amber-800/40"}`}>
-                        {trx.jenisTransaksi}
-                      </span>
-                    </td>
                     <td className="px-5 py-4 text-slate-300">
                       {trx.pengirimNama || trx.pihak1Nama || "-"} ➔ {trx.penerimaNama || trx.pihak2Nama || trx.tujuan || "-"}
                     </td>

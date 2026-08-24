@@ -9,6 +9,7 @@ export default function NotificationBell({
   buildingSewas = [],
   setView,
   isMobile = false,
+  showLabel = true,
 }) {
   const safePrinters = Array.isArray(printers) ? printers : [];
   const safeComputers = Array.isArray(computers) ? computers : [];
@@ -44,15 +45,18 @@ export default function NotificationBell({
     <div className="relative">
       <button
         onClick={() => setView && setView("notifikasi")}
-        className="relative p-2 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-xl transition-all border border-transparent flex items-center justify-center cursor-pointer"
+        className="relative px-3 py-1.5 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-xl transition-all border border-slate-200 dark:border-slate-800 flex items-center gap-2 cursor-pointer text-xs font-semibold bg-white dark:bg-slate-900 shadow-sm"
         title="Notifikasi Peringatan"
       >
-        <Bell className={isMobile ? "w-6 h-6" : "w-5 h-5"} />
-        {totalCount > 0 && (
-          <span className="absolute top-1 right-1 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white shadow-sm animate-pulse">
-            {totalCount}
-          </span>
-        )}
+        <div className="relative flex items-center justify-center">
+          <Bell className={isMobile ? "w-5 h-5" : "w-4 h-4 text-slate-500 dark:text-slate-400"} />
+          {totalCount > 0 && (
+            <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[9px] font-extrabold text-white shadow-sm animate-pulse">
+              {totalCount}
+            </span>
+          )}
+        </div>
+        {showLabel && !isMobile && <span>Notifikasi</span>}
       </button>
     </div>
   );

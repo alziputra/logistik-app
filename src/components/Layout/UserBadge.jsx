@@ -34,17 +34,17 @@ export default function UserBadge({ user }) {
         {/* Clickable Profile Badge Pill */}
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2.5 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700/80 px-3.5 py-1.5 rounded-full shadow-sm border border-slate-200 dark:border-slate-700 transition-all cursor-pointer select-none"
+          className="flex items-center gap-2.5 bg-slate-100 dark:bg-slate-800/80 hover:bg-slate-200 dark:hover:bg-slate-700 px-3.5 py-1.5 rounded-full shadow-sm border border-slate-200 dark:border-slate-800 transition-all cursor-pointer select-none"
         >
           <div className="bg-emerald-100 dark:bg-emerald-950 p-1.5 rounded-full flex-shrink-0">
             <User className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <div className="text-left text-sm pr-1">
-            <p className="text-slate-500 dark:text-slate-400 text-[10px] font-bold leading-tight uppercase tracking-wide">
-              {user.role || "User"}
+          <div className="text-left text-xs pr-1 leading-tight">
+            <p className="text-[10px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              {user.role || "ADMIN"}
             </p>
-            <p className="font-bold text-slate-900 dark:text-slate-200 text-xs leading-tight truncate max-w-[140px]">
-              {user.name || user.email}
+            <p className="font-bold text-slate-900 dark:text-slate-100 text-xs truncate max-w-[120px]">
+              {user.name || user.email || "admin"}
             </p>
           </div>
           <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} />

@@ -55,8 +55,8 @@ export const addDocumentData = async (primaryPath, data) => {
   try {
     const colRef = getColRef(primaryPath);
     const docRef = await addDoc(colRef, {
-      ...data,
-      createdAt: new Date().toISOString()
+      created_at: new Date().toISOString(),
+      ...data
     });
     return { id: docRef.id, ...data };
   } catch (err) {

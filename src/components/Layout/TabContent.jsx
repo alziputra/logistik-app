@@ -275,6 +275,10 @@ export default function TabContent({
       )}
 
       <Panel id="spk_renovasi" activeTab={activeTab}>
+        <BangunanSPK type="renovasi" setView={setView} activeTab={activeTab} />
+      </Panel>
+
+      <Panel id="spk_elektronik" activeTab={activeTab}>
         <BangunanSPK type="elektronik" setView={setView} activeTab={activeTab} />
       </Panel>
 
@@ -288,6 +292,10 @@ export default function TabContent({
 
       <Panel id="sopp_sewa" activeTab={activeTab}>
         <SoppGenerator type="sewa" setView={setView} activeTab={activeTab} />
+      </Panel>
+
+      <Panel id="sopp_renovasi" activeTab={activeTab}>
+        <SoppGenerator type="renovasi" setView={setView} activeTab={activeTab} />
       </Panel>
 
       {has("riwayat") && (

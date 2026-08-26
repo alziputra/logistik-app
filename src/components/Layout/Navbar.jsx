@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import {
   Package, LayoutDashboard, ChevronDown, FileText, Monitor, Printer, Shield,
-  Users, List, Cpu, Box, Building2, Database, History, Map, Building, Hammer, FileCheck,
-  Sun, Moon, Home, Settings, Activity, Car, Lock, Unlock, AlertTriangle, Download, Sliders, CheckSquare, Clock, PlusCircle
+  Users, List, Box, Building2, Database, History, Map, Building, FileCheck,
+  Sun, Moon, Home, Settings, Activity, LogOut, Download, Sliders, PlusCircle, CheckSquare
 } from "lucide-react";
 import NotificationBell from "./NotificationBell";
 import { useAuth } from "../../context/AuthContext";
@@ -23,30 +23,27 @@ export default function Navbar({
   setComputerFilter,
   setPrinterFilter,
 }) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
-  // 4 Active Rail Categories: 'surat' | 'tetap' | 'sewa' | 'settings'
+  // Rail categories: 'home' | 'surat' | 'master' | 'inventaris' | 'bangunan' | 'log'
   const getCategoryFromView = (v) => {
-    if (v === "form" || v === "riwayat" || v.startsWith("surat_")) return "surat";
-    if (v === "kelola_user" || v === "log_aktivitas" || v.startsWith("master_")) return "settings";
-    if (v.startsWith("bangunan_") || v.startsWith("spk_") || v.startsWith("sopp_")) return "sewa";
-    return "tetap";
+    if (v === "dashboard" || v.startsWith("dashboard_")) return "home";
+    if (v === "form" || v === "riwayat" || v.startsWith("surat_") || v.startsWith("spk_") || v.startsWith("sopp_")) return "surat";
+    if (v.startsWith("master_") || v === "kelola_user") return "master";
+    if (v.startsWith("perangkat_") || v === "inventory") return "inventaris";
+    if (v.startsWith("bangunan_")) return "bangunan";
+    if (v === "log_aktivitas") return "log";
+    return "home";
   };
 
   const [activeRailCategory, setActiveRailCategory] = useState(getCategoryFromView(view));
+  const [isSpkOpen, setIsSpkOpen] = useState(true);
+  const [isSoppOpen, setIsSoppOpen] = useState(true);
 
   useEffect(() => {
     setActiveRailCategory(getCategoryFromView(view));
   }, [view]);
-
-  // Accordion Toggles
-  const [isPengajuanTetapOpen, setIsPengajuanTetapOpen] = useState(true);
-  const [isPengajuanSewaOpen, setIsPengajuanSewaOpen] = useState(true);
-  const [isAdministrasiOpen, setIsAdministrasiOpen] = useState(false);
-  const [isAsetOpen, setIsAsetOpen] = useState(false);
-  const [isManajemenOpen, setIsManajemenOpen] = useState(view === "kelola_user" || view === "log_aktivitas");
-  const [isMasterDataOpen, setIsMasterDataOpen] = useState(view.startsWith("master_"));
 
   const closeMenu = () => setIsSidebarOpen(false);
 
@@ -77,8 +74,10 @@ export default function Navbar({
             <List className="w-6 h-6" />
           </button>
           <div className="flex items-center gap-2">
-            <Package className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
-            <span className="font-bold text-lg text-slate-900 dark:text-slate-100 tracking-tight">FAST LOGISTIK</span>
+            <div className="bg-blue-600 p-1.5 rounded-lg text-white">
+              <Box className="w-5 h-5" />
+            </div>
+            <span className="font-bold text-lg text-slate-900 dark:text-slate-100 tracking-tight">LogistikKu</span>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -103,610 +102,496 @@ export default function Navbar({
       {/* Mobile Backdrop */}
       {isSidebarOpen && <div className="md:hidden fixed inset-0 bg-black/60 z-40 print:hidden transition-opacity" onClick={closeMenu} />}
 
-      {/* NARROW ICON RAIL (4 MENU UTAMA SISI PALING KIRI) */}
-      <div className="hidden md:flex fixed top-0 left-0 bottom-0 w-20 bg-[#00382B] dark:bg-slate-950 text-white flex-col items-center py-4 z-50 print:hidden shadow-md border-r border-emerald-900/40 dark:border-slate-800">
+      {/* NARROW ICON RAIL (SISI PALING KIRI - DARK NAVY matching view.jpeg) */}
+      <div className="hidden md:flex fixed top-0 left-0 bottom-0 w-20 bg-[#0B192C] dark:bg-slate-950 text-white flex-col items-center py-4 z-50 print:hidden shadow-md border-r border-slate-800">
         {/* Toggle Hamburger Button */}
         <button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="p-2.5 text-emerald-100 hover:text-white hover:bg-emerald-900/50 dark:hover:bg-slate-800 rounded-xl transition-all cursor-pointer mb-6 active:scale-95"
+          className="p-2.5 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-xl transition-all cursor-pointer mb-6 active:scale-95"
           title={isSidebarOpen ? "Sembunyikan Menu" : "Tampilkan Menu"}
         >
           <List className="w-6 h-6" />
         </button>
 
-        {/* 4 Rail Menu Items */}
-        <div className="flex flex-col items-center gap-4 w-full px-2">
-          {/* 1. Buat Surat */}
+        {/* 6 Rail Menu Items Vertical Stack matching view.jpeg */}
+        <div className="flex flex-col items-center gap-3 w-full px-2">
+          {/* 1. Home */}
+          <button
+            onClick={() => {
+              setActiveRailCategory("home");
+              handleNavClick("dashboard");
+              if (!isSidebarOpen) setIsSidebarOpen(true);
+            }}
+            className={`flex flex-col items-center justify-center p-2 rounded-xl text-[10px] font-bold gap-1 transition-all cursor-pointer w-16 py-2.5 ${
+              activeRailCategory === "home"
+                ? "bg-[#00753A] text-white shadow-md font-extrabold scale-105"
+                : "text-slate-300 hover:text-white hover:bg-slate-800/60"
+            }`}
+            title="Home"
+          >
+            <Home className="w-5 h-5 shrink-0" />
+            <span className="text-[10px] leading-tight text-center">Home</span>
+          </button>
+
+          {/* 2. Surat */}
           <button
             onClick={() => {
               setActiveRailCategory("surat");
               if (!isSidebarOpen) setIsSidebarOpen(true);
             }}
-            className={`flex flex-col items-center justify-center p-2 rounded-xl text-[10px] font-bold gap-1.5 transition-all cursor-pointer w-16 py-3 ${
+            className={`flex flex-col items-center justify-center p-2 rounded-xl text-[10px] font-bold gap-1 transition-all cursor-pointer w-16 py-2.5 ${
               activeRailCategory === "surat"
-                ? "bg-white text-emerald-900 shadow-md font-extrabold scale-105"
-                : "text-emerald-100/75 hover:text-white hover:bg-emerald-900/40"
+                ? "bg-[#00753A] text-white shadow-md font-extrabold scale-105"
+                : "text-slate-300 hover:text-white hover:bg-slate-800/60"
             }`}
-            title="Masukan buat surat disini"
+            title="Surat"
           >
             <FileText className="w-5 h-5 shrink-0" />
-            <span className="text-[10px] leading-tight text-center">Buat Surat</span>
+            <span className="text-[10px] leading-tight text-center">Surat</span>
           </button>
 
-          {/* 2. Aset Tetap */}
+          {/* 3. Data Master */}
           <button
             onClick={() => {
-              setActiveRailCategory("tetap");
+              setActiveRailCategory("master");
               if (!isSidebarOpen) setIsSidebarOpen(true);
             }}
-            className={`flex flex-col items-center justify-center p-2 rounded-xl text-[10px] font-bold gap-1.5 transition-all cursor-pointer w-16 py-3 ${
-              activeRailCategory === "tetap"
-                ? "bg-white text-emerald-900 shadow-md font-extrabold scale-105"
-                : "text-emerald-100/75 hover:text-white hover:bg-emerald-900/40"
+            className={`flex flex-col items-center justify-center p-2 rounded-xl text-[10px] font-bold gap-1 transition-all cursor-pointer w-16 py-2.5 ${
+              activeRailCategory === "master"
+                ? "bg-[#00753A] text-white shadow-md font-extrabold scale-105"
+                : "text-slate-300 hover:text-white hover:bg-slate-800/60"
             }`}
-            title="Aset Tetap"
+            title="Data Master"
           >
-            <Home className="w-5 h-5 shrink-0" />
-            <span className="text-[10px] leading-tight text-center">Aset Tetap</span>
+            <Database className="w-5 h-5 shrink-0" />
+            <span className="text-[10px] leading-tight text-center">Data Master</span>
           </button>
 
-          {/* 3. Aset Sewa */}
+          {/* 4. Inventaris */}
           <button
             onClick={() => {
-              setActiveRailCategory("sewa");
+              setActiveRailCategory("inventaris");
               if (!isSidebarOpen) setIsSidebarOpen(true);
             }}
-            className={`flex flex-col items-center justify-center p-2 rounded-xl text-[10px] font-bold gap-1.5 transition-all cursor-pointer w-16 py-3 ${
-              activeRailCategory === "sewa"
-                ? "bg-white text-emerald-900 shadow-md font-extrabold scale-105"
-                : "text-emerald-100/75 hover:text-white hover:bg-emerald-900/40"
+            className={`flex flex-col items-center justify-center p-2 rounded-xl text-[10px] font-bold gap-1 transition-all cursor-pointer w-16 py-2.5 ${
+              activeRailCategory === "inventaris"
+                ? "bg-[#00753A] text-white shadow-md font-extrabold scale-105"
+                : "text-slate-300 hover:text-white hover:bg-slate-800/60"
             }`}
-            title="Aset Sewa"
+            title="Inventaris"
+          >
+            <Package className="w-5 h-5 shrink-0" />
+            <span className="text-[10px] leading-tight text-center">Inventaris</span>
+          </button>
+
+          {/* 5. Bangunan */}
+          <button
+            onClick={() => {
+              setActiveRailCategory("bangunan");
+              if (!isSidebarOpen) setIsSidebarOpen(true);
+            }}
+            className={`flex flex-col items-center justify-center p-2 rounded-xl text-[10px] font-bold gap-1 transition-all cursor-pointer w-16 py-2.5 ${
+              activeRailCategory === "bangunan"
+                ? "bg-[#00753A] text-white shadow-md font-extrabold scale-105"
+                : "text-slate-300 hover:text-white hover:bg-slate-800/60"
+            }`}
+            title="Bangunan"
           >
             <Building2 className="w-5 h-5 shrink-0" />
-            <span className="text-[10px] leading-tight text-center">Aset Sewa</span>
+            <span className="text-[10px] leading-tight text-center">Bangunan</span>
           </button>
 
-          {/* 4. Pengaturan */}
+          {/* 6. Log Aktivitas */}
           <button
             onClick={() => {
-              setActiveRailCategory("settings");
+              setActiveRailCategory("log");
+              handleNavClick("log_aktivitas");
               if (!isSidebarOpen) setIsSidebarOpen(true);
             }}
-            className={`flex flex-col items-center justify-center p-2 rounded-xl text-[10px] font-bold gap-1.5 transition-all cursor-pointer w-16 py-3 ${
-              activeRailCategory === "settings"
-                ? "bg-white text-emerald-900 shadow-md font-extrabold scale-105"
-                : "text-emerald-100/75 hover:text-white hover:bg-emerald-900/40"
+            className={`flex flex-col items-center justify-center p-2 rounded-xl text-[10px] font-bold gap-1 transition-all cursor-pointer w-16 py-2.5 ${
+              activeRailCategory === "log"
+                ? "bg-[#00753A] text-white shadow-md font-extrabold scale-105"
+                : "text-slate-300 hover:text-white hover:bg-slate-800/60"
             }`}
-            title="Pengaturan"
+            title="Log Aktivitas"
           >
-            <Settings className="w-5 h-5 shrink-0" />
-            <span className="text-[10px] leading-tight text-center">Pengaturan</span>
+            <Activity className="w-5 h-5 shrink-0" />
+            <span className="text-[10px] leading-tight text-center">Log Aktivitas</span>
           </button>
         </div>
       </div>
 
-      {/* MAIN SUB-MENU SIDEBAR PANEL */}
+      {/* MAIN SUB-MENU SIDEBAR PANEL (Drawer matching view.jpeg) */}
       <aside
         className={`fixed top-0 left-0 md:left-20 h-screen w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 print:hidden flex flex-col z-40 shadow-xl transition-transform duration-300 ease-in-out ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full md:-translate-x-full"
         }`}
       >
-        {/* Header Drawer */}
-        <div className="flex items-center gap-3 px-4 h-16 md:h-20 border-b border-slate-200 dark:border-slate-800 shrink-0">
+        {/* Header Drawer LogistikKu */}
+        <div className="flex items-center gap-3 px-5 h-16 md:h-20 border-b border-slate-200 dark:border-slate-800 shrink-0">
           <button onClick={closeMenu} className="md:hidden p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors cursor-pointer flex items-center justify-center shrink-0">
             <List className="w-5 h-5" />
           </button>
 
-          <div className="flex items-center gap-2">
-            <div className="bg-emerald-100 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-800/40 p-1.5 rounded-lg">
-              <Package className="w-5 h-5 md:w-6 md:h-6 text-emerald-600 dark:text-emerald-400 shrink-0" />
+          <div className="flex items-center gap-3">
+            <div className="border border-slate-300 dark:border-slate-700 p-1.5 rounded-lg text-slate-800 dark:text-slate-200">
+              <Box className="w-6 h-6 shrink-0" />
             </div>
-            <span className="font-extrabold text-base md:text-lg text-emerald-700 dark:text-emerald-400 tracking-tight italic">
-              FAST <span className="text-slate-800 dark:text-slate-100 not-italic text-sm font-bold">LOGISTIK</span>
+            <span className="font-bold text-xl text-slate-900 dark:text-slate-100 tracking-tight">
+              LogistikKu
             </span>
           </div>
         </div>
 
-        {/* Sub-menu Content Sesuai Kategori Rail Active */}
-        <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto mt-4 custom-scrollbar pb-6 text-xs font-semibold">
-
-          {/* ========================================================================= */}
-          {/* CATEGORY 1: BUAT SURAT (Letter Generator Catalog Hub)                     */}
-          {/* ========================================================================= */}
-          {activeRailCategory === "surat" && (
-            <div className="space-y-1.5 animate-in fade-in duration-200">
-              <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                Pilih Modul Surat
-              </div>
-
-              {/* BAST Surat Serah Terima */}
-              <button
-                onClick={handleStartNew}
-                className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
-                  view === "form"
-                    ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
-                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
-                }`}
-              >
-                <PlusCircle className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                <div>
-                  <div>Berita Acara (BAST)</div>
-                  <div className="text-[10px] text-slate-400 font-normal">Barang Masuk / Keluar / Mutasi</div>
-                </div>
-              </button>
-
-              {/* SPK Surat Perjanjian Kerja */}
-              <button
-                onClick={() => handleNavClick("spk_renovasi")}
-                className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
-                  view.startsWith("spk_")
-                    ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
-                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
-                }`}
-              >
-                <FileCheck className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                <div>
-                  <div>Surat Perjanjian (SPK)</div>
-                  <div className="text-[10px] text-slate-400 font-normal">Renovasi / IT / Kendaraan</div>
-                </div>
-              </button>
-
-              {/* SOPP Generator */}
-              <button
-                onClick={() => handleNavClick("sopp_generator")}
-                className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
-                  view === "sopp_generator" || view === "sopp_sewa"
-                    ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
-                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
-                }`}
-              >
-                <Sliders className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                <div>
-                  <div>Pedoman SOPP</div>
-                  <div className="text-[10px] text-slate-400 font-normal">Standar Prosedur Operasional</div>
-                </div>
-              </button>
-
-              {/* Riwayat Transaksi & Surat */}
-              <button
-                onClick={() => handleNavClick("riwayat")}
-                className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors mt-2 ${
-                  view === "riwayat"
-                    ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
-                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
-                }`}
-              >
-                <History className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                <div>
-                  <div>Riwayat Surat</div>
-                  <div className="text-[10px] text-slate-400 font-normal">Daftar Surat Masuk & Keluar</div>
-                </div>
-              </button>
-            </div>
-          )}
-
-          {/* ========================================================================= */}
-          {/* CATEGORY 2: ASET TETAP (Video Timestamps 0:13 - 0:22)                    */}
-          {/* ========================================================================= */}
-          {activeRailCategory === "tetap" && (
-            <div className="space-y-1 animate-in fade-in duration-200">
-              {/* Beranda */}
+        {/* Sub-menu Content */}
+        <nav className="flex-1 px-3 space-y-1.5 overflow-y-auto mt-4 custom-scrollbar text-xs font-semibold">
+          
+          {/* CATEGORY: HOME (Dashboard Submenu matching view.jpeg) */}
+          {activeRailCategory === "home" && (
+            <div className="space-y-2 animate-in fade-in duration-200">
               <button
                 onClick={() => handleNavClick("dashboard")}
-                className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
+                className={`w-full px-3.5 py-3 rounded-xl flex items-center gap-3 text-left transition-all ${
                   view === "dashboard"
-                    ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                    ? "bg-[#E6F4EA] dark:bg-emerald-950/70 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-sm"
                     : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                 }`}
               >
-                <LayoutDashboard className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                <span>Beranda</span>
+                <LayoutDashboard className="w-4 h-4 shrink-0" />
+                <span className="text-xs">Dashboard Inventaris</span>
               </button>
 
-              {/* Pengajuan (Accordion) */}
-              <div>
-                <button
-                  onClick={() => setIsPengajuanTetapOpen(!isPengajuanTetapOpen)}
-                  className="w-full px-4 py-2.5 rounded-xl flex items-center justify-between text-left text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <FileText className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    <span>Pengajuan</span>
-                  </div>
-                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isPengajuanTetapOpen ? "rotate-180" : ""}`} />
-                </button>
-                {isPengajuanTetapOpen && (
-                  <div className="pl-9 pr-2 py-1 space-y-1 text-xs">
-                    <button
-                      onClick={handleStartNew}
-                      className={`w-full px-3 py-1.5 rounded-lg text-left transition-colors ${
-                        view === "form" ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-slate-600 dark:text-slate-400 hover:text-emerald-600"
-                      }`}
-                    >
-                      Buat Pengajuan Baru
-                    </button>
-                    <button
-                      onClick={() => handleNavClick("riwayat")}
-                      className={`w-full px-3 py-1.5 rounded-lg text-left transition-colors ${
-                        view === "riwayat" ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-slate-600 dark:text-slate-400 hover:text-emerald-600"
-                      }`}
-                    >
-                      Daftar Pengajuan / Riwayat
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Aset Tanah */}
               <button
                 onClick={() => handleNavClick("bangunan_tanah")}
-                className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
+                className={`w-full px-3.5 py-3 rounded-xl flex items-center gap-3 text-left transition-all ${
                   view === "bangunan_tanah"
-                    ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                    ? "bg-[#E6F4EA] dark:bg-emerald-950/70 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-sm"
                     : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                 }`}
               >
-                <Map className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                <span>Aset Tanah</span>
+                <Building2 className="w-4 h-4 shrink-0" />
+                <span className="text-xs">Dashboard Bangunan</span>
               </button>
 
-              {/* Aset Bangunan */}
               <button
-                onClick={() => handleNavClick("bangunan_sewa")}
-                className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
-                  view === "bangunan_sewa"
-                    ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                onClick={() => handleNavClick("bangunan_sarana")}
+                className={`w-full px-3.5 py-3 rounded-xl flex items-center gap-3 text-left transition-all ${
+                  view === "bangunan_sarana"
+                    ? "bg-[#E6F4EA] dark:bg-emerald-950/70 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-sm"
                     : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                 }`}
               >
-                <Building className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                <span>Aset Bangunan</span>
-              </button>
-
-              {/* Aset Kendaraan */}
-              <button
-                onClick={() => handleNavClick("spk_kendaraan")}
-                className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
-                  view === "spk_kendaraan"
-                    ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
-                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
-                }`}
-              >
-                <Car className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                <span>Aset Kendaraan</span>
-              </button>
-
-              {/* Aset Inventaris & IT */}
-              <button
-                onClick={() => handleNavClick("perangkat_komputer")}
-                className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
-                  view.startsWith("perangkat_")
-                    ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
-                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
-                }`}
-              >
-                <Monitor className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                <span>Aset Inventaris & IT</span>
-              </button>
-
-              {/* Aset Disewakan */}
-              <button
-                onClick={() => handleNavClick("sopp_sewa")}
-                className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
-                  view === "sopp_sewa"
-                    ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
-                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
-                }`}
-              >
-                <Building2 className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                <span>Aset Disewakan</span>
-              </button>
-
-              {/* Persetujuan */}
-              <button
-                onClick={() => handleNavClick("spk_renovasi")}
-                className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
-                  view === "spk_renovasi"
-                    ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
-                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
-                }`}
-              >
-                <CheckSquare className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                <span>Persetujuan</span>
-              </button>
-
-              {/* Laporan */}
-              <button
-                onClick={() => handleNavClick("log_aktivitas")}
-                className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
-                  view === "log_aktivitas"
-                    ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
-                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
-                }`}
-              >
-                <Activity className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                <span>Laporan & Jejak Audit</span>
+                <Shield className="w-4 h-4 shrink-0" />
+                <span className="text-xs">Dashboard Pengamanan & Korporasi</span>
               </button>
             </div>
           )}
 
-          {/* ========================================================================= */}
-          {/* CATEGORY 3: ASET SEWA (Video Timestamps 0:23 - 0:39)                    */}
-          {/* ========================================================================= */}
-          {activeRailCategory === "sewa" && (
+          {/* CATEGORY: SURAT */}
+          {activeRailCategory === "surat" && (
             <div className="space-y-1 animate-in fade-in duration-200">
-              {/* Beranda */}
+              {/* Surat Serah Terima */}
               <button
-                onClick={() => handleNavClick("dashboard")}
-                className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
-                  view === "dashboard"
-                    ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                onClick={handleStartNew}
+                className={`w-full px-3.5 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
+                  view === "form"
+                    ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
                     : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                 }`}
               >
-                <LayoutDashboard className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                <span>Beranda</span>
+                <FileText className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
+                <span>Surat Serah Terima</span>
               </button>
 
-              {/* Pengajuan (Accordion) */}
+              {/* SPK Accordion */}
               <div>
                 <button
-                  onClick={() => setIsPengajuanSewaOpen(!isPengajuanSewaOpen)}
-                  className="w-full px-4 py-2.5 rounded-xl flex items-center justify-between text-left text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
+                  onClick={() => setIsSpkOpen(!isSpkOpen)}
+                  className="w-full px-3.5 py-2.5 rounded-xl flex items-center justify-between text-left text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
-                    <FileText className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    <span>Pengajuan</span>
+                    <FileCheck className="w-4 h-4 text-[#00753A] dark:text-emerald-400 shrink-0" />
+                    <span>SPK</span>
                   </div>
-                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isPengajuanSewaOpen ? "rotate-180" : ""}`} />
+                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isSpkOpen ? "rotate-180" : ""}`} />
                 </button>
-                {isPengajuanSewaOpen && (
+
+                {isSpkOpen && (
                   <div className="pl-9 pr-2 py-1 space-y-1 text-xs">
                     <button
-                      onClick={handleStartNew}
-                      className={`w-full px-3 py-1.5 rounded-lg text-left transition-colors ${
-                        view === "form" ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-slate-600 dark:text-slate-400 hover:text-emerald-600"
+                      onClick={() => handleNavClick("spk_renovasi")}
+                      className={`w-full px-3 py-1.5 rounded-lg text-left transition-all cursor-pointer ${
+                        view === "spk_renovasi"
+                          ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold"
+                          : "text-slate-600 dark:text-slate-400 hover:text-[#00753A]"
                       }`}
                     >
-                      Pengajuan Baru
+                      Renovasi
                     </button>
                     <button
-                      onClick={() => handleNavClick("riwayat")}
-                      className={`w-full px-3 py-1.5 rounded-lg text-left transition-colors ${
-                        view === "riwayat" ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-slate-600 dark:text-slate-400 hover:text-emerald-600"
+                      onClick={() => handleNavClick("spk_elektronik")}
+                      className={`w-full px-3 py-1.5 rounded-lg text-left transition-all cursor-pointer ${
+                        view === "spk_elektronik"
+                          ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold"
+                          : "text-slate-600 dark:text-slate-400 hover:text-[#00753A]"
                       }`}
                     >
-                      Approval / Status
+                      Elektronik
+                    </button>
+                    <button
+                      onClick={() => handleNavClick("spk_kendaraan")}
+                      className={`w-full px-3 py-1.5 rounded-lg text-left transition-all cursor-pointer ${
+                        view === "spk_kendaraan"
+                          ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold"
+                          : "text-slate-600 dark:text-slate-400 hover:text-[#00753A]"
+                      }`}
+                    >
+                      Kendaraan
                     </button>
                   </div>
                 )}
               </div>
 
-              {/* SPK */}
+              {/* SOPP Accordion */}
+              <div>
+                <button
+                  onClick={() => setIsSoppOpen(!isSoppOpen)}
+                  className="w-full px-3.5 py-2.5 rounded-xl flex items-center justify-between text-left text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <Sliders className="w-4 h-4 text-[#00753A] dark:text-emerald-400 shrink-0" />
+                    <span>SOPP</span>
+                  </div>
+                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isSoppOpen ? "rotate-180" : ""}`} />
+                </button>
+
+                {isSoppOpen && (
+                  <div className="pl-9 pr-2 py-1 space-y-1 text-xs">
+                    <button
+                      onClick={() => handleNavClick("sopp_pengadaan")}
+                      className={`w-full px-3 py-1.5 rounded-lg text-left transition-all cursor-pointer ${
+                        view === "sopp_pengadaan"
+                          ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold"
+                          : "text-slate-600 dark:text-slate-400 hover:text-[#00753A]"
+                      }`}
+                    >
+                      Pengadaan
+                    </button>
+                    <button
+                      onClick={() => handleNavClick("sopp_sewa")}
+                      className={`w-full px-3 py-1.5 rounded-lg text-left transition-all cursor-pointer ${
+                        view === "sopp_sewa"
+                          ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold"
+                          : "text-slate-600 dark:text-slate-400 hover:text-[#00753A]"
+                      }`}
+                    >
+                      Sewa
+                    </button>
+                    <button
+                      onClick={() => handleNavClick("sopp_renovasi")}
+                      className={`w-full px-3 py-1.5 rounded-lg text-left transition-all cursor-pointer ${
+                        view === "sopp_renovasi"
+                          ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold"
+                          : "text-slate-600 dark:text-slate-400 hover:text-[#00753A]"
+                      }`}
+                    >
+                      Renovasi
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Riwayat Surat */}
               <button
-                onClick={() => handleNavClick("spk_renovasi")}
-                className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
-                  view === "spk_renovasi"
-                    ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                onClick={() => handleNavClick("riwayat")}
+                className={`w-full px-3.5 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
+                  view === "riwayat"
+                    ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
                     : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                 }`}
               >
-                <FileCheck className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                <span>SPK</span>
+                <History className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
+                <span>Riwayat Surat</span>
+              </button>
+            </div>
+          )}
+
+          {/* CATEGORY: DATA MASTER */}
+          {activeRailCategory === "master" && (
+            <div className="space-y-1.5 animate-in fade-in duration-200">
+              <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#00753A] dark:text-emerald-400">
+                Kelola Data Master
+              </div>
+
+              <button
+                onClick={() => handleNavClick("master_barang")}
+                className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
+                  view === "master_barang"
+                    ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
+                }`}
+              >
+                <Package className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
+                <span>Master Barang</span>
               </button>
 
-              {/* Administrasi (Accordion) */}
-              <div>
-                <button
-                  onClick={() => setIsAdministrasiOpen(!isAdministrasiOpen)}
-                  className="w-full px-4 py-2.5 rounded-xl flex items-center justify-between text-left text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <Database className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    <span>Administrasi</span>
-                  </div>
-                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isAdministrasiOpen ? "rotate-180" : ""}`} />
-                </button>
-                {isAdministrasiOpen && (
-                  <div className="pl-9 pr-2 py-1 space-y-1 text-xs">
-                    <button
-                      onClick={() => handleNavClick("bangunan_renovasi")}
-                      className="w-full px-3 py-1.5 rounded-lg text-left text-slate-600 dark:text-slate-400 hover:text-emerald-600"
-                    >
-                      Registrasi
-                    </button>
-                    <button
-                      onClick={() => handleNavClick("riwayat")}
-                      className="w-full px-3 py-1.5 rounded-lg text-left text-slate-600 dark:text-slate-400 hover:text-emerald-600"
-                    >
-                      Penyerahan
-                    </button>
-                    <button
-                      onClick={() => handleNavClick("riwayat")}
-                      className="w-full px-3 py-1.5 rounded-lg text-left text-slate-600 dark:text-slate-400 hover:text-emerald-600"
-                    >
-                      Pengembalian
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Aset (Accordion) */}
-              <div>
-                <button
-                  onClick={() => setIsAsetOpen(!isAsetOpen)}
-                  className="w-full px-4 py-2.5 rounded-xl flex items-center justify-between text-left text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <Box className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    <span>Aset</span>
-                  </div>
-                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isAsetOpen ? "rotate-180" : ""}`} />
-                </button>
-                {isAsetOpen && (
-                  <div className="pl-9 pr-2 py-1 space-y-1 text-xs">
-                    <button
-                      onClick={() => handleNavClick("master_barang")}
-                      className="w-full px-3 py-1.5 rounded-lg text-left text-slate-600 dark:text-slate-400 hover:text-emerald-600"
-                    >
-                      Blokir
-                    </button>
-                    <button
-                      onClick={() => handleNavClick("master_barang")}
-                      className="w-full px-3 py-1.5 rounded-lg text-left text-slate-600 dark:text-slate-400 hover:text-emerald-600"
-                    >
-                      Buka Blokir
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Vendor */}
               <button
                 onClick={() => handleNavClick("master_vendor")}
                 className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
                   view === "master_vendor"
-                    ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                    ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
                     : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                 }`}
               >
-                <Users className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                <span>Vendor</span>
+                <Users className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
+                <span>Supplier / Vendor</span>
               </button>
 
-              {/* Kehilangan */}
               <button
-                onClick={() => handleNavClick("bangunan_sarana")}
+                onClick={() => handleNavClick("master_outlet")}
                 className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
-                  view === "bangunan_sarana"
-                    ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                  view === "master_outlet"
+                    ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
                     : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                 }`}
               >
-                <AlertTriangle className="w-4 h-4 shrink-0 text-amber-500" />
-                <span>Kehilangan</span>
+                <Building className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
+                <span>Outlet & Instansi</span>
               </button>
 
-              {/* Laporan */}
               <button
-                onClick={() => handleNavClick("log_aktivitas")}
+                onClick={() => handleNavClick("kelola_user")}
                 className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
-                  view === "log_aktivitas"
-                    ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                  view === "kelola_user"
+                    ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
                     : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                 }`}
               >
-                <Activity className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                <span>Laporan</span>
+                <Users className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
+                <span>Manajemen User</span>
               </button>
             </div>
           )}
 
-          {/* ========================================================================= */}
-          {/* CATEGORY 4: PENGATURAN (Video Timestamps 0:40 - 0:49)                    */}
-          {/* ========================================================================= */}
-          {activeRailCategory === "settings" && (
-            <div className="space-y-2 animate-in fade-in duration-200">
-              {/* Manajemen (Accordion) */}
-              <div>
-                <button
-                  onClick={() => setIsManajemenOpen(!isManajemenOpen)}
-                  className="w-full px-4 py-2.5 rounded-xl flex items-center justify-between text-left text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <Users className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    <span>Manajemen</span>
-                  </div>
-                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isManajemenOpen ? "rotate-180" : ""}`} />
-                </button>
-                {isManajemenOpen && (
-                  <div className="pl-9 pr-2 py-1 space-y-1 text-xs">
-                    <button
-                      onClick={() => handleNavClick("kelola_user")}
-                      className={`w-full px-3 py-1.5 rounded-lg text-left transition-colors ${
-                        view === "kelola_user" ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-slate-600 dark:text-slate-400 hover:text-emerald-600"
-                      }`}
-                    >
-                      User & Akses
-                    </button>
-                    <button
-                      onClick={() => handleNavClick("kelola_user")}
-                      className="w-full px-3 py-1.5 rounded-lg text-left text-slate-600 dark:text-slate-400 hover:text-emerald-600"
-                    >
-                      Role & Izin
-                    </button>
-                  </div>
-                )}
+          {/* CATEGORY: INVENTARIS */}
+          {activeRailCategory === "inventaris" && (
+            <div className="space-y-1.5 animate-in fade-in duration-200">
+              <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#00753A] dark:text-emerald-400">
+                Aset & Perangkat IT
               </div>
 
-              {/* Master Data (Accordion) */}
-              <div>
-                <button
-                  onClick={() => setIsMasterDataOpen(!isMasterDataOpen)}
-                  className="w-full px-4 py-2.5 rounded-xl flex items-center justify-between text-left text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <Database className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    <span>Master Data</span>
-                  </div>
-                  <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isMasterDataOpen ? "rotate-180" : ""}`} />
-                </button>
-                {isMasterDataOpen && (
-                  <div className="pl-9 pr-2 py-1 space-y-1 text-xs">
-                    <button
-                      onClick={() => handleNavClick("master_barang")}
-                      className={`w-full px-3 py-1.5 rounded-lg text-left transition-colors ${
-                        view === "master_barang" ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-slate-600 dark:text-slate-400 hover:text-emerald-600"
-                      }`}
-                    >
-                      Barang / Manufaktur
-                    </button>
-                    <button
-                      onClick={() => handleNavClick("master_vendor")}
-                      className={`w-full px-3 py-1.5 rounded-lg text-left transition-colors ${
-                        view === "master_vendor" ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-slate-600 dark:text-slate-400 hover:text-emerald-600"
-                      }`}
-                    >
-                      Supplier / Vendor
-                    </button>
-                    <button
-                      onClick={() => handleNavClick("master_outlet")}
-                      className={`w-full px-3 py-1.5 rounded-lg text-left transition-colors ${
-                        view === "master_outlet" ? "text-emerald-600 dark:text-emerald-400 font-bold" : "text-slate-600 dark:text-slate-400 hover:text-emerald-600"
-                      }`}
-                    >
-                      Outlet & Instansi
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Lookup & Parameter */}
               <button
-                onClick={() => handleNavClick("sopp_generator")}
-                className="w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors"
+                onClick={() => handleNavClick("perangkat_komputer")}
+                className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
+                  view === "perangkat_komputer"
+                    ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
+                }`}
               >
-                <Sliders className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                <span>Lookup & Parameter</span>
+                <Monitor className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
+                <span>Perangkat Komputer</span>
               </button>
 
-              {/* Riwayat Penarikan Data */}
+              <button
+                onClick={() => handleNavClick("perangkat_printer")}
+                className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
+                  view === "perangkat_printer"
+                    ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
+                }`}
+              >
+                <Printer className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
+                <span>Perangkat Printer</span>
+              </button>
+            </div>
+          )}
+
+          {/* CATEGORY: BANGUNAN */}
+          {activeRailCategory === "bangunan" && (
+            <div className="space-y-1.5 animate-in fade-in duration-200">
+              <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#00753A] dark:text-emerald-400">
+                Aset Bangunan & Fasilitas
+              </div>
+
+              <button
+                onClick={() => handleNavClick("bangunan_tanah")}
+                className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
+                  view === "bangunan_tanah"
+                    ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
+                }`}
+              >
+                <Map className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
+                <span>Aset Tanah</span>
+              </button>
+
+              <button
+                onClick={() => handleNavClick("bangunan_sewa")}
+                className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
+                  view === "bangunan_sewa"
+                    ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
+                }`}
+              >
+                <Building className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
+                <span>Aset Bangunan & Sewa</span>
+              </button>
+
+              <button
+                onClick={() => handleNavClick("bangunan_renovasi")}
+                className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
+                  view === "bangunan_renovasi"
+                    ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
+                }`}
+              >
+                <Building2 className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
+                <span>Renovasi Gedung</span>
+              </button>
+
+              <button
+                onClick={() => handleNavClick("bangunan_sarana")}
+                className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
+                  view === "bangunan_sarana"
+                    ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
+                }`}
+              >
+                <Shield className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
+                <span>Sarana Pengamanan</span>
+              </button>
+            </div>
+          )}
+
+          {/* CATEGORY: LOG AKTIVITAS */}
+          {activeRailCategory === "log" && (
+            <div className="space-y-1.5 animate-in fade-in duration-200">
+              <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#00753A] dark:text-emerald-400">
+                Audit & Laporan
+              </div>
+
               <button
                 onClick={() => handleNavClick("log_aktivitas")}
                 className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
                   view === "log_aktivitas"
-                    ? "bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                    ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
                     : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                 }`}
               >
-                <Download className="w-4 h-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
-                <span>Riwayat Penarikan Data</span>
+                <Activity className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
+                <span>Log Aktivitas Sistem</span>
               </button>
             </div>
           )}
 
         </nav>
+
+        {/* Bottom Section Drawer (Footer) */}
+        <div className="p-3 border-t border-slate-200 dark:border-slate-800 shrink-0 bg-slate-50/50 dark:bg-slate-900/50">
+          <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center font-medium">
+            © 2026 Departemen Logistik
+          </p>
+        </div>
       </aside>
     </>
   );

@@ -25,6 +25,7 @@ import { getSoppHistories } from "../services/soppService";
 import { getActivityLogs } from "../services/activityLogService";
 
 import ToastNotif from "../components/Modal/ToastNotif";
+import { ensureFirestoreCollectionsSeeded } from "../utils/firestoreAutoSeeder";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -131,7 +132,11 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    loadAllData();
+    const initApp = async () => {
+      await ensureFirestoreCollectionsSeeded();
+      loadAllData();
+    };
+    initApp();
   }, []);
 
   const handleUpdateRole = async (userId, newRole) => {

@@ -2,11 +2,7 @@ import { fetchCollectionData, addDocumentData, updateDocumentData, deleteDocumen
 
 const PATHS = [
   'logistik/devices/printers',
-  'logistik/devices/printer',
-  'devices/printers',
-  'devices/printer',
-  'printers',
-  'printer'
+  { parentCol: 'logistik', parentDoc: 'devices', subCol: 'printers' }
 ];
 
 export const getPrinter = async () => {
@@ -51,5 +47,3 @@ export const deletePrinter = async (id) => {
 export const importPrinterCSV = async (rows) => {
   return importCollectionCSV(addPrinter, rows);
 };
-
-

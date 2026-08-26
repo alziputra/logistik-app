@@ -2,11 +2,7 @@ import { fetchCollectionData, addDocumentData, updateDocumentData, deleteDocumen
 
 const PATHS = [
   'logistik/operations/transactions',
-  'logistik/operations/transaksi',
-  'operations/transactions',
-  'operations/transaksi',
-  'transactions',
-  'transaksi'
+  { parentCol: 'logistik', parentDoc: 'operations', subCol: 'transactions' }
 ];
 
 export const getTransaksi = async () => {
@@ -26,4 +22,3 @@ export const updateTransaksi = async (id, data) => {
 export const deleteTransaksi = async (id) => {
   return deleteDocumentData(PATHS[0], id);
 };
-

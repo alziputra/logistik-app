@@ -1,9 +1,8 @@
 import { fetchCollectionData, addDocumentData, updateDocumentData, deleteDocumentData } from './firestoreHelper';
 
 const PATHS = [
-  { parentCol: 'logistik', parentDoc: 'auth', subCol: 'users' },
-  { parentCol: 'logistik', parentDoc: 'master', subCol: 'users' },
-  'users'
+  'logistik/auth/users',
+  { parentCol: 'logistik', parentDoc: 'auth', subCol: 'users' }
 ];
 
 export const getUsers = async () => {
@@ -12,7 +11,6 @@ export const getUsers = async () => {
     { id: 'usr-002', nama: 'User Biasa', email: 'user@gmail.com', role: 'user' }
   ]);
 
-  // Standardize name & nama property on returned list
   return data.map((u) => ({
     ...u,
     nama: u.nama || u.name || 'User',

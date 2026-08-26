@@ -1,9 +1,8 @@
 import { fetchCollectionData, addDocumentData, updateDocumentData, deleteDocumentData } from './firestoreHelper';
 
 const PATHS = [
-  { parentCol: 'logistik', parentDoc: 'master', subCol: 'pengamanan' },
-  { parentCol: 'logistik', parentDoc: 'master', subCol: 'pengamanan-korporasi' },
-  'pengamanan-korporasi'
+  'logistik/master/pengamanan',
+  { parentCol: 'logistik', parentDoc: 'master', subCol: 'pengamanan' }
 ];
 
 export const getPengamananKorporasi = async () => {
@@ -23,4 +22,3 @@ export const updatePengamananKorporasi = async (id, formData) => {
 export const deletePengamananKorporasi = async (id) => {
   return deleteDocumentData(PATHS[0], id);
 };
-

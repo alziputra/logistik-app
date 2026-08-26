@@ -1,9 +1,8 @@
 import { fetchCollectionData, addDocumentData } from './firestoreHelper';
 
 const PATHS = [
-  { parentCol: 'logistik', parentDoc: 'master', subCol: 'sopp' },
-  { parentCol: 'logistik', parentDoc: 'master', subCol: 'sopp-histories' },
-  'sopp-histories'
+  'logistik/master/sopp',
+  { parentCol: 'logistik', parentDoc: 'master', subCol: 'sopp' }
 ];
 
 export const getSoppHistories = async () => {
@@ -15,4 +14,3 @@ export const getSoppHistories = async () => {
 export const addSoppHistory = async (formData) => {
   return addDocumentData(PATHS[0], formData);
 };
-

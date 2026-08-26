@@ -14,6 +14,7 @@ export default function DataKomputer({
   computers = [],
   outlets = [],
   inventory = [],
+  vendors = [],
   filterStatus: propFilterStatus = "Semua",
   setFilterStatus,
   loadAllData,
@@ -182,6 +183,7 @@ export default function DataKomputer({
         isSaving={isSaving}
         outletsList={outlets}
         inventoryList={inventory}
+        vendorsList={vendors}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSave}
       />

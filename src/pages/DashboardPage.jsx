@@ -10,6 +10,7 @@ import { useTransaksi } from "../hooks/useTransaksi";
 import { hitungSisaBulan } from "../utils/deviceUtils";
 
 import { getKomputer } from "../services/komputerService";
+import { getLaptop } from "../services/laptopService";
 import { getPrinter } from "../services/printerService";
 import { getTransaksi } from "../services/transaksiService";
 import { getInventory } from "../services/inventoryService";
@@ -25,7 +26,6 @@ import { getSoppHistories } from "../services/soppService";
 import { getActivityLogs } from "../services/activityLogService";
 
 import ToastNotif from "../components/Modal/ToastNotif";
-import { ensureFirestoreCollectionsSeeded } from "../utils/firestoreAutoSeeder";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -36,6 +36,7 @@ export default function DashboardPage() {
 
   // Core Data States
   const [computers, setComputers] = useState([]);
+  const [laptops, setLaptops] = useState([]);
   const [printers, setPrinters] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [inventory, setInventory] = useState([]);
@@ -91,10 +92,11 @@ export default function DashboardPage() {
     setLoadingData(true);
     try {
       const [
-        compRes, printRes, trxRes, invRes, venRes, userRes, instRes,
+        compRes, laptopRes, printRes, trxRes, invRes, venRes, userRes, instRes,
         landRes, sewaRes, renoRes, secRes, spkRes, soppRes, logRes
       ] = await Promise.allSettled([
         getKomputer(),
+        getLaptop(),
         getPrinter(),
         getTransaksi(),
         getInventory(),
@@ -111,6 +113,7 @@ export default function DashboardPage() {
       ]);
 
       if (compRes.status === "fulfilled") setComputers(ensureArray(compRes.value));
+      if (laptopRes.status === "fulfilled") setLaptops(ensureArray(laptopRes.value));
       if (printRes.status === "fulfilled") setPrinters(ensureArray(printRes.value));
       if (trxRes.status === "fulfilled") setTransactions(ensureArray(trxRes.value));
       if (invRes.status === "fulfilled") setInventory(ensureArray(invRes.value));
@@ -132,11 +135,7 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    const initApp = async () => {
-      await ensureFirestoreCollectionsSeeded();
-      loadAllData();
-    };
-    initApp();
+    loadAllData();
   }, []);
 
   const handleUpdateRole = async (userId, newRole) => {
@@ -233,6 +232,7 @@ export default function DashboardPage() {
               outlets={outlets}
               printers={printers}
               computers={computers}
+              laptops={laptops}
               notifSewa={notifSewa}
               notifSewaKomputer={notifSewaKomputer}
               usersList={usersList}

@@ -1,22 +1,56 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { X, Edit, Database, Plus, Loader2, Package, Calendar, Building2 } from "lucide-react";
+import { X, Edit, Database, Plus, Loader2, Package, Calendar, Building2, ChevronDown } from "lucide-react";
 
-export default function BarangFormModal({ isOpen, editingInv, isSaving, vendors = [], onClose, onSubmit }) {
+export default function BarangFormModal({ isOpen, editingInv, isSaving, inventory = [], vendors = [], onClose, onSubmit }) {
+  const [namaBarang, setNamaBarang] = useState("");
   const [vendorNama, setVendorNama] = useState("");
   const [tglMulai, setTglMulai] = useState("");
   const [tglSelesai, setTglSelesai] = useState("");
+  const [isBarangDropdownOpen, setIsBarangDropdownOpen] = useState(false);
+  const [isVendorDropdownOpen, setIsVendorDropdownOpen] = useState(false);
 
   useEffect(() => {
     if (editingInv) {
+      setNamaBarang(editingInv.nama || "");
       setVendorNama(editingInv.vendor_nama || editingInv.vendor?.nama || "");
       setTglMulai(editingInv.tanggal_mulai || "");
       setTglSelesai(editingInv.tanggal_selesai || "");
     } else {
+      setNamaBarang("");
       setVendorNama("");
       setTglMulai("");
       setTglSelesai("");
     }
   }, [editingInv, isOpen]);
+
+  const barangSuggestions = useMemo(() => {
+    const uniqueMap = new Map();
+    const defaults = [
+      { nama: "Kertas HVS A4 80gsm", satuan: "Rim", kategori: "ATK" },
+      { nama: "Pulpen Standard Black 0.5", satuan: "Pcs", kategori: "ATK" },
+      { nama: "Kursi Kerja Ergonomis Mesh", satuan: "Unit", kategori: "Fungsi Kantor" },
+      { nama: "Dell Optiplex 3070 MFF", satuan: "Unit", kategori: "IT Hardware" },
+      { nama: "Dell Optiplex SFF 7010", satuan: "Unit", kategori: "IT Hardware" },
+      { nama: "EPSON L4260 ECO TANK", satuan: "Unit", kategori: "IT Hardware" },
+      { nama: "LQ-310 DOT MATRIX", satuan: "Unit", kategori: "IT Hardware" },
+    ];
+
+    defaults.forEach(item => uniqueMap.set(item.nama.toLowerCase(), item));
+
+    if (Array.isArray(inventory)) {
+      inventory.forEach(item => {
+        if (item.nama && !uniqueMap.has(item.nama.toLowerCase())) {
+          uniqueMap.set(item.nama.toLowerCase(), {
+            nama: item.nama,
+            satuan: item.satuan || "Pcs",
+            kategori: item.kategori || "Inventaris"
+          });
+        }
+      });
+    }
+
+    return Array.from(uniqueMap.values());
+  }, [inventory]);
 
   const isVendorFilled = useMemo(() => {
     const v = (vendorNama || "").trim();
@@ -94,10 +128,11 @@ export default function BarangFormModal({ isOpen, editingInv, isSaving, vendors 
                   </label>
                   <input
                     name="nama"
+                    type="text"
                     defaultValue={editingInv?.nama || ""}
                     required
                     placeholder="Contoh: Dell Optiplex SFF 7010"
-                    className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs text-slate-100 placeholder:text-slate-500 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 transition-all"
+                    className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs text-slate-100 placeholder:text-slate-500 outline-none focus:border-[#00753A] focus:ring-1 focus:ring-[#00753A]/40 transition-all"
                   />
                 </div>
 
@@ -142,21 +177,87 @@ export default function BarangFormModal({ isOpen, editingInv, isSaving, vendors 
                 <Building2 className="w-4 h-4" /> Vendor & Legalitas Kontrak
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-950/40 p-4 rounded-xl border border-slate-800/60">
-                <div>
+                <div className="relative">
                   <label className="block text-xs font-semibold text-slate-300 mb-1.5">Nama Vendor</label>
-                  <input
-                    name="vendor_nama"
-                    list="vendor-options-list"
-                    value={vendorNama}
-                    onChange={(e) => setVendorNama(e.target.value)}
-                    placeholder="Pilih / ketik nama vendor..."
-                    className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs text-slate-100 placeholder:text-slate-500 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 transition-all"
-                  />
-                  <datalist id="vendor-options-list">
-                    {vendors.map((v) => (
-                      <option key={v.id} value={v.nama} />
-                    ))}
-                  </datalist>
+                  <div className="relative">
+                    <input
+                      name="vendor_nama"
+                      type="text"
+                      value={vendorNama}
+                      onChange={(e) => {
+                        setVendorNama(e.target.value);
+                        setIsVendorDropdownOpen(true);
+                      }}
+                      onFocus={() => setIsVendorDropdownOpen(true)}
+                      placeholder="Pilih / ketik nama vendor..."
+                      className="w-full pl-9 pr-8 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs text-slate-100 placeholder:text-slate-500 outline-none focus:border-[#00753A] focus:ring-1 focus:ring-[#00753A]/40 transition-all"
+                    />
+                    <Building2 className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <ChevronDown
+                      className={`w-4 h-4 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 transition-transform cursor-pointer ${isVendorDropdownOpen ? "rotate-180" : ""}`}
+                      onClick={() => setIsVendorDropdownOpen(!isVendorDropdownOpen)}
+                    />
+                  </div>
+
+                  {/* Custom Styled Vendor Dropdown Panel */}
+                  {isVendorDropdownOpen && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setIsVendorDropdownOpen(false)} />
+                      <div className="absolute left-0 right-0 top-full mt-1.5 max-h-60 overflow-y-auto bg-slate-900 border border-slate-700/90 rounded-xl shadow-2xl z-20 divide-y divide-slate-800 text-xs custom-scrollbar">
+                        {vendors.filter((v) => {
+                          const q = (vendorNama || "").toLowerCase();
+                          const name = (v.nama_perusahaan || v.nama || "").toLowerCase();
+                          const pimpinan = (v.pimpinan || "").toLowerCase();
+                          const ket = (v.keterangan || "").toLowerCase();
+                          return name.includes(q) || pimpinan.includes(q) || ket.includes(q);
+                        }).length === 0 ? (
+                          <div className="p-3 text-center text-slate-400 italic">
+                            Vendor baru: &quot;{vendorNama}&quot; (tekan simpan untuk menggunakan)
+                          </div>
+                        ) : (
+                          vendors
+                            .filter((v) => {
+                              const q = (vendorNama || "").toLowerCase();
+                              const name = (v.nama_perusahaan || v.nama || "").toLowerCase();
+                              const pimpinan = (v.pimpinan || "").toLowerCase();
+                              const ket = (v.keterangan || "").toLowerCase();
+                              return name.includes(q) || pimpinan.includes(q) || ket.includes(q);
+                            })
+                            .map((v) => {
+                              const displayName = v.nama_perusahaan || v.nama;
+                              return (
+                                <button
+                                  key={v.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setVendorNama(displayName);
+                                    setIsVendorDropdownOpen(false);
+                                  }}
+                                  className="w-full text-left p-3 hover:bg-[#E6F4EA] dark:hover:bg-slate-800 text-slate-100 hover:text-[#00753A] flex flex-col gap-1 transition-colors cursor-pointer group"
+                                >
+                                  <span className="font-bold group-hover:text-[#00753A]">
+                                    {displayName}
+                                  </span>
+                                  <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300">
+                                    {v.pimpinan && (
+                                      <span>
+                                        {v.pimpinan} ({v.jabatan || "Direktur"})
+                                      </span>
+                                    )}
+                                    {v.kota && <span>• {v.kota}</span>}
+                                    {v.keterangan && (
+                                      <span className="px-1.5 py-0.5 bg-emerald-950 text-emerald-300 rounded text-[9px] font-extrabold border border-emerald-800/40">
+                                        {v.keterangan}
+                                      </span>
+                                    )}
+                                  </div>
+                                </button>
+                              );
+                            })
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div>

@@ -82,6 +82,24 @@ export default function PrinterTable({
                   : "Jan 2024 - Jan 2026";
                 const keterangan = printer.keterangan || printer.deskripsi || "-";
 
+                const enrichedPrinter = {
+                  kategori: "PRINTER",
+                  isPrinter: true,
+                  sn,
+                  produk: hardware,
+                  outlet: outletName,
+                  idOutlet: outletId,
+                  vendor,
+                  tanggalMulai: tglMulai || "2024-01-10",
+                  tanggalSelesai: tglSelesai || "2026-01-10",
+                  status: printer.status || "Sewa Berjalan",
+                  kondisi: printer.kondisi || "BAIK",
+                  spkNo: printer.spkNo || printer.no_spk || "SPK/PRNT/2024/001",
+                  pksNo: printer.pksNo || printer.no_pks || "2503/00108.04/2024",
+                  deskripsi: keterangan,
+                  ...printer,
+                };
+
                 return (
                   <tr key={printer.id || index} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
                     <td className="p-3.5 text-center font-mono text-slate-400">{startIndex + index + 1}</td>
@@ -120,7 +138,7 @@ export default function PrinterTable({
                     {userRole === "admin" && (
                       <td className="p-3.5 text-center">
                         <div className="flex justify-center gap-1.5">
-                          <button onClick={() => onQr && onQr(printer)} title="Cetak QR" className="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg cursor-pointer transition-colors">
+                          <button onClick={() => onQr && onQr(enrichedPrinter)} title="Cetak QR" className="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg cursor-pointer transition-colors">
                             <QrCode className="w-4 h-4" />
                           </button>
                           <button onClick={() => onEdit && onEdit(printer)} title="Edit" className="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-emerald-600 dark:text-emerald-400 rounded-lg cursor-pointer transition-colors">

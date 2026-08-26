@@ -90,6 +90,30 @@ export default function KomputerTable({
                   : "Apr 2024 - Apr 2026";
                 const keterangan = comp.keterangan || comp.deskripsi || "-";
 
+                const enrichedComp = {
+                  kategori: "KOMPUTER",
+                  isPrinter: false,
+                  sn,
+                  produk: hardware,
+                  outlet: outletName,
+                  idOutlet: outletId,
+                  vendor,
+                  ipAddress: ip,
+                  macAddress: mac,
+                  cpu,
+                  ram,
+                  storage,
+                  os,
+                  tanggalMulai: tglMulai || "2024-04-30",
+                  tanggalSelesai: tglSelesai || "2026-04-30",
+                  status: comp.status || "Sewa Berjalan",
+                  kondisi: comp.kondisi || "BAIK",
+                  spkNo: comp.spkNo || comp.no_spk || "SPK/COMP/2024/001",
+                  pksNo: comp.pksNo || comp.no_pks || "2503/00108.04/2024",
+                  keterangan,
+                  ...comp,
+                };
+
                 return (
                   <tr key={comp.id || index} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
                     <td className="p-3.5 text-center font-mono text-slate-400">{startIndex + index + 1}</td>
@@ -152,7 +176,7 @@ export default function KomputerTable({
                     {userRole === "admin" && (
                       <td className="p-3.5 text-center">
                         <div className="flex justify-center gap-1.5">
-                          <button onClick={() => onQr && onQr(comp)} title="Cetak QR" className="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg cursor-pointer transition-colors">
+                          <button onClick={() => onQr && onQr(enrichedComp)} title="Cetak QR" className="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg cursor-pointer transition-colors">
                             <QrCode className="w-4 h-4" />
                           </button>
                           <button onClick={() => onEdit && onEdit(comp)} title="Edit" className="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-emerald-600 dark:text-emerald-400 rounded-lg cursor-pointer transition-colors">

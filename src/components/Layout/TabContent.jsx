@@ -1,7 +1,7 @@
 import React from "react";
 import {
   DashboardView, DataMaster, FormView, PreviewView,
-  DataPrinter, DataKomputer, KelolaUser,
+  DataPrinter, DataKomputer, DataLaptop, KelolaUser,
   RiwayatTransaksi, LogAktivitas,
   BangunanTanah, BangunanSewa,
   BangunanRenovasi, BangunanSarana, BangunanSPK,
@@ -37,6 +37,7 @@ export default function TabContent({
   outlets = [],
   printers = [],
   computers = [],
+  laptops = [],
   notifSewa = [],
   notifSewaKomputer = [],
   usersList = [],
@@ -209,6 +210,9 @@ export default function TabContent({
         <Panel id={has("perangkat_printer") ? "perangkat_printer" : "printer"} activeTab={activeTab}>
           <DataPrinter 
             printers={printers} 
+            outlets={outlets}
+            inventory={inventory}
+            vendors={vendors}
             userRole={userRole} 
             loadAllData={loadAllData} 
             printerFilter={printerFilter}
@@ -221,10 +225,24 @@ export default function TabContent({
         <Panel id={has("perangkat_komputer") ? "perangkat_komputer" : "komputer"} activeTab={activeTab}>
           <DataKomputer 
             computers={computers} 
+            outlets={outlets}
+            inventory={inventory}
+            vendors={vendors}
             userRole={userRole} 
             loadAllData={loadAllData}
             computerFilter={computerFilter}
             setComputerFilter={setComputerFilter}
+          />
+        </Panel>
+      )}
+
+      {(has("perangkat_laptop") || has("laptop")) && (
+        <Panel id={has("perangkat_laptop") ? "perangkat_laptop" : "laptop"} activeTab={activeTab}>
+          <DataLaptop 
+            laptops={laptops} 
+            vendors={vendors}
+            userRole={userRole} 
+            loadAllData={loadAllData}
           />
         </Panel>
       )}

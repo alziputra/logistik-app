@@ -9,6 +9,7 @@ export const VIEW_TITLES = {
   preview: "Preview Surat",
   perangkat_printer: "Data Printer",
   perangkat_komputer: "Data PC",
+  perangkat_laptop: "Data Laptop",
   kelola_user: "Kelola Akses",
   log_aktivitas: "Log Aktivitas",
   bangunan_tanah: "Daftar Tanah",

@@ -4,6 +4,7 @@ import FormView from "../Form/FormView.jsx";
 import PreviewView from "../Form/PreviewView.jsx";
 import DataPrinter from "../DataPerangkat/DataPrinter/index.jsx";
 import DataKomputer from "../DataPerangkat/DataKomputer/index.jsx";
+import DataLaptop from "../DataPerangkat/DataLaptop/index.jsx";
 import KelolaUser from "../Admin/KelolaUser.jsx";
 import RiwayatTransaksi from "../Transaksi/RiwayatTransaksi.jsx";
 import LogAktivitas from "../Admin/LogAktivitas.jsx";
@@ -22,6 +23,7 @@ export {
   PreviewView,
   DataPrinter,
   DataKomputer,
+  DataLaptop,
   KelolaUser,
   RiwayatTransaksi,
   LogAktivitas,

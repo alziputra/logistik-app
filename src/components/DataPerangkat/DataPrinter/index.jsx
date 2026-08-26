@@ -14,6 +14,7 @@ export default function DataPrinter({
   printers = [],
   outlets = [],
   inventory = [],
+  vendors = [],
   filterStatus: propFilterStatus = "Semua",
   setFilterStatus,
   loadAllData,
@@ -179,6 +180,7 @@ export default function DataPrinter({
         isSaving={isSaving}
         outletsList={outlets}
         inventoryList={inventory}
+        vendorsList={vendors}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSave}
       />

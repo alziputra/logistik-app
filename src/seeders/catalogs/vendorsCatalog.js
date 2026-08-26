@@ -1,12 +1,7 @@
-import { fetchCollectionData, addDocumentData, updateDocumentData, deleteDocumentData } from './firestoreHelper';
-
-const PATHS = [
-  'logistik/master/vendors',
-  { parentCol: 'logistik', parentDoc: 'master', subCol: 'vendors' }
-];
-
-export const getVendors = async () => {
-  return fetchCollectionData(PATHS, [
+export const vendorsCatalog = {
+  name: 'Vendors (Supplier)',
+  paths: ['logistik/master/vendors'],
+  items: [
     { id: 'ven-001', nama: 'CV YODERINDO INTI PRIMA', nama_perusahaan: 'CV YODERINDO INTI PRIMA', pimpinan: 'YOSIA MASLIPUTRA', jabatan: 'Direktur', alamat: 'Jl. Beringin Blok B No.1 Rt01/004 Kedung Halang, Bogor Utara', kota: 'BOGOR', no_telp: '083811106700', kontak: '083811106700', keterangan: 'CCTV' },
     { id: 'ven-002', nama: 'PT DANAKAR', nama_perusahaan: 'PT DANAKAR', pimpinan: 'HUSEIN IZZATI', jabatan: 'Direktur', alamat: 'Jl. Otista Raya No. 68A, Bidara Cina, Jatinegara', kota: 'JAKARTA', no_telp: '081297220944', kontak: '081297220944', keterangan: 'BANGUNAN' },
     { id: 'ven-003', nama: 'PT IMTEK TRIVISHAKA HADITAMA', nama_perusahaan: 'PT IMTEK TRIVISHAKA HADITAMA', pimpinan: 'IMAM SUHADI', jabatan: 'Direktur', alamat: 'Ruko Symphoni Blok HX 1, No. 22 Harapan Indah Bekasi', kota: 'BEKASI', no_telp: '083845078652', kontak: '083845078652', keterangan: 'LIFT' },
@@ -42,17 +37,5 @@ export const getVendors = async () => {
     { id: 'ven-033', nama: 'PT ESAS EDUKASI INDONESIA', nama_perusahaan: 'PT ESAS EDUKASI INDONESIA', pimpinan: 'PT ESAS EDUKASI INDONESIA', jabatan: 'Direktur', alamat: 'Komplek Perkantoran Tanjung Mas Raya Blok B1 No 44 Tanjung Barat Jakarta Selatan', kota: 'JAKARTA', no_telp: '082111995378', kontak: '082111995378', keterangan: 'SERTIFIKASI' },
     { id: 'ven-034', nama: 'RPA', nama_perusahaan: 'RPA', pimpinan: 'HERDIAN', jabatan: 'Pimpinan', alamat: 'jL Bangka Raya 97 Kemang Jakarta Selatan', kota: 'JAKARTA', no_telp: '081315005151', kontak: '081315005151', keterangan: 'BILLBOARD' },
     { id: 'ven-035', nama: 'QUPRO INDONESIA', nama_perusahaan: 'QUPRO INDONESIA', pimpinan: 'ALI AMRIL', jabatan: 'DIREKTUR', alamat: 'Pasar Segar Blok RA-1 No.9 Jl. Tole Iskandar, Sukmajaya, Depok, Indonesia', kota: 'DEPOK', no_telp: '081808351090', kontak: '081808351090', keterangan: 'EO' }
-  ]);
-};
-
-export const addVendor = async (formData) => {
-  return addDocumentData(PATHS[0], formData);
-};
-
-export const updateVendor = async (id, formData) => {
-  return updateDocumentData(PATHS[0], id, formData);
-};
-
-export const deleteVendor = async (id) => {
-  return deleteDocumentData(PATHS[0], id);
+  ]
 };

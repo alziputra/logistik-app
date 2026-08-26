@@ -259,7 +259,7 @@ export default function MasterBarang({ inventory = [], vendors = [], userRole = 
       </div>
 
       {/* Modal Form Tambah / Edit */}
-      <BarangFormModal isOpen={isModalOpen} editingInv={editingInv} isSaving={isSaving} vendors={vendors} onClose={() => setIsModalOpen(false)} onSubmit={handleSubmit} />
+      <BarangFormModal isOpen={isModalOpen} editingInv={editingInv} isSaving={isSaving} inventory={inventory} vendors={vendors} onClose={() => setIsModalOpen(false)} onSubmit={handleSubmit} />
     </div>
   );
 }

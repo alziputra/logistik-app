@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
-  Package, LayoutDashboard, ChevronDown, FileText, Monitor, Printer, Shield,
+  Package, LayoutDashboard, ChevronDown, FileText, Monitor, Laptop, Printer, Shield,
   Users, List, Box, Building2, Database, History, Map, Building, FileCheck,
   Sun, Moon, Home, Settings, Activity, LogOut, Download, Sliders, PlusCircle, CheckSquare
 } from "lucide-react";
@@ -102,18 +102,18 @@ export default function Navbar({
       {/* Mobile Backdrop */}
       {isSidebarOpen && <div className="md:hidden fixed inset-0 bg-black/60 z-40 print:hidden transition-opacity" onClick={closeMenu} />}
 
-      {/* NARROW ICON RAIL (SISI PALING KIRI - DARK NAVY matching view.jpeg) */}
-      <div className="hidden md:flex fixed top-0 left-0 bottom-0 w-20 bg-[#0B192C] dark:bg-slate-950 text-white flex-col items-center py-4 z-50 print:hidden shadow-md border-r border-slate-800">
+      {/* NARROW ICON RAIL (SISI PALING KIRI - HIJAU PEGADAAN) */}
+      <div className="hidden md:flex fixed top-0 left-0 bottom-0 w-20 bg-[#00753A] text-white flex-col items-center py-4 z-50 print:hidden shadow-md border-r border-[#005c2e]">
         {/* Toggle Hamburger Button */}
         <button
           onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className="p-2.5 text-slate-300 hover:text-white hover:bg-slate-800/80 rounded-xl transition-all cursor-pointer mb-6 active:scale-95"
+          className="p-2.5 text-emerald-100 hover:text-white hover:bg-[#005c2e] rounded-xl transition-all cursor-pointer mb-6 active:scale-95"
           title={isSidebarOpen ? "Sembunyikan Menu" : "Tampilkan Menu"}
         >
           <List className="w-6 h-6" />
         </button>
 
-        {/* 6 Rail Menu Items Vertical Stack matching view.jpeg */}
+        {/* 6 Rail Menu Items Vertical Stack */}
         <div className="flex flex-col items-center gap-3 w-full px-2">
           {/* 1. Home */}
           <button
@@ -124,8 +124,8 @@ export default function Navbar({
             }}
             className={`flex flex-col items-center justify-center p-2 rounded-xl text-[10px] font-bold gap-1 transition-all cursor-pointer w-16 py-2.5 ${
               activeRailCategory === "home"
-                ? "bg-[#00753A] text-white shadow-md font-extrabold scale-105"
-                : "text-slate-300 hover:text-white hover:bg-slate-800/60"
+                ? "bg-white text-[#00753A] shadow-md font-extrabold scale-105"
+                : "text-emerald-100/90 hover:text-white hover:bg-[#005c2e]"
             }`}
             title="Home"
           >
@@ -141,8 +141,8 @@ export default function Navbar({
             }}
             className={`flex flex-col items-center justify-center p-2 rounded-xl text-[10px] font-bold gap-1 transition-all cursor-pointer w-16 py-2.5 ${
               activeRailCategory === "surat"
-                ? "bg-[#00753A] text-white shadow-md font-extrabold scale-105"
-                : "text-slate-300 hover:text-white hover:bg-slate-800/60"
+                ? "bg-white text-[#00753A] shadow-md font-extrabold scale-105"
+                : "text-emerald-100/90 hover:text-white hover:bg-[#005c2e]"
             }`}
             title="Surat"
           >
@@ -158,8 +158,8 @@ export default function Navbar({
             }}
             className={`flex flex-col items-center justify-center p-2 rounded-xl text-[10px] font-bold gap-1 transition-all cursor-pointer w-16 py-2.5 ${
               activeRailCategory === "master"
-                ? "bg-[#00753A] text-white shadow-md font-extrabold scale-105"
-                : "text-slate-300 hover:text-white hover:bg-slate-800/60"
+                ? "bg-white text-[#00753A] shadow-md font-extrabold scale-105"
+                : "text-emerald-100/90 hover:text-white hover:bg-[#005c2e]"
             }`}
             title="Data Master"
           >
@@ -175,8 +175,8 @@ export default function Navbar({
             }}
             className={`flex flex-col items-center justify-center p-2 rounded-xl text-[10px] font-bold gap-1 transition-all cursor-pointer w-16 py-2.5 ${
               activeRailCategory === "inventaris"
-                ? "bg-[#00753A] text-white shadow-md font-extrabold scale-105"
-                : "text-slate-300 hover:text-white hover:bg-slate-800/60"
+                ? "bg-white text-[#00753A] shadow-md font-extrabold scale-105"
+                : "text-emerald-100/90 hover:text-white hover:bg-[#005c2e]"
             }`}
             title="Inventaris"
           >
@@ -192,8 +192,8 @@ export default function Navbar({
             }}
             className={`flex flex-col items-center justify-center p-2 rounded-xl text-[10px] font-bold gap-1 transition-all cursor-pointer w-16 py-2.5 ${
               activeRailCategory === "bangunan"
-                ? "bg-[#00753A] text-white shadow-md font-extrabold scale-105"
-                : "text-slate-300 hover:text-white hover:bg-slate-800/60"
+                ? "bg-white text-[#00753A] shadow-md font-extrabold scale-105"
+                : "text-emerald-100/90 hover:text-white hover:bg-[#005c2e]"
             }`}
             title="Bangunan"
           >
@@ -210,8 +210,8 @@ export default function Navbar({
             }}
             className={`flex flex-col items-center justify-center p-2 rounded-xl text-[10px] font-bold gap-1 transition-all cursor-pointer w-16 py-2.5 ${
               activeRailCategory === "log"
-                ? "bg-[#00753A] text-white shadow-md font-extrabold scale-105"
-                : "text-slate-300 hover:text-white hover:bg-slate-800/60"
+                ? "bg-white text-[#00753A] shadow-md font-extrabold scale-105"
+                : "text-emerald-100/90 hover:text-white hover:bg-[#005c2e]"
             }`}
             title="Log Aktivitas"
           >
@@ -490,6 +490,18 @@ export default function Navbar({
               >
                 <Monitor className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
                 <span>Perangkat Komputer</span>
+              </button>
+
+              <button
+                onClick={() => handleNavClick("perangkat_laptop")}
+                className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
+                  view === "perangkat_laptop"
+                    ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
+                }`}
+              >
+                <Laptop className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
+                <span>Perangkat Laptop</span>
               </button>
 
               <button

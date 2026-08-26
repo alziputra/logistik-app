@@ -14,7 +14,9 @@
     "firebase": "^10.14.1",
     "lucide-react": "^0.469.0",
     "papaparse": "^5.5.2",
+    "qrcode.react": "^4.2.0",
     "react": "^18.3.1",
+    "react-barcode": "^1.6.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0",
     "tailwind-merge": "^2.6.0"

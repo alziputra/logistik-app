@@ -45,6 +45,15 @@ export default function UserProfileModal({ isOpen, onClose, user }) {
     }
   };
 
+  const getInitials = (nameStr) => {
+    if (!nameStr) return "PG";
+    const parts = nameStr.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return nameStr.substring(0, 2).toUpperCase();
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 print:hidden">
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden flex flex-col transition-colors">
@@ -100,7 +109,7 @@ export default function UserProfileModal({ isOpen, onClose, user }) {
               {/* User Avatar Card */}
               <div className="flex items-center gap-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200/80 dark:border-slate-800">
                 <div className="w-14 h-14 rounded-2xl bg-linear-to-tr from-emerald-600 to-teal-500 text-white font-extrabold text-xl flex items-center justify-center shadow-md">
-                  {(user.name || user.email || "U").substring(0, 2).toUpperCase()}
+                  {getInitials(user.name || user.email)}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">

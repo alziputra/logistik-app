@@ -170,8 +170,22 @@ export default function DashboardPage() {
     setActivityLogs,
     showNotif,
     navigateTo: handleSetView,
-    loadAllData,
   });
+
+  const activeUser = useMemo(() => {
+    if (!user) return null;
+    const matched = (usersList || []).find((u) => u.email?.toLowerCase() === user.email?.toLowerCase());
+    const name = matched?.name || matched?.nama || user.name || (user.email === 'officer@gmail.com' ? 'Dio Haris Kurniawan' : user.email === 'admin@logistik.com' ? 'Alzi Rahmana Putra' : user.email?.split('@')[0] || 'User Logistik');
+    const roleStr = matched?.role || user.role || "officer";
+    const r = String(roleStr).toLowerCase();
+    const roleLabel = r === "admin" || r === "administrator" ? "ADMINISTRATOR" : "LOGISTIK OFFICER";
+    return { ...user, name, role: roleLabel };
+  }, [user, usersList]);
+
+  const activeRole = useMemo(() => {
+    if (!activeUser) return "officer";
+    return activeUser.role === "ADMINISTRATOR" ? "admin" : "officer";
+  }, [activeUser]);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans relative selection:bg-emerald-500 selection:text-white transition-colors duration-300">
@@ -197,7 +211,7 @@ export default function DashboardPage() {
       {/* Main Content Area */}
       <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "md:pl-[336px]" : "md:pl-20"}`}>
         <AppHeader
-          user={user}
+          user={activeUser}
           title={activeTab.replace("_", " ").toUpperCase()}
           printers={printers}
           computers={computers}
@@ -225,7 +239,7 @@ export default function DashboardPage() {
             <TabContent
               tabs={tabs}
               activeTab={activeTab}
-              userRole={user?.role || "admin"}
+              userRole={activeRole}
               transactions={transactions}
               setTransactions={setTransactions}
               inventory={inventory}

@@ -21,14 +21,52 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(() => localStorage.getItem('token') || null);
   const [loading, setLoading] = useState(true);
 
+  const getNameFromEmail = (email, existingName) => {
+    if (existingName && existingName !== 'officer' && existingName !== 'admin') return existingName;
+    if (!email) return 'User Logistik';
+    const e = email.toLowerCase();
+    if (e === 'officer@gmail.com') return 'Dio Haris Kurniawan';
+    if (e.includes('admin') || e === 'admin@logistik.com' || e === 'admin@logistik.co.id') return 'Alzi Rahmana Putra';
+    const namePart = email.split('@')[0];
+    return namePart.charAt(0).toUpperCase() + namePart.slice(1);
+  };
+
+  const determineRole = (email, existingRole) => {
+    if (existingRole) {
+      const r = String(existingRole).toLowerCase();
+      if (r === 'admin' || r === 'administrator') return 'admin';
+      if (r === 'officer' || r === 'logistik officer' || r === 'user') return 'officer';
+    }
+    if (!email) return 'officer';
+    const e = email.toLowerCase();
+    if (e.includes('admin') || e === 'admin@logistik.com' || e === 'admin@logistik.co.id') {
+      return 'admin';
+    }
+    return 'officer';
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
+        let savedRole = null;
+        let savedName = null;
+        try {
+          const savedUser = localStorage.getItem('user');
+          if (savedUser) {
+            const parsed = JSON.parse(savedUser);
+            savedRole = parsed.role;
+            savedName = parsed.name;
+          }
+        } catch (e) {}
+
+        const userRole = determineRole(firebaseUser.email, savedRole);
+        const userName = getNameFromEmail(firebaseUser.email, firebaseUser.displayName || savedName);
+
         const userData = {
           uid: firebaseUser.uid,
           email: firebaseUser.email,
-          name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User Logistik',
-          role: 'admin',
+          name: userName,
+          role: userRole,
         };
         setUser(userData);
         setToken(firebaseUser.accessToken || 'firebase-token');
@@ -51,11 +89,26 @@ export const AuthProvider = ({ children }) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const firebaseUser = userCredential.user;
+
+      let savedRole = null;
+      let savedName = null;
+      try {
+        const savedUser = localStorage.getItem('user');
+        if (savedUser) {
+          const parsed = JSON.parse(savedUser);
+          savedRole = parsed.role;
+          savedName = parsed.name;
+        }
+      } catch (e) {}
+
+      const userRole = determineRole(firebaseUser.email, savedRole);
+      const userName = getNameFromEmail(firebaseUser.email, firebaseUser.displayName || savedName);
+
       const userData = {
         uid: firebaseUser.uid,
         email: firebaseUser.email,
-        name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User Logistik',
-        role: 'admin',
+        name: userName,
+        role: userRole,
       };
       const authToken = await firebaseUser.getIdToken();
 
@@ -69,11 +122,13 @@ export const AuthProvider = ({ children }) => {
       console.warn('Firebase login attempt failed or fallback used:', error.message);
       // Fallback demo/local login if Firebase Auth is not yet populated with this user
       if (email && password) {
+        const userRole = determineRole(email);
+        const userName = getNameFromEmail(email);
         const fallbackUser = {
-          uid: 'local-admin-01',
+          uid: email.includes('admin') ? 'local-admin-01' : 'local-officer-01',
           email: email,
-          name: email.split('@')[0] || 'Admin Logistik',
-          role: 'admin',
+          name: userName,
+          role: userRole,
         };
         const fallbackToken = 'demo-token-12345';
         localStorage.setItem('token', fallbackToken);

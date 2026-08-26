@@ -26,14 +26,17 @@ export default function Navbar({
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
-  // Rail categories: 'home' | 'surat' | 'master' | 'inventaris' | 'bangunan' | 'log'
+  const userRole = (user?.role || "officer").toLowerCase();
+  const isAdmin = userRole === "admin" || userRole === "administrator";
+
+  // Rail categories: 'home' | 'surat' | 'master' | 'inventaris' | 'bangunan' | 'settings'
   const getCategoryFromView = (v) => {
     if (v === "dashboard" || v.startsWith("dashboard_")) return "home";
     if (v === "form" || v === "riwayat" || v.startsWith("surat_") || v.startsWith("spk_") || v.startsWith("sopp_")) return "surat";
-    if (v.startsWith("master_") || v === "kelola_user") return "master";
+    if (v.startsWith("master_")) return "master";
     if (v.startsWith("perangkat_") || v === "inventory") return "inventaris";
     if (v.startsWith("bangunan_")) return "bangunan";
-    if (v === "log_aktivitas") return "log";
+    if (v === "kelola_user" || v === "log_aktivitas") return "settings";
     return "home";
   };
 
@@ -201,22 +204,21 @@ export default function Navbar({
             <span className="text-[10px] leading-tight text-center">Bangunan</span>
           </button>
 
-          {/* 6. Log Aktivitas */}
+          {/* 6. Pengaturan / Settings */}
           <button
             onClick={() => {
-              setActiveRailCategory("log");
-              handleNavClick("log_aktivitas");
+              setActiveRailCategory("settings");
               if (!isSidebarOpen) setIsSidebarOpen(true);
             }}
             className={`flex flex-col items-center justify-center p-2 rounded-xl text-[10px] font-bold gap-1 transition-all cursor-pointer w-16 py-2.5 ${
-              activeRailCategory === "log"
+              activeRailCategory === "settings"
                 ? "bg-white text-[#00753A] shadow-md font-extrabold scale-105"
                 : "text-emerald-100/90 hover:text-white hover:bg-[#005c2e]"
             }`}
-            title="Log Aktivitas"
+            title="Pengaturan Sistem"
           >
-            <Activity className="w-5 h-5 shrink-0" />
-            <span className="text-[10px] leading-tight text-center">Log Aktivitas</span>
+            <Settings className="w-5 h-5 shrink-0" />
+            <span className="text-[10px] leading-tight text-center">Pengaturan</span>
           </button>
         </div>
       </div>
@@ -458,18 +460,6 @@ export default function Navbar({
                 <Building className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
                 <span>Outlet & Instansi</span>
               </button>
-
-              <button
-                onClick={() => handleNavClick("kelola_user")}
-                className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
-                  view === "kelola_user"
-                    ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
-                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
-                }`}
-              >
-                <Users className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
-                <span>Manajemen User</span>
-              </button>
             </div>
           )}
 
@@ -575,12 +565,26 @@ export default function Navbar({
             </div>
           )}
 
-          {/* CATEGORY: LOG AKTIVITAS */}
-          {activeRailCategory === "log" && (
+          {/* CATEGORY: PENGATURAN / SETTINGS */}
+          {activeRailCategory === "settings" && (
             <div className="space-y-1.5 animate-in fade-in duration-200">
               <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#00753A] dark:text-emerald-400">
-                Audit & Laporan
+                Pengaturan & Hak Akses
               </div>
+
+              {isAdmin && (
+                <button
+                  onClick={() => handleNavClick("kelola_user")}
+                  className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
+                    view === "kelola_user"
+                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                      : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
+                  }`}
+                >
+                  <Users className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
+                  <span>Manajemen User</span>
+                </button>
+              )}
 
               <button
                 onClick={() => handleNavClick("log_aktivitas")}

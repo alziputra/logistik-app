@@ -25,7 +25,8 @@ export default function AppHeader({
     if (title === "sopp_sewa") return { category: "SURAT", text: "SOPP > Sewa" };
     if (title === "sopp_renovasi") return { category: "SURAT", text: "SOPP > Renovasi" };
     if (title === "form") return { category: "SURAT", text: "Surat Serah Terima (BAST)" };
-    if (title === "riwayat") return { category: "SURAT", text: "Riwayat Surat" };
+    if (title === "kelola_user") return { category: "PENGATURAN", text: "Manajemen User & Hak Akses" };
+    if (title === "log_aktivitas") return { category: "PENGATURAN", text: "Log Aktivitas Sistem" };
 
     const formatted = title.toLowerCase().replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
     return { category: "HOME", text: formatted };

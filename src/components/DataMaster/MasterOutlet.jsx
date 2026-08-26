@@ -3,9 +3,12 @@ import { Building2, Search, Plus, Edit, Trash2, MapPin } from "lucide-react";
 import { addInstansi, updateInstansi, deleteInstansi } from "../../services/instansiService";
 import OutletFormModal from "./OutletFormModal";
 import ExcelActionButtons from "../Common/ExcelActionButtons";
+import Pagination from "../Common/Pagination";
 
 export default function MasterOutlet({ outlets = [], userRole = "admin", loadAllData }) {
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingOutlet, setEditingOutlet] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -179,56 +182,54 @@ export default function MasterOutlet({ outlets = [], userRole = "admin", loadAll
               {filteredOutlets.length === 0 ? (
                 <tr>
                   <td colSpan={userRole === "admin" ? "10" : "9"} className="px-6 py-8 text-center text-slate-500 italic">
-                    Belum ada data instansi terdaftar.
+                    Belum ada data outlet / unit kerja terdaftar.
                   </td>
                 </tr>
               ) : (
-                filteredOutlets.map((item, idx) => (
-                  <tr key={item.id || idx} className="hover:bg-slate-800/50 transition-colors">
-                    <td className="px-5 py-3.5 text-center text-slate-500 font-mono">{idx + 1}</td>
-                    <td className="px-5 py-3.5 font-mono font-bold text-emerald-400">{item.code || item.kode || "-"}</td>
-                    <td className="px-5 py-3.5 font-bold text-slate-100 flex items-center gap-2">
-                      <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                      {item.nama || "-"}
-                    </td>
-                    <td className="px-5 py-3.5">
-                      <span
-                        className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase border ${
-                          item.status === "Cabang"
-                            ? "bg-emerald-950/80 text-emerald-400 border-emerald-800/50"
-                            : "bg-blue-950/80 text-blue-400 border-blue-800/50"
-                        }`}
-                      >
-                        {item.status || "UPC"}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5 font-mono text-slate-300">{item.kodeCabang || "-"}</td>
-                    <td className="px-5 py-3.5 text-slate-300 font-medium">{item.cabangInduk || "-"}</td>
-                    <td className="px-5 py-3.5">
-                      <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px] font-semibold border border-slate-700">
-                        {item.clustering || "NON CLUSTER"}
-                      </span>
-                    </td>
-                    <td className="px-5 py-3.5 text-slate-300">{item.jenis || "KONVEN"}</td>
-                    <td className="px-5 py-3.5 text-slate-400 text-[11px]">{item.area || "AREA BEKASI"}</td>
-                    {userRole === "admin" && (
-                      <td className="px-5 py-3.5 text-center">
-                        <div className="flex justify-center gap-1.5">
-                          <button onClick={() => handleOpenEdit(item)} className="p-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-lg cursor-pointer transition-colors">
-                            <Edit className="w-3.5 h-3.5" />
-                          </button>
-                          <button onClick={() => handleDelete(item.id)} className="p-1.5 bg-slate-800 hover:bg-slate-700 text-rose-400 rounded-lg cursor-pointer transition-colors">
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
+                filteredOutlets
+                  .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                  .map((item, idx) => (
+                    <tr key={item.id || idx} className="hover:bg-slate-800/50 transition-colors">
+                      <td className="px-5 py-3.5 text-center text-slate-500 font-mono font-bold">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
+                      <td className="px-5 py-3.5 font-bold text-slate-100">{item.nama || "-"}</td>
+                      <td className="px-5 py-3.5 text-slate-300 font-mono">{item.code || item.kode || "-"}</td>
+                      <td className="px-5 py-3.5 text-slate-400">{item.tipe || item.jenisOutlet || "UPC"}</td>
+                      <td className="px-5 py-3.5 font-mono text-slate-300">{item.kodeCabang || "-"}</td>
+                      <td className="px-5 py-3.5 text-slate-300 font-medium">{item.cabangInduk || "-"}</td>
+                      <td className="px-5 py-3.5">
+                        <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 text-[10px] font-semibold border border-slate-700">
+                          {item.clustering || "NON CLUSTER"}
+                        </span>
                       </td>
-                    )}
-                  </tr>
-                ))
+                      <td className="px-5 py-3.5 text-slate-300">{item.jenis || "KONVEN"}</td>
+                      <td className="px-5 py-3.5 text-slate-400 text-[11px]">{item.area || "AREA BEKASI"}</td>
+                      {userRole === "admin" && (
+                        <td className="px-5 py-3.5 text-center">
+                          <div className="flex justify-center gap-1.5">
+                            <button onClick={() => handleOpenEdit(item)} className="p-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-lg cursor-pointer transition-colors">
+                              <Edit className="w-3.5 h-3.5" />
+                            </button>
+                            <button onClick={() => handleDelete(item.id)} className="p-1.5 bg-slate-800 hover:bg-slate-700 text-rose-400 rounded-lg cursor-pointer transition-colors">
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))
               )}
             </tbody>
           </table>
         </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={Math.ceil(filteredOutlets.length / itemsPerPage) || 1}
+          totalItems={filteredOutlets.length}
+          startIndex={(currentPage - 1) * itemsPerPage}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       <OutletFormModal

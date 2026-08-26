@@ -254,7 +254,7 @@ export default function Navbar({
               <button
                 onClick={() => handleNavClick("dashboard")}
                 className={`w-full px-3.5 py-3 rounded-xl flex items-center gap-3 text-left transition-all ${
-                  view === "dashboard"
+                  view === "dashboard" || view === "dashboard_inventaris"
                     ? "bg-[#E6F4EA] dark:bg-emerald-950/70 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-sm"
                     : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                 }`}
@@ -264,9 +264,9 @@ export default function Navbar({
               </button>
 
               <button
-                onClick={() => handleNavClick("bangunan_tanah")}
+                onClick={() => handleNavClick("dashboard_bangunan")}
                 className={`w-full px-3.5 py-3 rounded-xl flex items-center gap-3 text-left transition-all ${
-                  view === "bangunan_tanah"
+                  view === "dashboard_bangunan"
                     ? "bg-[#E6F4EA] dark:bg-emerald-950/70 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-sm"
                     : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                 }`}
@@ -276,9 +276,9 @@ export default function Navbar({
               </button>
 
               <button
-                onClick={() => handleNavClick("bangunan_sarana")}
+                onClick={() => handleNavClick("dashboard_pengamanan")}
                 className={`w-full px-3.5 py-3 rounded-xl flex items-center gap-3 text-left transition-all ${
-                  view === "bangunan_sarana"
+                  view === "dashboard_pengamanan"
                     ? "bg-[#E6F4EA] dark:bg-emerald-950/70 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-sm"
                     : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                 }`}

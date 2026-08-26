@@ -1,9 +1,10 @@
 import React from "react";
-import { Edit, Trash2, QrCode, Network, Cpu, HardDrive } from "lucide-react";
+import { Edit, Trash2, QrCode, Monitor, Network, Cpu, HardDrive } from "lucide-react";
 import { formatBulanTahun } from "../../../utils/deviceUtils";
+import Pagination from "../../Common/Pagination";
 
 export default function KomputerTable({
-  isLoading, paginatedData, userRole,
+  isLoading, paginatedData = [], filteredData = [], userRole,
   currentPage, totalPages, startIndex, itemsPerPage,
   setCurrentPage, onEdit, onDelete, onQr,
 }) {
@@ -195,6 +196,15 @@ export default function KomputerTable({
           </tbody>
         </table>
       </div>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filteredData.length || paginatedData.length}
+        startIndex={startIndex}
+        itemsPerPage={itemsPerPage}
+        onPageChange={setCurrentPage}
+      />
     </div>
   );
 }

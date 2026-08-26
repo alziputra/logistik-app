@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import { Map, Search, Plus, FileSpreadsheet, Edit, Trash2, X, Loader2 } from "lucide-react";
 import ExcelActionButtons from "../../Common/ExcelActionButtons";
+import Pagination from "../../Common/Pagination";
 import { addAsetTanah, updateAsetTanah, deleteAsetTanah } from "../../../services/asetTanahService";
 
 export default function BangunanTanah({ userRole = "admin", lands = [], landFilter = "", setLandFilter, loadAllData }) {
@@ -274,6 +275,15 @@ export default function BangunanTanah({ userRole = "admin", lands = [], landFilt
             </tbody>
           </table>
         </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={Math.ceil(filteredLands.length / itemsPerPage) || 1}
+          totalItems={filteredLands.length}
+          startIndex={(currentPage - 1) * itemsPerPage}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {/* Form Modal */}

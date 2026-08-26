@@ -3,6 +3,10 @@ import { X } from "lucide-react";
 import { VIEW_TITLES, PERMANENT_TABS } from "../../constants/tabConfig";
 
 export default function TabBar({ tabs, activeTab, setActiveTab, setTabs }) {
+  if (!activeTab || activeTab === "dashboard" || activeTab.startsWith("dashboard_")) {
+    return null;
+  }
+
   const handleTabClick = (tabId) => setActiveTab(tabId);
 
   const closeTab = (e, tabId) => {

@@ -4,11 +4,14 @@ import { addInventory, updateInventory, deleteInventory } from "../../services/i
 import BarangFormModal from "./BarangFormModal";
 import { useNotification } from "../../context/NotificationContext";
 import ExcelActionButtons from "../Common/ExcelActionButtons";
+import Pagination from "../Common/Pagination";
 
 export default function MasterBarang({ inventory = [], vendors = [], userRole = "admin", loadAllData }) {
   const { showSuccess, showError, showConfirmDelete } = useNotification();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingInv, setEditingInv] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -210,52 +213,60 @@ export default function MasterBarang({ inventory = [], vendors = [], userRole = 
                 {userRole === "admin" && <th className="px-6 py-4 text-center">Aksi</th>}
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/80">
+            <tbody className="divide-y divide-slate-800">
               {filteredInventory.length === 0 ? (
                 <tr>
                   <td colSpan={userRole === "admin" ? "8" : "7"} className="px-6 py-12 text-center text-slate-500 italic">
-                    <div className="flex flex-col items-center justify-center gap-2">
-                      <Box className="w-8 h-8 text-slate-600 stroke-[1.5]" />
-                      <p>Belum ada data barang atau tidak ditemukan hasil pencarian.</p>
-                    </div>
+                    Belum ada data barang logistik terdaftar.
                   </td>
                 </tr>
               ) : (
-                filteredInventory.map((item, idx) => (
-                  <tr key={item.id || idx} className="hover:bg-slate-800/40 transition-colors">
-                    <td className="px-6 py-4 text-center text-slate-500 font-mono">{idx + 1}</td>
-                    <td className="px-6 py-4 font-bold text-slate-100">{item.nama || "-"}</td>
-                    <td className="px-6 py-4 text-center font-bold text-emerald-400 font-mono">{item.kuantitas !== undefined ? item.kuantitas : item.stok || 0}</td>
-                    <td className="px-6 py-4 text-slate-300">{item.satuan || "Pcs"}</td>
-                    <td className="px-6 py-4 text-slate-300 font-medium">{item.vendor_nama || item.vendor?.nama || "-"}</td>
-                    <td className="px-6 py-4 text-slate-400 font-mono text-[11px]">{item.no_spk || item.no_pks || "-"}</td>
-                    <td className="px-6 py-4 text-center">{renderStatusBadge(item.status)}</td>
-                    {userRole === "admin" && (
-                      <td className="px-6 py-4 text-center">
-                        <div className="flex justify-center items-center gap-1.5">
-                          <button
-                            onClick={() => handleOpenEdit(item)}
-                            title="Edit Barang"
-                            className="p-2 bg-slate-800/80 hover:bg-slate-700 text-emerald-400 hover:text-emerald-300 rounded-xl transition-all cursor-pointer border border-slate-700/60"
-                          >
-                            <Edit className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleOpenDelete(item)}
-                            title="Hapus Barang"
-                            className="p-2 bg-slate-800/80 hover:bg-rose-950/40 text-rose-400 hover:text-rose-300 rounded-xl transition-all cursor-pointer border border-slate-700/60 hover:border-rose-500/30"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    )}
-                  </tr>
-                ))
+                filteredInventory
+                  .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                  .map((item, idx) => (
+                    <tr key={item.id || idx} className="hover:bg-slate-800/50 transition-colors">
+                      <td className="px-6 py-4 text-center text-slate-500 font-mono">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
+                      <td className="px-6 py-4 font-bold text-slate-100">{item.nama || "-"}</td>
+                      <td className="px-6 py-4 text-center font-bold text-emerald-400 font-mono">{item.kuantitas !== undefined ? item.kuantitas : item.stok || 0}</td>
+                      <td className="px-6 py-4 text-slate-300">{item.satuan || "Pcs"}</td>
+                      <td className="px-6 py-4 text-slate-300 font-medium">{item.vendor_nama || item.vendor?.nama || "-"}</td>
+                      <td className="px-6 py-4 text-slate-400 font-mono text-[11px]">{item.no_spk || item.no_pks || "-"}</td>
+                      <td className="px-6 py-4 text-center">{renderStatusBadge(item.status)}</td>
+                      {userRole === "admin" && (
+                        <td className="px-6 py-4 text-center">
+                          <div className="flex justify-center items-center gap-1.5">
+                            <button
+                              onClick={() => handleOpenEdit(item)}
+                              title="Edit Barang"
+                              className="p-2 bg-slate-800/80 hover:bg-slate-700 text-emerald-400 hover:text-emerald-300 rounded-xl transition-all cursor-pointer border border-slate-700/60"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleOpenDelete(item)}
+                              title="Hapus Barang"
+                              className="p-2 bg-slate-800/80 hover:bg-rose-950/40 text-rose-400 hover:text-rose-300 rounded-xl transition-all cursor-pointer border border-slate-700/60 hover:border-rose-500/30"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ))
               )}
             </tbody>
           </table>
         </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={Math.ceil(filteredInventory.length / itemsPerPage) || 1}
+          totalItems={filteredInventory.length}
+          startIndex={(currentPage - 1) * itemsPerPage}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {/* Modal Form Tambah / Edit */}

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Key, Search, Plus, FileSpreadsheet } from "lucide-react";
 import ExcelActionButtons from "../../Common/ExcelActionButtons";
+import Pagination from "../../Common/Pagination";
 import SewaTable from "./SewaTable";
 import SewaModal from "./SewaModal";
 import { addMenuSewa, updateMenuSewa, deleteMenuSewa } from "../../../services/menuSewaService";
@@ -156,6 +157,15 @@ export default function BangunanSewa({
           startIndex={startIndex}
           onEdit={openEdit}
           onDelete={handleDelete}
+        />
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredSewas.length}
+          startIndex={startIndex}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
         />
       </div>
 

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { History, Search, FileText, ArrowLeftRight, Eye, Edit, Trash2, Package } from "lucide-react";
 import ExcelActionButtons from "../Common/ExcelActionButtons";
 import ConfirmDeleteModal from "../Modal/ConfirmDeleteModal";
+import Pagination from "../Common/Pagination";
 import { deleteTransaksi } from "../../services/transaksiService";
 
 export default function RiwayatTransaksi({
@@ -18,6 +19,8 @@ export default function RiwayatTransaksi({
   const [search, setSearch] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [activeTabFilter, setActiveTabFilter] = useState("all"); // "all" | "masuk" | "keluar"
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const countAll = transactions.length;
   const countMasuk = transactions.filter(
@@ -272,73 +275,84 @@ export default function RiwayatTransaksi({
                   </td>
                 </tr>
               ) : (
-                filtered.map((trx, idx) => (
-                  <tr key={trx.id || idx} className="hover:bg-slate-800/50 transition-colors">
-                    <td className="px-5 py-4 text-center text-slate-400 font-mono">{idx + 1}</td>
-                    <td className="px-5 py-4 font-bold text-slate-100 font-mono">{trx.nomorSurat}</td>
-                    <td className="px-5 py-4 text-slate-300">{trx.tanggal}</td>
-                    <td className="px-5 py-4 text-slate-300">
-                      {trx.pengirimNama || trx.pihak1Nama || "-"} ➔ {trx.penerimaNama || trx.pihak2Nama || trx.tujuan || "-"}
-                    </td>
-                    
-                    {/* Rincian Nama Barang & Kuantitas/Satuan */}
-                    <td className="px-5 py-4">
-                      {trx.items && trx.items.length > 0 ? (
-                        <div className="space-y-1">
-                          {trx.items.map((it, i) => (
-                            <div key={i} className="flex items-center gap-1.5 text-xs">
-                              <Package className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                              <span className="font-semibold text-slate-100">{it.namaBarang || it.nama || "Barang"}</span>
-                              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-emerald-400 border border-slate-700">
-                                {it.jumlah || it.kuantitas || 1} {it.satuan || "Unit"}
-                              </span>
-                            </div>
-                          ))}
+                filtered
+                  .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                  .map((trx, idx) => (
+                    <tr key={trx.id || idx} className="hover:bg-slate-800/50 transition-colors">
+                      <td className="px-5 py-4 text-center text-slate-400 font-mono">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
+                      <td className="px-5 py-4 font-bold text-slate-100 font-mono">{trx.nomorSurat}</td>
+                      <td className="px-5 py-4 text-slate-300">{trx.tanggal}</td>
+                      <td className="px-5 py-4 text-slate-300">
+                        {trx.pengirimNama || trx.pihak1Nama || "-"} ➔ {trx.penerimaNama || trx.pihak2Nama || trx.tujuan || "-"}
+                      </td>
+                      
+                      {/* Rincian Nama Barang & Kuantitas/Satuan */}
+                      <td className="px-5 py-4">
+                        {trx.items && trx.items.length > 0 ? (
+                          <div className="space-y-1">
+                            {trx.items.map((it, i) => (
+                              <div key={i} className="flex items-center gap-1.5 text-xs">
+                                <Package className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                                <span className="font-semibold text-slate-100">{it.namaBarang || it.nama || "Barang"}</span>
+                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-slate-800 text-emerald-400 border border-slate-700">
+                                  {it.jumlah || it.kuantitas || 1} {it.satuan || "Unit"}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-slate-500 italic text-xs">- Tidak ada rincian -</span>
+                        )}
+                      </td>
+
+                      <td className="px-5 py-4 text-center">
+                        <div className="flex items-center justify-center gap-1.5">
+                          {/* Lihat / Preview Surat (Icon Only) */}
+                          <button
+                            type="button"
+                            onClick={() => handleViewLetter(trx)}
+                            className="p-2 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 rounded-xl transition-all shadow-sm hover:shadow-md cursor-pointer active:scale-95 flex items-center justify-center shrink-0"
+                            title="Lihat / Cetak Surat"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+
+                          {/* Edit Surat (Icon Only) */}
+                          <button
+                            type="button"
+                            onClick={() => handleEditLetter(trx)}
+                            className="p-2 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 rounded-xl transition-all shadow-sm hover:shadow-md cursor-pointer active:scale-95 flex items-center justify-center shrink-0"
+                            title="Edit Surat"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+
+                          {/* Hapus Surat (Icon Only -> Membuka ConfirmDeleteModal) */}
+                          <button
+                            type="button"
+                            onClick={() => setDeleteTarget(trx)}
+                            className="p-2 bg-rose-600/20 hover:bg-rose-600/40 text-rose-400 border border-rose-500/30 rounded-xl transition-all shadow-sm hover:shadow-md cursor-pointer active:scale-95 flex items-center justify-center shrink-0"
+                            title="Hapus Transaksi"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
-                      ) : (
-                        <span className="text-slate-500 italic text-xs">- Tidak ada rincian -</span>
-                      )}
-                    </td>
-
-                    <td className="px-5 py-4 text-center">
-                      <div className="flex items-center justify-center gap-1.5">
-                        {/* Lihat / Preview Surat (Icon Only) */}
-                        <button
-                          type="button"
-                          onClick={() => handleViewLetter(trx)}
-                          className="p-2 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 rounded-xl transition-all shadow-sm hover:shadow-md cursor-pointer active:scale-95 flex items-center justify-center shrink-0"
-                          title="Lihat / Cetak Surat"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-
-                        {/* Edit Surat (Icon Only) */}
-                        <button
-                          type="button"
-                          onClick={() => handleEditLetter(trx)}
-                          className="p-2 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 rounded-xl transition-all shadow-sm hover:shadow-md cursor-pointer active:scale-95 flex items-center justify-center shrink-0"
-                          title="Edit Surat"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-
-                        {/* Hapus Surat (Icon Only -> Membuka ConfirmDeleteModal) */}
-                        <button
-                          type="button"
-                          onClick={() => setDeleteTarget(trx)}
-                          className="p-2 bg-rose-600/20 hover:bg-rose-600/40 text-rose-400 border border-rose-500/30 rounded-xl transition-all shadow-sm hover:shadow-md cursor-pointer active:scale-95 flex items-center justify-center shrink-0"
-                          title="Hapus Transaksi"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                    </tr>
+                  ))
               )}
             </tbody>
           </table>
         </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={Math.ceil(filtered.length / itemsPerPage) || 1}
+          totalItems={filtered.length}
+          startIndex={(currentPage - 1) * itemsPerPage}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {/* Global Confirmation Delete Modal */}

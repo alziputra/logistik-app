@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Hammer, Search, Plus, FileSpreadsheet, Edit, Trash2, X, Loader2 } from "lucide-react";
 import ExcelActionButtons from "../../Common/ExcelActionButtons";
+import Pagination from "../../Common/Pagination";
 import { addRenovasi, updateRenovasi, deleteRenovasi } from "../../../services/renovasiService";
 
 export default function BangunanRenovasi({
@@ -201,6 +202,15 @@ export default function BangunanRenovasi({
             </tbody>
           </table>
         </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={filteredData.length}
+          startIndex={startIndex}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {isModalOpen && (

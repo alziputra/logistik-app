@@ -9,7 +9,7 @@ import {
 } from "./LazyComponents";
 
 function Panel({ id, activeTab, children }) {
-  const isActive = activeTab === id;
+  const isActive = activeTab === id || (id === "dashboard" && activeTab?.startsWith("dashboard"));
   return (
     <div id={id} className={isActive ? "block animate-in fade-in duration-300" : "hidden"}>
       {children}
@@ -87,6 +87,7 @@ export default function TabContent({
       {has("dashboard") && (
         <Panel id="dashboard" activeTab={activeTab}>
           <DashboardView
+            activeTab={activeTab}
             transactions={transactions}
             inventory={inventory}
             setView={setView}

@@ -1,7 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
 import { Activity, Clock } from "lucide-react";
+import Pagination from "../Common/Pagination";
 
 export default function LogAktivitas({ logs = [] }) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const totalPages = Math.ceil(logs.length / itemsPerPage) || 1;
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedLogs = logs.slice(startIndex, startIndex + itemsPerPage);
+
   return (
     <div className="max-w-7xl mx-auto p-6 animate-in fade-in duration-300">
       <div className="flex items-center gap-3 mb-6">
@@ -34,7 +42,7 @@ export default function LogAktivitas({ logs = [] }) {
                   </td>
                 </tr>
               ) : (
-                logs.map((log, idx) => (
+                paginatedLogs.map((log, idx) => (
                   <tr key={log.id || idx} className="hover:bg-slate-800/50 transition-colors">
                     <td className="px-6 py-4 text-slate-400 font-mono flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5 text-slate-500" />
@@ -54,6 +62,15 @@ export default function LogAktivitas({ logs = [] }) {
             </tbody>
           </table>
         </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={logs.length}
+          startIndex={startIndex}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+        />
       </div>
     </div>
   );

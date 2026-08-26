@@ -1,9 +1,10 @@
 import React from "react";
 import { Edit, Trash2, QrCode, Printer } from "lucide-react";
 import { formatBulanTahun } from "../../../utils/deviceUtils";
+import Pagination from "../../Common/Pagination";
 
 export default function PrinterTable({
-  isLoading, paginatedData, userRole,
+  isLoading, paginatedData = [], filteredData = [], userRole,
   currentPage, totalPages, startIndex, itemsPerPage,
   setCurrentPage, onEdit, onDelete, onQr,
 }) {
@@ -157,6 +158,15 @@ export default function PrinterTable({
           </tbody>
         </table>
       </div>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filteredData.length || paginatedData.length}
+        startIndex={startIndex}
+        itemsPerPage={itemsPerPage}
+        onPageChange={setCurrentPage}
+      />
     </div>
   );
 }

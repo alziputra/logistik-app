@@ -1,11 +1,12 @@
 import React from "react";
-import { Edit, Trash2, QrCode, Laptop, User } from "lucide-react";
+import { Edit, Trash2, QrCode, Laptop, User, Shield } from "lucide-react";
+import Pagination from "../../Common/Pagination";
 import { formatBulanTahun } from "../../../utils/deviceUtils";
 
 export default function LaptopTable({
-  isLoading, paginatedData, userRole,
+  isLoading, paginatedData = [], userRole,
   currentPage, totalPages, startIndex, itemsPerPage,
-  setCurrentPage, onEdit, onDelete, onQr,
+  setCurrentPage, onEdit, onDelete, onQr, filteredData = []
 }) {
   const renderStatusBadge = (status) => {
     switch (status) {
@@ -157,6 +158,15 @@ export default function LaptopTable({
           </tbody>
         </table>
       </div>
+
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={filteredData.length || paginatedData.length}
+        startIndex={startIndex}
+        itemsPerPage={itemsPerPage}
+        onPageChange={setCurrentPage}
+      />
     </div>
   );
 }

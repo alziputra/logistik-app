@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { Users, UserPlus, Shield, Trash2, Edit, X, Eye, EyeOff, Check, UserCheck } from "lucide-react";
 import ConfirmDeleteModal from "../Modal/ConfirmDeleteModal";
+import Pagination from "../Common/Pagination";
 import { addUser, updateUser, deleteUser, getUsers } from "../../services/userService";
 
 export default function KelolaUser({ usersList = [], handleUpdateRole }) {
   const [dataUsers, setDataUsers] = useState(usersList);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -213,44 +216,55 @@ export default function KelolaUser({ usersList = [], handleUpdateRole }) {
                   </td>
                 </tr>
               ) : (
-                dataUsers.map((usr, idx) => (
-                  <tr key={usr.id || idx} className="hover:bg-slate-800/50 transition-colors">
-                    <td className="px-6 py-4 text-center text-slate-400 font-mono">{idx + 1}</td>
-                    <td className="px-6 py-4 font-bold text-slate-100">{usr.name || usr.nama || usr.username || "User"}</td>
-                    <td className="px-6 py-4 text-slate-300 font-mono">{usr.email}</td>
-                    <td className="px-6 py-4">
-                      {renderRoleBadge(usr.role)}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex items-center justify-center gap-2">
-                        {/* Tombol Edit User */}
-                        <button
-                          type="button"
-                          onClick={() => openEditModal(usr)}
-                          className="p-2 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold"
-                          title="Edit Data User"
-                        >
-                          <Edit className="w-3.5 h-3.5" />
-                          <span>Edit</span>
-                        </button>
+                dataUsers
+                  .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                  .map((usr, idx) => (
+                    <tr key={usr.id || idx} className="hover:bg-slate-800/50 transition-colors">
+                      <td className="px-6 py-4 text-center text-slate-400 font-mono">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
+                      <td className="px-6 py-4 font-bold text-slate-100">{usr.name || usr.nama || usr.username || "User"}</td>
+                      <td className="px-6 py-4 text-slate-300 font-mono">{usr.email}</td>
+                      <td className="px-6 py-4">
+                        {renderRoleBadge(usr.role)}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex items-center justify-center gap-2">
+                          {/* Tombol Edit User */}
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(usr)}
+                            className="p-2 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold"
+                            title="Edit Data User"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                            <span>Edit</span>
+                          </button>
 
-                        {/* Tombol Hapus User */}
-                        <button
-                          type="button"
-                          onClick={() => setDeleteTarget(usr)}
-                          className="p-2 bg-rose-600/20 hover:bg-rose-600/40 text-rose-400 border border-rose-500/30 rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer"
-                          title="Hapus User"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                          {/* Tombol Hapus User */}
+                          <button
+                            type="button"
+                            onClick={() => setDeleteTarget(usr)}
+                            className="p-2 bg-rose-600/20 hover:bg-rose-600/40 text-rose-400 border border-rose-500/30 rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer"
+                            title="Hapus User"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
               )}
             </tbody>
           </table>
         </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={Math.ceil(dataUsers.length / itemsPerPage) || 1}
+          totalItems={dataUsers.length}
+          startIndex={(currentPage - 1) * itemsPerPage}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {/* Modal Form Tambah User */}

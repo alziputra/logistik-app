@@ -17,7 +17,9 @@ export default function AppHeader({
   const { theme, toggleTheme } = useTheme();
 
   const getHeaderDetails = () => {
-    if (!title || title === "dashboard") return { category: "HOME", text: "Dashboard Inventaris" };
+    if (!title || title === "dashboard" || title === "dashboard_inventaris") return { category: "HOME", text: "Dashboard Inventaris" };
+    if (title === "dashboard_bangunan") return { category: "HOME", text: "Dashboard Bangunan" };
+    if (title === "dashboard_pengamanan") return { category: "HOME", text: "Dashboard Pengamanan & Korporasi" };
     if (title === "spk_renovasi") return { category: "SURAT", text: "SPK > Renovasi" };
     if (title === "spk_elektronik") return { category: "SURAT", text: "SPK > Elektronik" };
     if (title === "spk_kendaraan") return { category: "SURAT", text: "SPK > Kendaraan" };

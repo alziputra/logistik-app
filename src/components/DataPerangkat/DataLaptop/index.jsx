@@ -194,6 +194,7 @@ export default function DataLaptop({
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
         <LaptopTable
           paginatedData={paginatedData}
+          filteredData={filteredData}
           userRole={userRole}
           currentPage={currentPage}
           totalPages={totalPages}

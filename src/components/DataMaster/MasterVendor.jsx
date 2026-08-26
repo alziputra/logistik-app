@@ -1,10 +1,14 @@
 import React, { useState } from "react";
-import { Users, Search, Plus, Phone, MapPin, Edit, Trash2, Building2, User, Tag, Map, Briefcase } from "lucide-react";
-import { addVendor, updateVendor, deleteVendor } from "../../services/vendorService";
+import { Users, Plus, Search, Edit, Trash2, Building2, MapPin, Phone, User, Map, X } from "lucide-react";
 import ExcelActionButtons from "../Common/ExcelActionButtons";
+import ConfirmDeleteModal from "../Modal/ConfirmDeleteModal";
+import Pagination from "../Common/Pagination";
+import { addVendor, updateVendor, deleteVendor } from "../../services/vendorService";
 
 export default function MasterVendor({ vendors = [], userRole = "admin", loadAllData }) {
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
@@ -221,9 +225,9 @@ export default function MasterVendor({ vendors = [], userRole = "admin", loadAll
                   </td>
                 </tr>
               ) : (
-                filtered.map((v, idx) => (
+                filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((v, idx) => (
                   <tr key={v.id || idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                    <td className="px-5 py-3.5 text-center text-slate-400 font-mono">{idx + 1}</td>
+                    <td className="px-5 py-3.5 text-center text-slate-400 font-mono">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
                     
                     {/* Nama Perusahaan */}
                     <td className="px-5 py-3.5 font-bold text-slate-900 dark:text-slate-100">
@@ -304,6 +308,15 @@ export default function MasterVendor({ vendors = [], userRole = "admin", loadAll
             </tbody>
           </table>
         </div>
+
+        <Pagination
+          currentPage={currentPage}
+          totalPages={Math.ceil(filtered.length / itemsPerPage) || 1}
+          totalItems={filtered.length}
+          startIndex={(currentPage - 1) * itemsPerPage}
+          itemsPerPage={itemsPerPage}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {/* Form Modal Add / Edit Vendor */}

@@ -155,7 +155,9 @@ const ItemCombobox = ({ inventory = [], value = "", onChange = () => {}, placeho
     const merk = (inv.merk || inv.brand || "").toLowerCase();
     const sn = (inv.sn || inv.serialNumber || "").toLowerCase();
     const jenis = (inv.jenis || inv.kategori || "").toLowerCase();
-    return nama.includes(q) || merk.includes(q) || sn.includes(q) || jenis.includes(q);
+    const spk = (inv.no_spk || inv.no_pks || "").toLowerCase();
+    const vendor = (inv.vendor_nama || inv.vendor?.nama || (typeof inv.vendor === "string" ? inv.vendor : "")).toLowerCase();
+    return nama.includes(q) || merk.includes(q) || sn.includes(q) || jenis.includes(q) || spk.includes(q) || vendor.includes(q);
   });
 
   const handleSelect = (inv) => {
@@ -183,14 +185,16 @@ const ItemCombobox = ({ inventory = [], value = "", onChange = () => {}, placeho
 
       {/* Custom Floating Dropdown Menu */}
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full mt-1.5 z-[9999] min-w-[220px] max-h-64 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl py-1.5 animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute left-0 right-0 top-full mt-1.5 z-[9999] min-w-[280px] max-h-64 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl py-1.5 animate-in fade-in zoom-in-95 duration-150">
           {filteredItems.length === 0 ? (
             <div className="px-3.5 py-2.5 text-xs text-slate-400 italic text-center">Tidak ada barang di master. Anda dapat mengetikkan nama barang manual.</div>
           ) : (
             filteredItems.map((inv, idx) => {
               const name = inv.nama || inv.namaBarang || inv.name;
               const isSelected = query === name;
-              const metaText = [inv.jenis || inv.kategori, inv.merk || inv.brand, inv.sn ? `S/N: ${inv.sn}` : null].filter(Boolean).join(" • ");
+              const spkNo = inv.no_spk || inv.no_pks || "";
+              const vendorName = inv.vendor_nama || inv.vendor?.nama || (typeof inv.vendor === "string" ? inv.vendor : "");
+              const stok = inv.kuantitas !== undefined ? inv.kuantitas : (inv.stok || 0);
 
               return (
                 <div
@@ -204,7 +208,21 @@ const ItemCombobox = ({ inventory = [], value = "", onChange = () => {}, placeho
                     <Package className={`w-4 h-4 shrink-0 ${isSelected ? "text-emerald-500" : "text-slate-400"}`} />
                     <div className="truncate">
                       <p className="text-xs font-bold truncate">{name}</p>
-                      {metaText && <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate mt-0.5">{metaText}</p>}
+                      <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                        {spkNo && (
+                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                            SPK: {spkNo}
+                          </span>
+                        )}
+                        {vendorName && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
+                            {vendorName}
+                          </span>
+                        )}
+                        <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-mono">
+                          Stok: {stok} {inv.satuan || "Pcs"}
+                        </span>
+                      </div>
                     </div>
                   </div>
                   {isSelected && <Check className="w-4 h-4 text-emerald-500 shrink-0 ml-2" />}

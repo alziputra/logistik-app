@@ -8,6 +8,7 @@ export default function LaptopModal({
   setFormData = () => {},
   isSaving = false,
   vendorsList = [],
+  inventoryList = [],
   onClose = () => {},
   onSave = () => {},
 }) {
@@ -16,9 +17,11 @@ export default function LaptopModal({
 
   const [showDeptDropdown, setShowDeptDropdown] = useState(false);
   const [showVendorDropdown, setShowVendorDropdown] = useState(false);
+  const [showProdukDropdown, setShowProdukDropdown] = useState(false);
 
   const deptRef = useRef(null);
   const vendorRef = useRef(null);
+  const produkRef = useRef(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -31,10 +34,23 @@ export default function LaptopModal({
     const handleClickOutside = (e) => {
       if (deptRef.current && !deptRef.current.contains(e.target)) setShowDeptDropdown(false);
       if (vendorRef.current && !vendorRef.current.contains(e.target)) setShowVendorDropdown(false);
+      if (produkRef.current && !produkRef.current.contains(e.target)) setShowProdukDropdown(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const filteredInventory = useMemo(() => {
+    const masterLaptops = inventoryList.length > 0 ? inventoryList : [
+      { id: "l1", nama: "HP EliteBook 840 G8", kategori: "LAPTOP" },
+      { id: "l2", nama: "Dell Latitude 5420", kategori: "LAPTOP" },
+      { id: "l3", nama: "Lenovo ThinkPad L14", kategori: "LAPTOP" },
+      { id: "l4", nama: "MacBook Pro M2 14-inch", kategori: "LAPTOP" },
+    ];
+    const q = (formData.namaUnit || formData.produk || "").toLowerCase().trim();
+    if (!q) return masterLaptops;
+    return masterLaptops.filter((item) => (item.nama || item.produk || "").toLowerCase().includes(q));
+  }, [inventoryList, formData.namaUnit, formData.produk]);
 
   const { status, masaSewa } = useMemo(() => {
     if (!tglMulai || !tglSelesai) {
@@ -216,6 +232,85 @@ export default function LaptopModal({
                 Spesifikasi Laptop & Jaringan
               </h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Produk / Model Laptop Combobox Dropdown */}
+                <div className="relative sm:col-span-2" ref={produkRef}>
+                  <label className={labelCls}>Produk / Model Laptop</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={formData.namaUnit || formData.produk || ""}
+                      onFocus={() => setShowProdukDropdown(true)}
+                      onChange={(e) => {
+                        setFormData((p) => ({ ...p, namaUnit: e.target.value, produk: e.target.value }));
+                        setShowProdukDropdown(true);
+                      }}
+                      disabled={isSaving}
+                      className={`${inputCls} pr-8`}
+                      placeholder="Pilih atau ketik model laptop..."
+                    />
+                    <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+
+                  {showProdukDropdown && (
+                    <div className="absolute left-0 right-0 top-full mt-1 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-30 max-h-56 overflow-y-auto custom-scrollbar p-1.5">
+                      {filteredInventory.length === 0 ? (
+                        <div className="px-3 py-2 text-xs text-slate-400 italic">
+                          Gunakan model custom: "{formData.namaUnit || formData.produk}"
+                        </div>
+                      ) : (
+                        filteredInventory.map((item, idx) => {
+                          const name = item.nama || item.produk;
+                          const spkNo = item.no_spk || item.no_pks || "";
+                          const vendorName = item.vendor_nama || item.vendor?.nama || (typeof item.vendor === "string" ? item.vendor : "");
+                          const stok = item.kuantitas !== undefined ? item.kuantitas : (item.stok || 0);
+
+                          return (
+                            <button
+                              key={item.id || idx}
+                              type="button"
+                              onClick={() => {
+                                setFormData((p) => ({
+                                  ...p,
+                                  namaUnit: name,
+                                  produk: name,
+                                  vendor: vendorName || p.vendor,
+                                  penyedia: vendorName || p.penyedia,
+                                  no_spk: spkNo || p.no_spk,
+                                  tanggalMulai: item.tgl_mulai_sewa || p.tanggalMulai,
+                                  tanggalSelesai: item.tgl_selesai_sewa || p.tanggalSelesai,
+                                }));
+                                if (item.tgl_mulai_sewa) setTglMulai(item.tgl_mulai_sewa);
+                                if (item.tgl_selesai_sewa) setTglSelesai(item.tgl_selesai_sewa);
+                                setShowProdukDropdown(false);
+                              }}
+                              className="w-full text-left px-3 py-2.5 text-xs rounded-lg hover:bg-[#00753A]/30 hover:text-emerald-300 transition-colors border-b border-slate-700/50 last:border-0 group cursor-pointer"
+                            >
+                              <div className="font-semibold text-slate-200 group-hover:text-emerald-300 truncate">
+                                {name}
+                              </div>
+                              <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                {spkNo && (
+                                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800/60">
+                                    SPK: {spkNo}
+                                  </span>
+                                )}
+                                {vendorName && (
+                                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-800/60">
+                                    {vendorName}
+                                  </span>
+                                )}
+                                <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-700 font-mono">
+                                  Stok: {stok}
+                                </span>
+                              </div>
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 <div>
                   <label className={labelCls}>Hostname / Device Name</label>
                   <input

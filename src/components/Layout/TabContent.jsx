@@ -213,7 +213,7 @@ export default function TabContent({
 
       {(has("perangkat_laptop") || has("laptop")) && (
         <Panel id={has("perangkat_laptop") ? "perangkat_laptop" : "laptop"} activeTab={activeTab}>
-          <DataLaptop laptops={laptops} vendors={vendors} userRole={userRole} loadAllData={loadAllData} />
+          <DataLaptop laptops={laptops} vendors={vendors} inventory={inventory} userRole={userRole} loadAllData={loadAllData} />
         </Panel>
       )}
 

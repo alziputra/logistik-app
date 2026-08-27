@@ -13,6 +13,7 @@ export default function DataLaptop({
   userRole = "admin",
   laptops = [],
   vendors = [],
+  inventory = [],
   filterStatus: propFilterStatus = "Semua",
   setFilterStatus,
   loadAllData,
@@ -215,6 +216,7 @@ export default function DataLaptop({
         setFormData={setFormData}
         isSaving={isSaving}
         vendorsList={vendors}
+        inventoryList={inventory}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSave}
       />

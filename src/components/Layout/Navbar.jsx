@@ -1,8 +1,32 @@
 import React, { useState, useEffect } from "react";
 import {
-  Package, LayoutDashboard, ChevronDown, FileText, Monitor, Laptop, Printer, Shield,
-  Users, List, Box, Building2, Database, History, Map, Building, FileCheck,
-  Sun, Moon, Home, Settings, Activity, LogOut, Download, Sliders, PlusCircle, CheckSquare
+  Package,
+  LayoutDashboard,
+  ChevronDown,
+  FileText,
+  Monitor,
+  Laptop,
+  Printer,
+  Shield,
+  Users,
+  List,
+  Box,
+  Building2,
+  Database,
+  History,
+  Map,
+  Building,
+  FileCheck,
+  Sun,
+  Moon,
+  Home,
+  Settings,
+  Activity,
+  LogOut,
+  Download,
+  Sliders,
+  PlusCircle,
+  CheckSquare,
 } from "lucide-react";
 import NotificationBell from "./NotificationBell";
 import { useAuth } from "../../context/AuthContext";
@@ -22,6 +46,10 @@ export default function Navbar({
   setSewaFilter,
   setComputerFilter,
   setPrinterFilter,
+  setPrinterSearch,
+  setComputerSearch,
+  setLandSearch,
+  setSewaSearch,
 }) {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
@@ -97,6 +125,14 @@ export default function Navbar({
             buildingLands={buildingLands}
             buildingSewas={buildingSewas}
             setView={setView}
+            setPrinterSearch={setPrinterSearch}
+            setComputerSearch={setComputerSearch}
+            setLandSearch={setLandSearch}
+            setSewaSearch={setSewaSearch}
+            setPrinterFilter={setPrinterFilter}
+            setComputerFilter={setComputerFilter}
+            setLandFilter={setLandFilter}
+            setSewaFilter={setSewaFilter}
             isMobile={true}
           />
         </div>
@@ -126,9 +162,7 @@ export default function Navbar({
               if (!isSidebarOpen) setIsSidebarOpen(true);
             }}
             className={`flex flex-col items-center justify-center p-2 rounded-xl text-[10px] font-bold gap-1 transition-all cursor-pointer w-16 py-2.5 ${
-              activeRailCategory === "home"
-                ? "bg-white text-[#00753A] shadow-md font-extrabold scale-105"
-                : "text-emerald-100/90 hover:text-white hover:bg-[#005c2e]"
+              activeRailCategory === "home" ? "bg-white text-[#00753A] shadow-md font-extrabold scale-105" : "text-emerald-100/90 hover:text-white hover:bg-[#005c2e]"
             }`}
             title="Home"
           >
@@ -143,9 +177,7 @@ export default function Navbar({
               if (!isSidebarOpen) setIsSidebarOpen(true);
             }}
             className={`flex flex-col items-center justify-center p-2 rounded-xl text-[10px] font-bold gap-1 transition-all cursor-pointer w-16 py-2.5 ${
-              activeRailCategory === "surat"
-                ? "bg-white text-[#00753A] shadow-md font-extrabold scale-105"
-                : "text-emerald-100/90 hover:text-white hover:bg-[#005c2e]"
+              activeRailCategory === "surat" ? "bg-white text-[#00753A] shadow-md font-extrabold scale-105" : "text-emerald-100/90 hover:text-white hover:bg-[#005c2e]"
             }`}
             title="Surat"
           >
@@ -160,9 +192,7 @@ export default function Navbar({
               if (!isSidebarOpen) setIsSidebarOpen(true);
             }}
             className={`flex flex-col items-center justify-center p-2 rounded-xl text-[10px] font-bold gap-1 transition-all cursor-pointer w-16 py-2.5 ${
-              activeRailCategory === "master"
-                ? "bg-white text-[#00753A] shadow-md font-extrabold scale-105"
-                : "text-emerald-100/90 hover:text-white hover:bg-[#005c2e]"
+              activeRailCategory === "master" ? "bg-white text-[#00753A] shadow-md font-extrabold scale-105" : "text-emerald-100/90 hover:text-white hover:bg-[#005c2e]"
             }`}
             title="Data Master"
           >
@@ -177,9 +207,7 @@ export default function Navbar({
               if (!isSidebarOpen) setIsSidebarOpen(true);
             }}
             className={`flex flex-col items-center justify-center p-2 rounded-xl text-[10px] font-bold gap-1 transition-all cursor-pointer w-16 py-2.5 ${
-              activeRailCategory === "inventaris"
-                ? "bg-white text-[#00753A] shadow-md font-extrabold scale-105"
-                : "text-emerald-100/90 hover:text-white hover:bg-[#005c2e]"
+              activeRailCategory === "inventaris" ? "bg-white text-[#00753A] shadow-md font-extrabold scale-105" : "text-emerald-100/90 hover:text-white hover:bg-[#005c2e]"
             }`}
             title="Inventaris"
           >
@@ -194,9 +222,7 @@ export default function Navbar({
               if (!isSidebarOpen) setIsSidebarOpen(true);
             }}
             className={`flex flex-col items-center justify-center p-2 rounded-xl text-[10px] font-bold gap-1 transition-all cursor-pointer w-16 py-2.5 ${
-              activeRailCategory === "bangunan"
-                ? "bg-white text-[#00753A] shadow-md font-extrabold scale-105"
-                : "text-emerald-100/90 hover:text-white hover:bg-[#005c2e]"
+              activeRailCategory === "bangunan" ? "bg-white text-[#00753A] shadow-md font-extrabold scale-105" : "text-emerald-100/90 hover:text-white hover:bg-[#005c2e]"
             }`}
             title="Bangunan"
           >
@@ -211,9 +237,7 @@ export default function Navbar({
               if (!isSidebarOpen) setIsSidebarOpen(true);
             }}
             className={`flex flex-col items-center justify-center p-2 rounded-xl text-[10px] font-bold gap-1 transition-all cursor-pointer w-16 py-2.5 ${
-              activeRailCategory === "settings"
-                ? "bg-white text-[#00753A] shadow-md font-extrabold scale-105"
-                : "text-emerald-100/90 hover:text-white hover:bg-[#005c2e]"
+              activeRailCategory === "settings" ? "bg-white text-[#00753A] shadow-md font-extrabold scale-105" : "text-emerald-100/90 hover:text-white hover:bg-[#005c2e]"
             }`}
             title="Pengaturan Sistem"
           >
@@ -239,15 +263,12 @@ export default function Navbar({
             <div className="border border-slate-300 dark:border-slate-700 p-1.5 rounded-lg text-slate-800 dark:text-slate-200">
               <Box className="w-6 h-6 shrink-0" />
             </div>
-            <span className="font-bold text-xl text-slate-900 dark:text-slate-100 tracking-tight">
-              LogistikKu
-            </span>
+            <span className="font-bold text-xl text-slate-900 dark:text-slate-100 tracking-tight">LogistikKu</span>
           </div>
         </div>
 
         {/* Sub-menu Content */}
         <nav className="flex-1 px-3 space-y-1.5 overflow-y-auto mt-4 custom-scrollbar text-xs font-semibold">
-          
           {/* CATEGORY: HOME (Dashboard Submenu matching view.jpeg) */}
           {activeRailCategory === "home" && (
             <div className="space-y-2 animate-in fade-in duration-200">
@@ -323,9 +344,7 @@ export default function Navbar({
                     <button
                       onClick={() => handleNavClick("spk_renovasi")}
                       className={`w-full px-3 py-1.5 rounded-lg text-left transition-all cursor-pointer ${
-                        view === "spk_renovasi"
-                          ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold"
-                          : "text-slate-600 dark:text-slate-400 hover:text-[#00753A]"
+                        view === "spk_renovasi" ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold" : "text-slate-600 dark:text-slate-400 hover:text-[#00753A]"
                       }`}
                     >
                       Renovasi
@@ -333,9 +352,7 @@ export default function Navbar({
                     <button
                       onClick={() => handleNavClick("spk_elektronik")}
                       className={`w-full px-3 py-1.5 rounded-lg text-left transition-all cursor-pointer ${
-                        view === "spk_elektronik"
-                          ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold"
-                          : "text-slate-600 dark:text-slate-400 hover:text-[#00753A]"
+                        view === "spk_elektronik" ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold" : "text-slate-600 dark:text-slate-400 hover:text-[#00753A]"
                       }`}
                     >
                       Elektronik
@@ -343,9 +360,7 @@ export default function Navbar({
                     <button
                       onClick={() => handleNavClick("spk_kendaraan")}
                       className={`w-full px-3 py-1.5 rounded-lg text-left transition-all cursor-pointer ${
-                        view === "spk_kendaraan"
-                          ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold"
-                          : "text-slate-600 dark:text-slate-400 hover:text-[#00753A]"
+                        view === "spk_kendaraan" ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold" : "text-slate-600 dark:text-slate-400 hover:text-[#00753A]"
                       }`}
                     >
                       Kendaraan
@@ -372,9 +387,7 @@ export default function Navbar({
                     <button
                       onClick={() => handleNavClick("sopp_pengadaan")}
                       className={`w-full px-3 py-1.5 rounded-lg text-left transition-all cursor-pointer ${
-                        view === "sopp_pengadaan"
-                          ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold"
-                          : "text-slate-600 dark:text-slate-400 hover:text-[#00753A]"
+                        view === "sopp_pengadaan" ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold" : "text-slate-600 dark:text-slate-400 hover:text-[#00753A]"
                       }`}
                     >
                       Pengadaan
@@ -382,9 +395,7 @@ export default function Navbar({
                     <button
                       onClick={() => handleNavClick("sopp_sewa")}
                       className={`w-full px-3 py-1.5 rounded-lg text-left transition-all cursor-pointer ${
-                        view === "sopp_sewa"
-                          ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold"
-                          : "text-slate-600 dark:text-slate-400 hover:text-[#00753A]"
+                        view === "sopp_sewa" ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold" : "text-slate-600 dark:text-slate-400 hover:text-[#00753A]"
                       }`}
                     >
                       Sewa
@@ -392,9 +403,7 @@ export default function Navbar({
                     <button
                       onClick={() => handleNavClick("sopp_renovasi")}
                       className={`w-full px-3 py-1.5 rounded-lg text-left transition-all cursor-pointer ${
-                        view === "sopp_renovasi"
-                          ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold"
-                          : "text-slate-600 dark:text-slate-400 hover:text-[#00753A]"
+                        view === "sopp_renovasi" ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold" : "text-slate-600 dark:text-slate-400 hover:text-[#00753A]"
                       }`}
                     >
                       Renovasi
@@ -421,9 +430,7 @@ export default function Navbar({
           {/* CATEGORY: DATA MASTER */}
           {activeRailCategory === "master" && (
             <div className="space-y-1.5 animate-in fade-in duration-200">
-              <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#00753A] dark:text-emerald-400">
-                Kelola Data Master
-              </div>
+              <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#00753A] dark:text-emerald-400">Kelola Data Master</div>
 
               <button
                 onClick={() => handleNavClick("master_barang")}
@@ -466,9 +473,7 @@ export default function Navbar({
           {/* CATEGORY: INVENTARIS */}
           {activeRailCategory === "inventaris" && (
             <div className="space-y-1.5 animate-in fade-in duration-200">
-              <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#00753A] dark:text-emerald-400">
-                Aset & Perangkat IT
-              </div>
+              <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#00753A] dark:text-emerald-400">Aset & Perangkat IT</div>
 
               <button
                 onClick={() => handleNavClick("perangkat_komputer")}
@@ -511,9 +516,7 @@ export default function Navbar({
           {/* CATEGORY: BANGUNAN */}
           {activeRailCategory === "bangunan" && (
             <div className="space-y-1.5 animate-in fade-in duration-200">
-              <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#00753A] dark:text-emerald-400">
-                Aset Bangunan & Fasilitas
-              </div>
+              <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#00753A] dark:text-emerald-400">Aset Bangunan & Fasilitas</div>
 
               <button
                 onClick={() => handleNavClick("bangunan_tanah")}
@@ -568,9 +571,7 @@ export default function Navbar({
           {/* CATEGORY: PENGATURAN / SETTINGS */}
           {activeRailCategory === "settings" && (
             <div className="space-y-1.5 animate-in fade-in duration-200">
-              <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#00753A] dark:text-emerald-400">
-                Pengaturan & Hak Akses
-              </div>
+              <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#00753A] dark:text-emerald-400">Pengaturan & Hak Akses</div>
 
               {isAdmin && (
                 <button
@@ -599,14 +600,11 @@ export default function Navbar({
               </button>
             </div>
           )}
-
         </nav>
 
         {/* Bottom Section Drawer (Footer) */}
         <div className="p-3 border-t border-slate-200 dark:border-slate-800 shrink-0 bg-slate-50/50 dark:bg-slate-900/50">
-          <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center font-medium">
-            © 2026 Departemen Logistik
-          </p>
+          <p className="text-[10px] text-slate-400 dark:text-slate-500 text-center font-medium">© 2026 Departemen Logistik</p>
         </div>
       </aside>
     </>

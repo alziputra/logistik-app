@@ -4,10 +4,23 @@ import ExcelActionButtons from "../../Common/ExcelActionButtons";
 import Pagination from "../../Common/Pagination";
 import { addAsetTanah, updateAsetTanah, deleteAsetTanah } from "../../../services/asetTanahService";
 
-export default function BangunanTanah({ userRole = "admin", lands = [], landFilter = "", setLandFilter, loadAllData }) {
-  const [searchQuery, setSearchQuery] = useState("");
+export default function BangunanTanah({ userRole = "admin", lands = [], landFilter = "", setLandFilter, landSearch = "", setLandSearch, loadAllData }) {
+  const [searchQuery, setSearchQuery] = useState(landSearch || "");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  React.useEffect(() => {
+    if (typeof landSearch === "string") {
+      setSearchQuery(landSearch);
+      setCurrentPage(1);
+    }
+  }, [landSearch]);
+
+  const handleSearchChange = (val) => {
+    setSearchQuery(val);
+    if (setLandSearch) setLandSearch(val);
+    setCurrentPage(1);
+  };
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -66,11 +79,22 @@ export default function BangunanTanah({ userRole = "admin", lands = [], landFilt
   const openAdd = () => {
     setEditingId(null);
     setFormData({
-      unit_kerja: "", alamat: "", peruntukan: "", aset_sap: "",
-      no_shgb: "", no_sertifikat: "", no_sertifikat_gabungan: "",
-      no_imb: "", nama_pemilik_imb: "", tgl_mulai_shgb: "",
-      tgl_berakhir_shgb: "", tahun_perolehan: "", luas_tanah: "",
-      luas_pagar: "", luas_bangunan: "", keterangan: "",
+      unit_kerja: "",
+      alamat: "",
+      peruntukan: "",
+      aset_sap: "",
+      no_shgb: "",
+      no_sertifikat: "",
+      no_sertifikat_gabungan: "",
+      no_imb: "",
+      nama_pemilik_imb: "",
+      tgl_mulai_shgb: "",
+      tgl_berakhir_shgb: "",
+      tahun_perolehan: "",
+      luas_tanah: "",
+      luas_pagar: "",
+      luas_bangunan: "",
+      keterangan: "",
     });
     setIsModalOpen(true);
   };
@@ -145,8 +169,6 @@ export default function BangunanTanah({ userRole = "admin", lands = [], landFilt
     }
   };
 
-
-
   return (
     <div className="max-w-7xl mx-auto p-6 animate-in fade-in duration-300">
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
@@ -199,10 +221,7 @@ export default function BangunanTanah({ userRole = "admin", lands = [], landFilt
             }}
           />
           {userRole === "admin" && (
-            <button
-              onClick={openAdd}
-              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-sm transition-colors cursor-pointer shrink-0"
-            >
+            <button onClick={openAdd} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-sm transition-colors cursor-pointer shrink-0">
               <Plus className="w-4 h-4" /> Tambah Tanah
             </button>
           )}
@@ -217,9 +236,19 @@ export default function BangunanTanah({ userRole = "admin", lands = [], landFilt
               type="text"
               placeholder="Cari unit kerja, alamat, No. SHGB..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-xl outline-none focus:border-emerald-500 text-xs text-slate-100"
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="w-full pl-10 pr-9 py-2 bg-slate-800 border border-slate-700 rounded-xl outline-none focus:border-emerald-500 text-xs text-slate-100"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => handleSearchChange("")}
+                className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-200 text-xs bg-slate-700 hover:bg-slate-600 rounded-full w-5 h-5 flex items-center justify-center cursor-pointer"
+                title="Hapus Pencarian"
+              >
+                ✕
+              </button>
+            )}
           </div>
           <span className="text-xs font-semibold text-slate-400">Total Aset Tanah: {filteredLands.length}</span>
         </div>
@@ -380,7 +409,9 @@ export default function BangunanTanah({ userRole = "admin", lands = [], landFilt
                 </div>
               </div>
               <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-xs font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-xl cursor-pointer">Batal</button>
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 text-xs font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-xl cursor-pointer">
+                  Batal
+                </button>
                 <button type="submit" disabled={isSaving} className="px-5 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl flex items-center gap-2 cursor-pointer disabled:opacity-50">
                   {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
                   {editingId ? "Simpan Perubahan" : "Simpan Aset Tanah"}

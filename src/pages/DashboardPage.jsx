@@ -73,13 +73,19 @@ export default function DashboardPage() {
   const [soppHistory, setSoppHistory] = useState([]);
   const [activityLogs, setActivityLogs] = useState([]);
 
-  // Filter States
+  // Filter & Search States
   const [computerFilter, setComputerFilter] = useState("Semua");
   const [printerFilter, setPrinterFilter] = useState("Semua");
   const [landFilter, setLandFilter] = useState("");
   const [sewaFilter, setSewaFilter] = useState("");
   const [renovationFilter, setRenovationFilter] = useState("");
   const [securityFilter, setSecurityFilter] = useState("");
+
+  // Direct Search States for Notifications
+  const [printerSearch, setPrinterSearch] = useState("");
+  const [computerSearch, setComputerSearch] = useState("");
+  const [landSearch, setLandSearch] = useState("");
+  const [sewaSearch, setSewaSearch] = useState("");
 
   const ensureArray = (res) => {
     if (!res) return [];
@@ -91,10 +97,7 @@ export default function DashboardPage() {
   const loadAllData = async () => {
     setLoadingData(true);
     try {
-      const [
-        compRes, laptopRes, printRes, trxRes, invRes, venRes, userRes, instRes,
-        landRes, sewaRes, renoRes, secRes, spkRes, soppRes, logRes
-      ] = await Promise.allSettled([
+      const [compRes, laptopRes, printRes, trxRes, invRes, venRes, userRes, instRes, landRes, sewaRes, renoRes, secRes, spkRes, soppRes, logRes] = await Promise.allSettled([
         getKomputer(),
         getLaptop(),
         getPrinter(),
@@ -150,32 +153,22 @@ export default function DashboardPage() {
     }
   };
 
-  const {
-    formData, setFormData,
-    items, setItems,
-    activeTransaction, setActiveTransaction,
-    startNewDocument,
-    editDocument,
-    viewDocument,
-    addItem, removeItem,
-    handleInputChange, handleItemChange,
-    handleSaveTransaction,
-    isSaving,
-  } = useTransaksi({
-    user,
-    transactions,
-    inventory,
-    setTransactions,
-    setInventory,
-    setActivityLogs,
-    showNotif,
-    navigateTo: handleSetView,
-  });
+  const { formData, setFormData, items, setItems, activeTransaction, setActiveTransaction, startNewDocument, editDocument, viewDocument, addItem, removeItem, handleInputChange, handleItemChange, handleSaveTransaction, isSaving } =
+    useTransaksi({
+      user,
+      transactions,
+      inventory,
+      setTransactions,
+      setInventory,
+      setActivityLogs,
+      showNotif,
+      navigateTo: handleSetView,
+    });
 
   const activeUser = useMemo(() => {
     if (!user) return null;
     const matched = (usersList || []).find((u) => u.email?.toLowerCase() === user.email?.toLowerCase());
-    const name = matched?.name || matched?.nama || user.name || (user.email === 'officer@gmail.com' ? 'Dio Haris Kurniawan' : user.email === 'admin@logistik.com' ? 'Alzi Rahmana Putra' : user.email?.split('@')[0] || 'User Logistik');
+    const name = matched?.name || matched?.nama || user.name || (user.email === "officer@gmail.com" ? "Dio Haris Kurniawan" : user.email === "admin@logistik.com" ? "Alzi Rahmana Putra" : user.email?.split("@")[0] || "User Logistik");
     const roleStr = matched?.role || user.role || "officer";
     const r = String(roleStr).toLowerCase();
     const roleLabel = r === "admin" || r === "administrator" ? "ADMINISTRATOR" : "LOGISTIK OFFICER";
@@ -206,6 +199,10 @@ export default function DashboardPage() {
         setSecurityFilter={setSecurityFilter}
         setComputerFilter={setComputerFilter}
         setPrinterFilter={setPrinterFilter}
+        setPrinterSearch={setPrinterSearch}
+        setComputerSearch={setComputerSearch}
+        setLandSearch={setLandSearch}
+        setSewaSearch={setSewaSearch}
       />
 
       {/* Main Content Area */}
@@ -218,16 +215,19 @@ export default function DashboardPage() {
           buildingLands={buildingLands}
           buildingSewas={buildingSewas}
           setView={handleSetView}
+          setPrinterSearch={setPrinterSearch}
+          setComputerSearch={setComputerSearch}
+          setLandSearch={setLandSearch}
+          setSewaSearch={setSewaSearch}
+          setPrinterFilter={setPrinterFilter}
+          setComputerFilter={setComputerFilter}
+          setLandFilter={setLandFilter}
+          setSewaFilter={setSewaFilter}
           isSidebarOpen={isSidebarOpen}
           setIsSidebarOpen={setIsSidebarOpen}
         />
 
-        <TabBar
-          tabs={tabs}
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          setTabs={setTabs}
-        />
+        <TabBar tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} setTabs={setTabs} />
 
         <main className="flex-1 p-4 md:p-6 bg-slate-100/70 dark:bg-slate-900/60 overflow-y-auto">
           {loadingData ? (
@@ -288,6 +288,14 @@ export default function DashboardPage() {
               setPrinterFilter={setPrinterFilter}
               computerFilter={computerFilter}
               setComputerFilter={setComputerFilter}
+              printerSearch={printerSearch}
+              setPrinterSearch={setPrinterSearch}
+              computerSearch={computerSearch}
+              setComputerSearch={setComputerSearch}
+              landSearch={landSearch}
+              setLandSearch={setLandSearch}
+              sewaSearch={sewaSearch}
+              setSewaSearch={setSewaSearch}
             />
           )}
         </main>

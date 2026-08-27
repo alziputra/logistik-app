@@ -1,11 +1,22 @@
 import React from "react";
 import {
-  DashboardView, DataMaster, FormView, PreviewView,
-  DataPrinter, DataKomputer, DataLaptop, KelolaUser,
-  RiwayatTransaksi, LogAktivitas,
-  BangunanTanah, BangunanSewa,
-  BangunanRenovasi, BangunanSarana, BangunanSPK,
-  NotificationPageView, SoppGenerator,
+  DashboardView,
+  DataMaster,
+  FormView,
+  PreviewView,
+  DataPrinter,
+  DataKomputer,
+  DataLaptop,
+  KelolaUser,
+  RiwayatTransaksi,
+  LogAktivitas,
+  BangunanTanah,
+  BangunanSewa,
+  BangunanRenovasi,
+  BangunanSarana,
+  BangunanSPK,
+  NotificationPageView,
+  SoppGenerator,
 } from "./LazyComponents";
 
 function Panel({ id, activeTab, children }) {
@@ -79,6 +90,14 @@ export default function TabContent({
   setPrinterFilter = () => {},
   computerFilter = "Semua",
   setComputerFilter = () => {},
+  printerSearch = "",
+  setPrinterSearch = () => {},
+  computerSearch = "",
+  setComputerSearch = () => {},
+  landSearch = "",
+  setLandSearch = () => {},
+  sewaSearch = "",
+  setSewaSearch = () => {},
 }) {
   const has = (id) => tabs.some((t) => t.id === id);
 
@@ -117,50 +136,22 @@ export default function TabContent({
 
       {/* BUAT SURAT / EDIT SURAT (DESKTOP SPLIT-VIEW) VS LIHAT SURAT (FULL DOKUMEN PREVIEW) */}
       {(has("form") || has("preview") || activeTab === "form" || activeTab === "preview") && (
-        <div
-          id="form_preview_panel"
-          className={activeTab === "form" || activeTab === "preview" ? "block animate-in fade-in duration-300 print:block print:p-0 print:m-0" : "hidden"}
-        >
+        <div id="form_preview_panel" className={activeTab === "form" || activeTab === "preview" ? "block animate-in fade-in duration-300 print:block print:p-0 print:m-0" : "hidden"}>
           <div className="w-full max-w-[1700px] mx-auto pt-6 pb-2 px-2 sm:p-4 lg:p-6 print:p-0 print:m-0 print:max-w-full">
             {activeTab === "preview" ? (
               /* MODE LIHAT SURAT (👁️): Tampilan Dokumen Penuh di Tengah (Clean Full-Width View) */
               <div className="w-full max-w-4xl mx-auto">
-                <PreviewView
-                  formData={formData}
-                  items={items}
-                  activeTransaction={activeTransaction}
-                  setView={setView}
-                  handleSaveTransaction={handleSaveTransaction}
-                  isSaving={isSaving}
-                  isViewOnly={true}
-                />
+                <PreviewView formData={formData} items={items} activeTransaction={activeTransaction} setView={setView} handleSaveTransaction={handleSaveTransaction} isSaving={isSaving} isViewOnly={true} />
               </div>
             ) : (
               /* MODE EDIT SURAT (✏️) ATAU BUAT SURAT BARU (➕): Split-View Form (Kiri) & Live Preview (Kanan) */
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 <div className="lg:col-span-6 xl:col-span-6">
-                  <FormView
-                    formData={formData}
-                    handleInputChange={handleInputChange}
-                    items={items}
-                    handleItemChange={handleItemChange}
-                    addItem={addItem}
-                    removeItem={removeItem}
-                    setView={setView}
-                    inventory={inventory}
-                    outlets={outlets}
-                  />
+                  <FormView formData={formData} handleInputChange={handleInputChange} items={items} handleItemChange={handleItemChange} addItem={addItem} removeItem={removeItem} setView={setView} inventory={inventory} outlets={outlets} />
                 </div>
 
                 <div className="lg:col-span-6 xl:col-span-6 sticky top-6">
-                  <PreviewView
-                    formData={formData}
-                    items={items}
-                    activeTransaction={activeTransaction}
-                    setView={setView}
-                    handleSaveTransaction={handleSaveTransaction}
-                    isSaving={isSaving}
-                  />
+                  <PreviewView formData={formData} items={items} activeTransaction={activeTransaction} setView={setView} handleSaveTransaction={handleSaveTransaction} isSaving={isSaving} />
                 </div>
               </div>
             )}
@@ -170,126 +161,83 @@ export default function TabContent({
 
       {has("master_barang") && (
         <Panel id="master_barang" activeTab={activeTab}>
-          <DataMaster
-            activeMenu="master_barang"
-            inventory={inventory}
-            outlets={outlets}
-            vendors={vendors}
-            userRole={userRole}
-            loadAllData={loadAllData}
-          />
+          <DataMaster activeMenu="master_barang" inventory={inventory} outlets={outlets} vendors={vendors} userRole={userRole} loadAllData={loadAllData} />
         </Panel>
       )}
 
       {has("master_outlet") && (
         <Panel id="master_outlet" activeTab={activeTab}>
-          <DataMaster
-            activeMenu="master_outlet"
-            inventory={inventory}
-            outlets={outlets}
-            vendors={vendors}
-            userRole={userRole}
-            loadAllData={loadAllData}
-          />
+          <DataMaster activeMenu="master_outlet" inventory={inventory} outlets={outlets} vendors={vendors} userRole={userRole} loadAllData={loadAllData} />
         </Panel>
       )}
 
       {has("master_vendor") && (
         <Panel id="master_vendor" activeTab={activeTab}>
-          <DataMaster
-            activeMenu="master_vendor"
-            inventory={inventory}
-            outlets={outlets}
-            vendors={vendors}
-            userRole={userRole}
-            loadAllData={loadAllData}
-          />
+          <DataMaster activeMenu="master_vendor" inventory={inventory} outlets={outlets} vendors={vendors} userRole={userRole} loadAllData={loadAllData} />
         </Panel>
       )}
 
       {(has("perangkat_printer") || has("printer")) && (
         <Panel id={has("perangkat_printer") ? "perangkat_printer" : "printer"} activeTab={activeTab}>
-          <DataPrinter 
-            printers={printers} 
+          <DataPrinter
+            printers={printers}
             outlets={outlets}
             inventory={inventory}
             vendors={vendors}
-            userRole={userRole} 
-            loadAllData={loadAllData} 
+            userRole={userRole}
+            loadAllData={loadAllData}
             printerFilter={printerFilter}
             setPrinterFilter={setPrinterFilter}
+            printerSearch={printerSearch}
+            setPrinterSearch={setPrinterSearch}
           />
         </Panel>
       )}
 
       {(has("perangkat_komputer") || has("komputer")) && (
         <Panel id={has("perangkat_komputer") ? "perangkat_komputer" : "komputer"} activeTab={activeTab}>
-          <DataKomputer 
-            computers={computers} 
+          <DataKomputer
+            computers={computers}
             outlets={outlets}
             inventory={inventory}
             vendors={vendors}
-            userRole={userRole} 
+            userRole={userRole}
             loadAllData={loadAllData}
             computerFilter={computerFilter}
             setComputerFilter={setComputerFilter}
+            computerSearch={computerSearch}
+            setComputerSearch={setComputerSearch}
           />
         </Panel>
       )}
 
       {(has("perangkat_laptop") || has("laptop")) && (
         <Panel id={has("perangkat_laptop") ? "perangkat_laptop" : "laptop"} activeTab={activeTab}>
-          <DataLaptop 
-            laptops={laptops} 
-            vendors={vendors}
-            userRole={userRole} 
-            loadAllData={loadAllData}
-          />
+          <DataLaptop laptops={laptops} vendors={vendors} userRole={userRole} loadAllData={loadAllData} />
         </Panel>
       )}
 
       {has("bangunan_tanah") && (
         <Panel id="bangunan_tanah" activeTab={activeTab}>
-          <BangunanTanah 
-            userRole={userRole} 
-            lands={buildingLands} 
-            landFilter={landFilter} 
-            setLandFilter={setLandFilter} 
-          />
+          <BangunanTanah userRole={userRole} lands={buildingLands} landFilter={landFilter} setLandFilter={setLandFilter} landSearch={landSearch} setLandSearch={setLandSearch} />
         </Panel>
       )}
 
       {has("bangunan_sewa") && (
         <Panel id="bangunan_sewa" activeTab={activeTab}>
-          <BangunanSewa 
-            userRole={userRole} 
-            sewas={buildingSewas} 
-            outlets={outlets} 
-            sewaFilter={sewaFilter} 
-            setSewaFilter={setSewaFilter} 
-          />
+          <BangunanSewa userRole={userRole} sewas={buildingSewas} outlets={outlets} sewaFilter={sewaFilter} setSewaFilter={setSewaFilter} sewaSearch={sewaSearch} setSewaSearch={setSewaSearch} />
         </Panel>
       )}
 
       {has("bangunan_renovasi") && (
         <Panel id="bangunan_renovasi" activeTab={activeTab}>
-          <BangunanRenovasi 
-            userRole={userRole} 
-            renovations={buildingRenovations} 
-            renovationFilter={renovationFilter}
-            setRenovationFilter={setRenovationFilter}
-          />
+          <BangunanRenovasi userRole={userRole} renovations={buildingRenovations} renovationFilter={renovationFilter} setRenovationFilter={setRenovationFilter} />
         </Panel>
       )}
 
       {has("bangunan_sarana") && (
         <Panel id="bangunan_sarana" activeTab={activeTab}>
-          <BangunanSarana 
-            userRole={userRole} 
-            facilities={securityFacilities} 
-            securityFilter={securityFilter}
-            setSecurityFilter={setSecurityFilter}
-          />
+          <BangunanSarana userRole={userRole} facilities={securityFacilities} securityFilter={securityFilter} setSecurityFilter={setSecurityFilter} />
         </Panel>
       )}
 
@@ -337,27 +285,19 @@ export default function TabContent({
 
       {has("kelola_user") && (
         <Panel id="kelola_user" activeTab={activeTab}>
-          {userRole === "admin"
-            ? <KelolaUser usersList={usersList} handleUpdateRole={handleUpdateRole} />
-            : <AccessDenied />}
+          {userRole === "admin" ? <KelolaUser usersList={usersList} handleUpdateRole={handleUpdateRole} /> : <AccessDenied />}
         </Panel>
       )}
 
       {has("log_aktivitas") && (
         <Panel id="log_aktivitas" activeTab={activeTab}>
-          {userRole === "admin"
-            ? <LogAktivitas logs={activityLogs} />
-            : <AccessDenied />}
+          {userRole === "admin" ? <LogAktivitas logs={activityLogs} /> : <AccessDenied />}
         </Panel>
       )}
 
       {has("notifikasi") && (
         <Panel id="notifikasi" activeTab={activeTab}>
-          <NotificationPageView
-            notifSewa={notifSewa}
-            notifSewaKomputer={notifSewaKomputer}
-            setView={setView}
-          />
+          <NotificationPageView notifSewa={notifSewa} notifSewaKomputer={notifSewaKomputer} setView={setView} />
         </Panel>
       )}
     </div>

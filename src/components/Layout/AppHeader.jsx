@@ -13,6 +13,14 @@ export default function AppHeader({
   buildingLands = [],
   buildingSewas = [],
   setView,
+  setPrinterSearch,
+  setComputerSearch,
+  setLandSearch,
+  setSewaSearch,
+  setPrinterFilter,
+  setComputerFilter,
+  setLandFilter,
+  setSewaFilter,
 }) {
   const { theme, toggleTheme } = useTheme();
 
@@ -30,7 +38,10 @@ export default function AppHeader({
     if (title === "kelola_user") return { category: "PENGATURAN", text: "Manajemen User & Hak Akses" };
     if (title === "log_aktivitas") return { category: "PENGATURAN", text: "Log Aktivitas Sistem" };
 
-    const formatted = title.toLowerCase().replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    const formatted = title
+      .toLowerCase()
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
     return { category: "HOME", text: formatted };
   };
 
@@ -40,12 +51,8 @@ export default function AppHeader({
     <div className="hidden md:flex sticky md:top-0 z-30 h-16 md:h-20 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm items-center justify-between px-6 sm:px-8 print:hidden shrink-0 transition-colors">
       {/* Left side: Breadcrumb & Title matching view.jpeg */}
       <div className="flex flex-col">
-        <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-          {headerInfo.category}
-        </span>
-        <h1 className="text-base md:text-lg font-bold text-[#00753A] dark:text-[#22C55E] tracking-tight leading-tight">
-          {headerInfo.text}
-        </h1>
+        <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">{headerInfo.category}</span>
+        <h1 className="text-base md:text-lg font-bold text-[#00753A] dark:text-[#22C55E] tracking-tight leading-tight">{headerInfo.text}</h1>
       </div>
 
       {/* Right side: Server Status, Theme Toggle, Notification Bell, User Badge */}
@@ -57,11 +64,7 @@ export default function AppHeader({
           title={theme === "dark" ? "Ganti ke Tema Terang" : "Ganti ke Tema Gelap"}
           className="p-2 rounded-full border shadow-sm transition-all cursor-pointer flex items-center justify-center bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
         >
-          {theme === "dark" ? (
-            <Sun className="w-5 h-5 text-amber-400" />
-          ) : (
-            <Moon className="w-5 h-5 text-slate-700 dark:text-slate-200" />
-          )}
+          {theme === "dark" ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-slate-700 dark:text-slate-200" />}
         </button>
 
         <NotificationBell
@@ -70,6 +73,14 @@ export default function AppHeader({
           buildingLands={buildingLands}
           buildingSewas={buildingSewas}
           setView={setView}
+          setPrinterSearch={setPrinterSearch}
+          setComputerSearch={setComputerSearch}
+          setLandSearch={setLandSearch}
+          setSewaSearch={setSewaSearch}
+          setPrinterFilter={setPrinterFilter}
+          setComputerFilter={setComputerFilter}
+          setLandFilter={setLandFilter}
+          setSewaFilter={setSewaFilter}
           showLabel={false}
         />
 

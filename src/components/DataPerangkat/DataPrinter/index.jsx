@@ -19,9 +19,11 @@ export default function DataPrinter({
   printerFilter,
   setPrinterFilter,
   setFilterStatus,
+  printerSearch = "",
+  setPrinterSearch,
   loadAllData,
 }) {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(printerSearch || "");
   const [filterStatusState, setFilterStatusState] = useState(printerFilter || propFilterStatus || "Semua");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -34,12 +36,25 @@ export default function DataPrinter({
   const [notif, setNotif] = useState({ show: false, message: "", type: "success" });
 
   React.useEffect(() => {
+    if (typeof printerSearch === "string") {
+      setSearchQuery(printerSearch);
+      setCurrentPage(1);
+    }
+  }, [printerSearch]);
+
+  React.useEffect(() => {
     if (printerFilter) {
       setFilterStatusState(printerFilter);
     } else if (propFilterStatus) {
       setFilterStatusState(propFilterStatus);
     }
   }, [printerFilter, propFilterStatus]);
+
+  const handleSearchChange = (val) => {
+    setSearchQuery(val);
+    if (setPrinterSearch) setPrinterSearch(val);
+    setCurrentPage(1);
+  };
 
   const handleFilterChange = (newStatus) => {
     setFilterStatusState(newStatus);
@@ -50,11 +65,7 @@ export default function DataPrinter({
 
   const filteredData = printers.filter((item) => {
     const q = searchQuery.toLowerCase();
-    const matchSearch =
-      item.produk?.toLowerCase().includes(q) ||
-      item.sn?.toLowerCase().includes(q) ||
-      item.outlet?.toLowerCase().includes(q) ||
-      item.vendor?.toLowerCase().includes(q);
+    const matchSearch = item.produk?.toLowerCase().includes(q) || item.sn?.toLowerCase().includes(q) || item.outlet?.toLowerCase().includes(q) || item.vendor?.toLowerCase().includes(q);
 
     let matchFilter = true;
     if (filterStatusState === "warning" || filterStatusState === "Sewa Habis" || filterStatusState === "Habis") {
@@ -114,9 +125,7 @@ export default function DataPrinter({
           <h2 className="text-2xl font-bold text-slate-100 flex items-center gap-2.5">
             <Printer className="w-6 h-6 text-purple-400" /> Manajemen Data Printer
           </h2>
-          <p className="text-sm text-slate-400 mt-1">
-            Kelola spesifikasi hardware, status, dan masa sewa printer outlet.
-          </p>
+          <p className="text-sm text-slate-400 mt-1">Kelola spesifikasi hardware, status, dan masa sewa printer outlet.</p>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
@@ -154,7 +163,11 @@ export default function DataPrinter({
           />
           {userRole === "admin" && (
             <button
-              onClick={() => { setEditingId(null); setFormData({}); setIsModalOpen(true); }}
+              onClick={() => {
+                setEditingId(null);
+                setFormData({});
+                setIsModalOpen(true);
+              }}
               className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-xl font-semibold shadow-sm transition-colors text-sm cursor-pointer"
             >
               <Plus className="w-4 h-4" /> Tambah Printer
@@ -172,9 +185,19 @@ export default function DataPrinter({
                 type="text"
                 placeholder="Cari model, S/N, atau outlet..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl outline-none focus:border-emerald-500 text-sm text-slate-100 placeholder:text-slate-500"
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="w-full pl-10 pr-9 py-2.5 bg-slate-800 border border-slate-700 rounded-xl outline-none focus:border-emerald-500 text-sm text-slate-100 placeholder:text-slate-500"
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => handleSearchChange("")}
+                  className="absolute right-2.5 top-3 text-slate-400 hover:text-slate-200 text-xs bg-slate-700 hover:bg-slate-600 rounded-full w-5 h-5 flex items-center justify-center cursor-pointer"
+                  title="Hapus Pencarian"
+                >
+                  ✕
+                </button>
+              )}
             </div>
 
             {/* Filter Status Buttons */}
@@ -182,11 +205,7 @@ export default function DataPrinter({
               <button
                 type="button"
                 onClick={() => handleFilterChange("Semua")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  filterStatusState === "Semua"
-                    ? "bg-slate-800 text-white font-bold shadow-xs"
-                    : "text-slate-400 hover:text-slate-200"
-                }`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${filterStatusState === "Semua" ? "bg-slate-800 text-white font-bold shadow-xs" : "text-slate-400 hover:text-slate-200"}`}
               >
                 Semua Data
               </button>
@@ -194,9 +213,7 @@ export default function DataPrinter({
                 type="button"
                 onClick={() => handleFilterChange("Sewa Berjalan")}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                  filterStatusState === "Sewa Berjalan"
-                    ? "bg-emerald-950 text-emerald-400 border border-emerald-800/60 font-bold"
-                    : "text-slate-400 hover:text-slate-200"
+                  filterStatusState === "Sewa Berjalan" ? "bg-emerald-950 text-emerald-400 border border-emerald-800/60 font-bold" : "text-slate-400 hover:text-slate-200"
                 }`}
               >
                 Sewa Berjalan
@@ -205,9 +222,7 @@ export default function DataPrinter({
                 type="button"
                 onClick={() => handleFilterChange("warning")}
                 className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
-                  filterStatusState === "warning" || filterStatusState === "Sewa Habis"
-                    ? "bg-rose-950 text-rose-400 border border-rose-800/60 font-bold"
-                    : "text-slate-400 hover:text-rose-400"
+                  filterStatusState === "warning" || filterStatusState === "Sewa Habis" ? "bg-rose-950 text-rose-400 border border-rose-800/60 font-bold" : "text-slate-400 hover:text-rose-400"
                 }`}
               >
                 <span>⚠️ Sewa Habis</span>
@@ -230,7 +245,11 @@ export default function DataPrinter({
           startIndex={startIndex}
           itemsPerPage={itemsPerPage}
           setCurrentPage={setCurrentPage}
-          onEdit={(printer) => { setEditingId(printer.id); setFormData(printer); setIsModalOpen(true); }}
+          onEdit={(printer) => {
+            setEditingId(printer.id);
+            setFormData(printer);
+            setIsModalOpen(true);
+          }}
           onDelete={(id, nama) => setDeleteConfirm({ show: true, id, name: nama })}
           onQr={setQrModalData}
         />
@@ -251,12 +270,7 @@ export default function DataPrinter({
 
       <QrLabelModal data={qrModalData} onClose={() => setQrModalData(null)} />
 
-      <ConfirmDeleteModal
-        show={deleteConfirm.show}
-        name={deleteConfirm.name}
-        onConfirm={handleDeleteConfirm}
-        onCancel={() => setDeleteConfirm({ show: false, id: null, name: "" })}
-      />
+      <ConfirmDeleteModal show={deleteConfirm.show} name={deleteConfirm.name} onConfirm={handleDeleteConfirm} onCancel={() => setDeleteConfirm({ show: false, id: null, name: "" })} />
 
       <ToastNotif notif={notif} onClose={() => setNotif({ show: false, message: "", type: "success" })} />
     </div>

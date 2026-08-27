@@ -6,15 +6,23 @@ import SewaTable from "./SewaTable";
 import SewaModal from "./SewaModal";
 import { addMenuSewa, updateMenuSewa, deleteMenuSewa } from "../../../services/menuSewaService";
 
-export default function BangunanSewa({
-  userRole = "admin",
-  sewas = [],
-  outlets = [],
-  loadAllData,
-}) {
-  const [searchQuery, setSearchQuery] = useState("");
+export default function BangunanSewa({ userRole = "admin", sewas = [], outlets = [], sewaFilter = "", setSewaFilter, sewaSearch = "", setSewaSearch, loadAllData }) {
+  const [searchQuery, setSearchQuery] = useState(sewaSearch || "");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  React.useEffect(() => {
+    if (typeof sewaSearch === "string") {
+      setSearchQuery(sewaSearch);
+      setCurrentPage(1);
+    }
+  }, [sewaSearch]);
+
+  const handleSearchChange = (val) => {
+    setSearchQuery(val);
+    if (setSewaSearch) setSewaSearch(val);
+    setCurrentPage(1);
+  };
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -23,11 +31,7 @@ export default function BangunanSewa({
 
   const filteredSewas = sewas.filter((item) => {
     const q = searchQuery.toLowerCase();
-    return (
-      (item.nama_outlet && item.nama_outlet.toLowerCase().includes(q)) ||
-      (item.kode_outlet && item.kode_outlet.toLowerCase().includes(q)) ||
-      (item.alamat && item.alamat.toLowerCase().includes(q))
-    );
+    return (item.nama_outlet && item.nama_outlet.toLowerCase().includes(q)) || (item.kode_outlet && item.kode_outlet.toLowerCase().includes(q)) || (item.alamat && item.alamat.toLowerCase().includes(q));
   });
 
   const totalPages = Math.ceil(filteredSewas.length / itemsPerPage) || 1;
@@ -73,8 +77,6 @@ export default function BangunanSewa({
       console.error("Gagal menghapus data sewa:", err);
     }
   };
-
-
 
   return (
     <div className="max-w-7xl mx-auto p-6 animate-in fade-in duration-300">
@@ -126,10 +128,7 @@ export default function BangunanSewa({
             }}
           />
           {userRole === "admin" && (
-            <button
-              onClick={openAdd}
-              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-sm transition-colors cursor-pointer shrink-0"
-            >
+            <button onClick={openAdd} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-sm transition-colors cursor-pointer shrink-0">
               <Plus className="w-4 h-4" /> Tambah Sewa
             </button>
           )}
@@ -144,41 +143,29 @@ export default function BangunanSewa({
               type="text"
               placeholder="Cari outlet, kode, atau alamat..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-xl outline-none focus:border-emerald-500 text-xs text-slate-100"
+              onChange={(e) => handleSearchChange(e.target.value)}
+              className="w-full pl-10 pr-9 py-2 bg-slate-800 border border-slate-700 rounded-xl outline-none focus:border-emerald-500 text-xs text-slate-100"
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => handleSearchChange("")}
+                className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-200 text-xs bg-slate-700 hover:bg-slate-600 rounded-full w-5 h-5 flex items-center justify-center cursor-pointer"
+                title="Hapus Pencarian"
+              >
+                ✕
+              </button>
+            )}
           </div>
           <span className="text-xs font-semibold text-slate-400">Total Bangunan Sewa: {filteredSewas.length}</span>
         </div>
 
-        <SewaTable
-          paginatedData={paginatedData}
-          userRole={userRole}
-          startIndex={startIndex}
-          onEdit={openEdit}
-          onDelete={handleDelete}
-        />
+        <SewaTable paginatedData={paginatedData} userRole={userRole} startIndex={startIndex} onEdit={openEdit} onDelete={handleDelete} />
 
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={filteredSewas.length}
-          startIndex={startIndex}
-          itemsPerPage={itemsPerPage}
-          onPageChange={setCurrentPage}
-        />
+        <Pagination currentPage={currentPage} totalPages={totalPages} totalItems={filteredSewas.length} startIndex={startIndex} itemsPerPage={itemsPerPage} onPageChange={setCurrentPage} />
       </div>
 
-      <SewaModal
-        isOpen={isModalOpen}
-        editingId={editingId}
-        formData={formData}
-        setFormData={setFormData}
-        isSaving={isSaving}
-        outletsList={outlets}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSave}
-      />
+      <SewaModal isOpen={isModalOpen} editingId={editingId} formData={formData} setFormData={setFormData} isSaving={isSaving} outletsList={outlets} onClose={() => setIsModalOpen(false)} onSave={handleSave} />
     </div>
   );
 }

@@ -362,13 +362,15 @@ export default function Navbar({
                 <div className="p-2 space-y-1 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800/80 animate-in fade-in duration-150">
                   <button
                     onClick={handleStartNew}
-                    className={`w-full px-3 py-2 rounded-xl text-left flex items-center gap-2.5 transition-all ${
+                    className={`w-full px-3 py-2 rounded-xl text-left flex items-center gap-2.5 transition-all cursor-pointer ${
                       view === "form"
-                        ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                        ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-xs"
                         : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50"
                     }`}
                   >
-                    <FileText className="w-3.5 h-3.5 text-[#00753A] dark:text-emerald-400 shrink-0" />
+                    <div className="p-1 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-[#00753A] dark:text-emerald-400">
+                      <FileText className="w-3.5 h-3.5 shrink-0" />
+                    </div>
                     <span>Surat Serah Terima (BAST)</span>
                   </button>
 
@@ -379,22 +381,39 @@ export default function Navbar({
                       className="w-full px-3 py-2 rounded-xl flex items-center justify-between text-left text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
                     >
                       <div className="flex items-center gap-2.5">
-                        <FileCheck className="w-3.5 h-3.5 text-[#00753A] dark:text-emerald-400 shrink-0" />
+                        <div className="p-1 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-[#00753A] dark:text-emerald-400">
+                          <FileCheck className="w-3.5 h-3.5 shrink-0" />
+                        </div>
                         <span>SPK (Perintah Kerja)</span>
                       </div>
-                      <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isSpkOpen ? "rotate-180" : ""}`} />
+                      <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isSpkOpen ? "rotate-180 text-[#00753A]" : ""}`} />
                     </button>
                     {isSpkOpen && (
-                      <div className="pl-8 pr-1 py-1 space-y-1 text-xs border-l-2 border-slate-200 dark:border-slate-800 ml-4 my-1">
-                        <button onClick={() => handleNavClick("spk_renovasi")} className={`w-full px-2.5 py-1.5 rounded-lg text-left transition-all ${view === "spk_renovasi" ? "text-[#00753A] dark:text-emerald-400 font-bold" : "text-slate-600 dark:text-slate-400"}`}>
-                          • Renovasi
-                        </button>
-                        <button onClick={() => handleNavClick("spk_elektronik")} className={`w-full px-2.5 py-1.5 rounded-lg text-left transition-all ${view === "spk_elektronik" ? "text-[#00753A] dark:text-emerald-400 font-bold" : "text-slate-600 dark:text-slate-400"}`}>
-                          • Elektronik
-                        </button>
-                        <button onClick={() => handleNavClick("spk_kendaraan")} className={`w-full px-2.5 py-1.5 rounded-lg text-left transition-all ${view === "spk_kendaraan" ? "text-[#00753A] dark:text-emerald-400 font-bold" : "text-slate-600 dark:text-slate-400"}`}>
-                          • Kendaraan
-                        </button>
+                      <div className="ml-4 pl-3 py-1 space-y-1 text-xs border-l-2 border-emerald-500/20 dark:border-emerald-500/30 my-1">
+                        {[
+                          { id: "spk_renovasi", label: "Renovasi", desc: "Pekerjaan Gedung" },
+                          { id: "spk_elektronik", label: "Elektronik", desc: "Perangkat IT" },
+                          { id: "spk_kendaraan", label: "Kendaraan", desc: "Sewa Operasional" },
+                        ].map((sub) => {
+                          const isActive = view === sub.id;
+                          return (
+                            <button
+                              key={sub.id}
+                              onClick={() => handleNavClick(sub.id)}
+                              className={`w-full px-2.5 py-1.5 rounded-lg text-left flex items-start gap-2 transition-all cursor-pointer ${
+                                isActive
+                                  ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold"
+                                  : "text-slate-600 dark:text-slate-400 hover:text-[#00753A]"
+                              }`}
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${isActive ? "bg-[#00753A] dark:bg-emerald-400" : "bg-slate-300 dark:bg-slate-600"}`} />
+                              <div className="flex flex-col min-w-0">
+                                <span className="font-semibold text-xs leading-tight">{sub.label}</span>
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal leading-tight mt-0.5">{sub.desc}</span>
+                              </div>
+                            </button>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -406,35 +425,54 @@ export default function Navbar({
                       className="w-full px-3 py-2 rounded-xl flex items-center justify-between text-left text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
                     >
                       <div className="flex items-center gap-2.5">
-                        <FileCheck className="w-3.5 h-3.5 text-[#00753A] dark:text-emerald-400 shrink-0" />
+                        <div className="p-1 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-[#00753A] dark:text-emerald-400">
+                          <FileCheck className="w-3.5 h-3.5 shrink-0" />
+                        </div>
                         <span>SOPP</span>
                       </div>
-                      <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isSoppOpen ? "rotate-180" : ""}`} />
+                      <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${isSoppOpen ? "rotate-180 text-[#00753A]" : ""}`} />
                     </button>
                     {isSoppOpen && (
-                      <div className="pl-8 pr-1 py-1 space-y-1 text-xs border-l-2 border-slate-200 dark:border-slate-800 ml-4 my-1">
-                        <button onClick={() => handleNavClick("sopp_pengadaan")} className={`w-full px-2.5 py-1.5 rounded-lg text-left transition-all ${view === "sopp_pengadaan" ? "text-[#00753A] dark:text-emerald-400 font-bold" : "text-slate-600 dark:text-slate-400"}`}>
-                          • Pengadaan
-                        </button>
-                        <button onClick={() => handleNavClick("sopp_sewa")} className={`w-full px-2.5 py-1.5 rounded-lg text-left transition-all ${view === "sopp_sewa" ? "text-[#00753A] dark:text-emerald-400 font-bold" : "text-slate-600 dark:text-slate-400"}`}>
-                          • Sewa
-                        </button>
-                        <button onClick={() => handleNavClick("sopp_renovasi")} className={`w-full px-2.5 py-1.5 rounded-lg text-left transition-all ${view === "sopp_renovasi" ? "text-[#00753A] dark:text-emerald-400 font-bold" : "text-slate-600 dark:text-slate-400"}`}>
-                          • Renovasi
-                        </button>
+                      <div className="ml-4 pl-3 py-1 space-y-1 text-xs border-l-2 border-emerald-500/20 dark:border-emerald-500/30 my-1">
+                        {[
+                          { id: "sopp_pengadaan", label: "Pengadaan", desc: "Belanja Barang" },
+                          { id: "sopp_sewa", label: "Sewa", desc: "Perjanjian Sewa" },
+                          { id: "sopp_renovasi", label: "Renovasi", desc: "Pemeliharaan" },
+                        ].map((sub) => {
+                          const isActive = view === sub.id;
+                          return (
+                            <button
+                              key={sub.id}
+                              onClick={() => handleNavClick(sub.id)}
+                              className={`w-full px-2.5 py-1.5 rounded-lg text-left flex items-start gap-2 transition-all cursor-pointer ${
+                                isActive
+                                  ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold"
+                                  : "text-slate-600 dark:text-slate-400 hover:text-[#00753A]"
+                              }`}
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${isActive ? "bg-[#00753A] dark:bg-emerald-400" : "bg-slate-300 dark:bg-slate-600"}`} />
+                              <div className="flex flex-col min-w-0">
+                                <span className="font-semibold text-xs leading-tight">{sub.label}</span>
+                                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal leading-tight mt-0.5">{sub.desc}</span>
+                              </div>
+                            </button>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
 
                   <button
                     onClick={() => handleNavClick("riwayat")}
-                    className={`w-full px-3 py-2 rounded-xl text-left flex items-center gap-2.5 transition-all ${
+                    className={`w-full px-3 py-2 rounded-xl text-left flex items-center gap-2.5 transition-all cursor-pointer ${
                       view === "riwayat"
-                        ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                        ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-xs"
                         : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50"
                     }`}
                   >
-                    <History className="w-3.5 h-3.5 text-[#00753A] dark:text-emerald-400 shrink-0" />
+                    <div className="p-1 rounded-md bg-emerald-50 dark:bg-emerald-950/60 text-[#00753A] dark:text-emerald-400">
+                      <History className="w-3.5 h-3.5 shrink-0" />
+                    </div>
                     <span>Riwayat Transaksi Surat</span>
                   </button>
                 </div>
@@ -654,122 +692,204 @@ export default function Navbar({
           <div className="hidden md:block">
             {/* CATEGORY: HOME */}
             {activeRailCategory === "home" && (
-              <div className="space-y-2 animate-in fade-in duration-200">
+              <div className="space-y-1.5 animate-in fade-in duration-200">
+                <div className="px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[#00753A] dark:text-emerald-400">Pusat Informasi & Statistik</div>
                 <button
                   onClick={() => handleNavClick("dashboard")}
-                  className={`w-full px-3.5 py-3 rounded-xl flex items-center gap-3 text-left transition-all ${
+                  className={`w-full px-3 py-2 rounded-xl flex items-center gap-2.5 text-left transition-all cursor-pointer ${
                     view === "dashboard" || view === "dashboard_inventaris"
-                      ? "bg-[#E6F4EA] dark:bg-emerald-950/70 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-sm"
+                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-xs"
                       : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                   }`}
                 >
-                  <LayoutDashboard className="w-4 h-4 shrink-0" />
-                  <span className="text-xs">Dashboard Inventaris</span>
+                  <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#00753A] dark:text-emerald-400 shrink-0">
+                    <LayoutDashboard className="w-4 h-4" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold">Dashboard Inventaris</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal leading-tight">Katalog & Stok Logistik</span>
+                  </div>
                 </button>
 
                 <button
                   onClick={() => handleNavClick("dashboard_bangunan")}
-                  className={`w-full px-3.5 py-3 rounded-xl flex items-center gap-3 text-left transition-all ${
+                  className={`w-full px-3 py-2 rounded-xl flex items-center gap-2.5 text-left transition-all cursor-pointer ${
                     view === "dashboard_bangunan"
-                      ? "bg-[#E6F4EA] dark:bg-emerald-950/70 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-sm"
+                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-xs"
                       : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                   }`}
                 >
-                  <Building2 className="w-4 h-4 shrink-0" />
-                  <span className="text-xs">Dashboard Bangunan</span>
+                  <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#00753A] dark:text-emerald-400 shrink-0">
+                    <Building2 className="w-4 h-4" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold">Dashboard Bangunan</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal leading-tight">Sewa & Renovasi Gedung</span>
+                  </div>
                 </button>
 
                 <button
                   onClick={() => handleNavClick("dashboard_pengamanan")}
-                  className={`w-full px-3.5 py-3 rounded-xl flex items-center gap-3 text-left transition-all ${
+                  className={`w-full px-3 py-2 rounded-xl flex items-center gap-2.5 text-left transition-all cursor-pointer ${
                     view === "dashboard_pengamanan"
-                      ? "bg-[#E6F4EA] dark:bg-emerald-950/70 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-sm"
+                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-xs"
                       : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                   }`}
                 >
-                  <Shield className="w-4 h-4 shrink-0" />
-                  <span className="text-xs">Dashboard Pengamanan & Korporasi</span>
+                  <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#00753A] dark:text-emerald-400 shrink-0">
+                    <Shield className="w-4 h-4" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold">Dashboard Pengamanan</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal leading-tight">Fasilitas Keamanan Korporasi</span>
+                  </div>
                 </button>
               </div>
             )}
 
             {/* CATEGORY: SURAT */}
             {activeRailCategory === "surat" && (
-              <div className="space-y-1 animate-in fade-in duration-200">
+              <div className="space-y-1.5 animate-in fade-in duration-200">
+                <div className="px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[#00753A] dark:text-emerald-400">
+                  Kelola Surat & Transaksi
+                </div>
+
+                {/* Surat Serah Terima */}
                 <button
                   onClick={handleStartNew}
-                  className={`w-full px-3.5 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
+                  className={`w-full px-3 py-2 rounded-xl flex items-center gap-2.5 text-left transition-all cursor-pointer ${
                     view === "form"
-                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-xs"
                       : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                   }`}
                 >
-                  <FileText className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
-                  <span>Surat Serah Terima</span>
+                  <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#00753A] dark:text-emerald-400 shrink-0">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold truncate">Surat Serah Terima</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal leading-tight">BAST Masuk & Keluar</span>
+                  </div>
                 </button>
 
+                {/* SPK (Perintah Kerja) Dropdown */}
                 <div>
                   <button
                     onClick={() => setIsSpkOpen(!isSpkOpen)}
-                    className="w-full px-3.5 py-2.5 rounded-xl flex items-center justify-between text-left text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-left transition-all cursor-pointer ${
+                      view?.startsWith("spk_")
+                        ? "bg-[#E6F4EA]/40 dark:bg-emerald-950/40 text-[#00753A] dark:text-emerald-400 font-bold"
+                        : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
+                    }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <FileCheck className="w-4 h-4 text-[#00753A] dark:text-emerald-400 shrink-0" />
-                      <span>SPK</span>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#00753A] dark:text-emerald-400 shrink-0">
+                        <FileCheck className="w-4 h-4" />
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-xs font-semibold">SPK</span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal leading-tight">Surat Perintah Kerja</span>
+                      </div>
                     </div>
-                    <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isSpkOpen ? "rotate-180" : ""}`} />
+                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ${isSpkOpen ? "rotate-180 text-[#00753A]" : ""}`} />
                   </button>
                   {isSpkOpen && (
-                    <div className="pl-9 pr-2 py-1 space-y-1 text-xs">
-                      <button onClick={() => handleNavClick("spk_renovasi")} className={`w-full px-3 py-1.5 rounded-lg text-left transition-all cursor-pointer ${view === "spk_renovasi" ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold" : "text-slate-600 dark:text-slate-400 hover:text-[#00753A]"}`}>
-                        Renovasi
-                      </button>
-                      <button onClick={() => handleNavClick("spk_elektronik")} className={`w-full px-3 py-1.5 rounded-lg text-left transition-all cursor-pointer ${view === "spk_elektronik" ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold" : "text-slate-600 dark:text-slate-400 hover:text-[#00753A]"}`}>
-                        Elektronik
-                      </button>
-                      <button onClick={() => handleNavClick("spk_kendaraan")} className={`w-full px-3 py-1.5 rounded-lg text-left transition-all cursor-pointer ${view === "spk_kendaraan" ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold" : "text-slate-600 dark:text-slate-400 hover:text-[#00753A]"}`}>
-                        Kendaraan
-                      </button>
+                    <div className="ml-5 pl-3.5 py-1 space-y-1 text-xs border-l-2 border-emerald-500/20 dark:border-emerald-500/30 my-1">
+                      {[
+                        { id: "spk_renovasi", label: "Renovasi", desc: "Pekerjaan Gedung" },
+                        { id: "spk_elektronik", label: "Elektronik", desc: "Perangkat IT" },
+                        { id: "spk_kendaraan", label: "Kendaraan", desc: "Sewa Operasional" },
+                      ].map((sub) => {
+                        const isActive = view === sub.id;
+                        return (
+                          <button
+                            key={sub.id}
+                            onClick={() => handleNavClick(sub.id)}
+                            className={`w-full px-2.5 py-1.5 rounded-lg text-left flex items-start gap-2.5 transition-all cursor-pointer ${
+                              isActive
+                                ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200/60 dark:border-emerald-800/40 shadow-xs"
+                                : "text-slate-600 dark:text-slate-400 hover:text-[#00753A] dark:hover:text-emerald-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
+                            }`}
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full transition-all mt-1.5 shrink-0 ${isActive ? "bg-[#00753A] dark:bg-emerald-400 scale-125" : "bg-slate-300 dark:bg-slate-600"}`} />
+                            <div className="flex flex-col min-w-0">
+                              <span className="font-semibold text-xs leading-tight">{sub.label}</span>
+                              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal leading-tight mt-0.5">{sub.desc}</span>
+                            </div>
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
 
+                {/* SOPP Dropdown */}
                 <div>
                   <button
                     onClick={() => setIsSoppOpen(!isSoppOpen)}
-                    className="w-full px-3.5 py-2.5 rounded-xl flex items-center justify-between text-left text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60 transition-colors cursor-pointer"
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between text-left transition-all cursor-pointer ${
+                      view?.startsWith("sopp_")
+                        ? "bg-[#E6F4EA]/40 dark:bg-emerald-950/40 text-[#00753A] dark:text-emerald-400 font-bold"
+                        : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
+                    }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <FileCheck className="w-4 h-4 text-[#00753A] dark:text-emerald-400 shrink-0" />
-                      <span>SOPP</span>
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#00753A] dark:text-emerald-400 shrink-0">
+                        <FileCheck className="w-4 h-4" />
+                      </div>
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-xs font-semibold">SOPP</span>
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal leading-tight">Standar Operasional Prosedur</span>
+                      </div>
                     </div>
-                    <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isSoppOpen ? "rotate-180" : ""}`} />
+                    <ChevronDown className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 shrink-0 ${isSoppOpen ? "rotate-180 text-[#00753A]" : ""}`} />
                   </button>
                   {isSoppOpen && (
-                    <div className="pl-9 pr-2 py-1 space-y-1 text-xs">
-                      <button onClick={() => handleNavClick("sopp_pengadaan")} className={`w-full px-3 py-1.5 rounded-lg text-left transition-all cursor-pointer ${view === "sopp_pengadaan" ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold" : "text-slate-600 dark:text-slate-400 hover:text-[#00753A]"}`}>
-                        Pengadaan
-                      </button>
-                      <button onClick={() => handleNavClick("sopp_sewa")} className={`w-full px-3 py-1.5 rounded-lg text-left transition-all cursor-pointer ${view === "sopp_sewa" ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold" : "text-slate-600 dark:text-slate-400 hover:text-[#00753A]"}`}>
-                        Sewa
-                      </button>
-                      <button onClick={() => handleNavClick("sopp_renovasi")} className={`w-full px-3 py-1.5 rounded-lg text-left transition-all cursor-pointer ${view === "sopp_renovasi" ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold" : "text-slate-600 dark:text-slate-400 hover:text-[#00753A]"}`}>
-                        Renovasi
-                      </button>
+                    <div className="ml-5 pl-3.5 py-1 space-y-1 text-xs border-l-2 border-emerald-500/20 dark:border-emerald-500/30 my-1">
+                      {[
+                        { id: "sopp_pengadaan", label: "Pengadaan", desc: "Belanja Barang" },
+                        { id: "sopp_sewa", label: "Sewa", desc: "Perjanjian Sewa" },
+                        { id: "sopp_renovasi", label: "Renovasi", desc: "Pemeliharaan" },
+                      ].map((sub) => {
+                        const isActive = view === sub.id;
+                        return (
+                          <button
+                            key={sub.id}
+                            onClick={() => handleNavClick(sub.id)}
+                            className={`w-full px-2.5 py-1.5 rounded-lg text-left flex items-start gap-2.5 transition-all cursor-pointer ${
+                              isActive
+                                ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200/60 dark:border-emerald-800/40 shadow-xs"
+                                : "text-slate-600 dark:text-slate-400 hover:text-[#00753A] dark:hover:text-emerald-400 hover:bg-slate-100/60 dark:hover:bg-slate-800/40"
+                            }`}
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full transition-all mt-1.5 shrink-0 ${isActive ? "bg-[#00753A] dark:bg-emerald-400 scale-125" : "bg-slate-300 dark:bg-slate-600"}`} />
+                            <div className="flex flex-col min-w-0">
+                              <span className="font-semibold text-xs leading-tight">{sub.label}</span>
+                              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal leading-tight mt-0.5">{sub.desc}</span>
+                            </div>
+                          </button>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
 
+                {/* Riwayat Surat */}
                 <button
                   onClick={() => handleNavClick("riwayat")}
-                  className={`w-full px-3.5 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
+                  className={`w-full px-3 py-2 rounded-xl flex items-center gap-2.5 text-left transition-all cursor-pointer ${
                     view === "riwayat"
-                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-xs"
                       : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                   }`}
                 >
-                  <History className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
-                  <span>Riwayat Surat</span>
+                  <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#00753A] dark:text-emerald-400 shrink-0">
+                    <History className="w-4 h-4" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold">Riwayat Surat</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal leading-tight">Arsip Dokumen Sah</span>
+                  </div>
                 </button>
               </div>
             )}
@@ -777,39 +897,54 @@ export default function Navbar({
             {/* CATEGORY: DATA MASTER */}
             {activeRailCategory === "master" && (
               <div className="space-y-1.5 animate-in fade-in duration-200">
-                <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#00753A] dark:text-emerald-400">Kelola Data Master</div>
+                <div className="px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[#00753A] dark:text-emerald-400">Kelola Data Master</div>
                 <button
                   onClick={() => handleNavClick("master_barang")}
-                  className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
+                  className={`w-full px-3 py-2 rounded-xl flex items-center gap-2.5 text-left transition-all cursor-pointer ${
                     view === "master_barang"
-                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-xs"
                       : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                   }`}
                 >
-                  <Package className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
-                  <span>Master Barang</span>
+                  <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#00753A] dark:text-emerald-400 shrink-0">
+                    <Package className="w-4 h-4" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold">Master Barang</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal leading-tight">Katalog & Stok Logistik</span>
+                  </div>
                 </button>
                 <button
                   onClick={() => handleNavClick("master_vendor")}
-                  className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
+                  className={`w-full px-3 py-2 rounded-xl flex items-center gap-2.5 text-left transition-all cursor-pointer ${
                     view === "master_vendor"
-                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-xs"
                       : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                   }`}
                 >
-                  <Users className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
-                  <span>Supplier / Vendor</span>
+                  <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#00753A] dark:text-emerald-400 shrink-0">
+                    <Users className="w-4 h-4" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold">Supplier / Vendor</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal leading-tight">Daftar Rekanan Resmi</span>
+                  </div>
                 </button>
                 <button
                   onClick={() => handleNavClick("master_outlet")}
-                  className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
+                  className={`w-full px-3 py-2 rounded-xl flex items-center gap-2.5 text-left transition-all cursor-pointer ${
                     view === "master_outlet"
-                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-xs"
                       : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                   }`}
                 >
-                  <Building className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
-                  <span>Outlet & Instansi</span>
+                  <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#00753A] dark:text-emerald-400 shrink-0">
+                    <Building className="w-4 h-4" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold">Outlet & Instansi</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal leading-tight">Unit Kerja & Cabang</span>
+                  </div>
                 </button>
               </div>
             )}
@@ -817,39 +952,54 @@ export default function Navbar({
             {/* CATEGORY: INVENTARIS */}
             {activeRailCategory === "inventaris" && (
               <div className="space-y-1.5 animate-in fade-in duration-200">
-                <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#00753A] dark:text-emerald-400">Aset & Perangkat IT</div>
+                <div className="px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[#00753A] dark:text-emerald-400">Aset & Perangkat IT</div>
                 <button
                   onClick={() => handleNavClick("perangkat_komputer")}
-                  className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
+                  className={`w-full px-3 py-2 rounded-xl flex items-center gap-2.5 text-left transition-all cursor-pointer ${
                     view === "perangkat_komputer"
-                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-xs"
                       : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                   }`}
                 >
-                  <Monitor className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
-                  <span>Perangkat Komputer</span>
+                  <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#00753A] dark:text-emerald-400 shrink-0">
+                    <Monitor className="w-4 h-4" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold">Perangkat Komputer</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal leading-tight">PC & All-in-One</span>
+                  </div>
                 </button>
                 <button
                   onClick={() => handleNavClick("perangkat_laptop")}
-                  className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
+                  className={`w-full px-3 py-2 rounded-xl flex items-center gap-2.5 text-left transition-all cursor-pointer ${
                     view === "perangkat_laptop"
-                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-xs"
                       : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                   }`}
                 >
-                  <Laptop className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
-                  <span>Perangkat Laptop</span>
+                  <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#00753A] dark:text-emerald-400 shrink-0">
+                    <Laptop className="w-4 h-4" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold">Perangkat Laptop</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal leading-tight">Notebook Pegawai</span>
+                  </div>
                 </button>
                 <button
                   onClick={() => handleNavClick("perangkat_printer")}
-                  className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
+                  className={`w-full px-3 py-2 rounded-xl flex items-center gap-2.5 text-left transition-all cursor-pointer ${
                     view === "perangkat_printer"
-                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-xs"
                       : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                   }`}
                 >
-                  <Printer className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
-                  <span>Perangkat Printer</span>
+                  <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#00753A] dark:text-emerald-400 shrink-0">
+                    <Printer className="w-4 h-4" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold">Perangkat Printer</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal leading-tight">Printer & Scanner</span>
+                  </div>
                 </button>
               </div>
             )}
@@ -857,50 +1007,70 @@ export default function Navbar({
             {/* CATEGORY: BANGUNAN */}
             {activeRailCategory === "bangunan" && (
               <div className="space-y-1.5 animate-in fade-in duration-200">
-                <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#00753A] dark:text-emerald-400">Aset Bangunan & Fasilitas</div>
+                <div className="px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[#00753A] dark:text-emerald-400">Aset Bangunan & Fasilitas</div>
                 <button
                   onClick={() => handleNavClick("bangunan_tanah")}
-                  className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
+                  className={`w-full px-3 py-2 rounded-xl flex items-center gap-2.5 text-left transition-all cursor-pointer ${
                     view === "bangunan_tanah"
-                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-xs"
                       : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                   }`}
                 >
-                  <Map className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
-                  <span>Aset Tanah</span>
+                  <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#00753A] dark:text-emerald-400 shrink-0">
+                    <Map className="w-4 h-4" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold">Aset Tanah</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal leading-tight">Sertifikat & Lokasi Lahan</span>
+                  </div>
                 </button>
                 <button
                   onClick={() => handleNavClick("bangunan_sewa")}
-                  className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
+                  className={`w-full px-3 py-2 rounded-xl flex items-center gap-2.5 text-left transition-all cursor-pointer ${
                     view === "bangunan_sewa"
-                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-xs"
                       : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                   }`}
                 >
-                  <Building className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
-                  <span>Aset Bangunan & Sewa</span>
+                  <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#00753A] dark:text-emerald-400 shrink-0">
+                    <Building className="w-4 h-4" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold">Aset Bangunan & Sewa</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal leading-tight">Gedung & Kontrak Sewa</span>
+                  </div>
                 </button>
                 <button
                   onClick={() => handleNavClick("bangunan_renovasi")}
-                  className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
+                  className={`w-full px-3 py-2 rounded-xl flex items-center gap-2.5 text-left transition-all cursor-pointer ${
                     view === "bangunan_renovasi"
-                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-xs"
                       : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                   }`}
                 >
-                  <Building2 className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
-                  <span>Renovasi Gedung</span>
+                  <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#00753A] dark:text-emerald-400 shrink-0">
+                    <Building2 className="w-4 h-4" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold">Renovasi Gedung</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal leading-tight">Monitoring Proyek & Biaya</span>
+                  </div>
                 </button>
                 <button
                   onClick={() => handleNavClick("bangunan_sarana")}
-                  className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
+                  className={`w-full px-3 py-2 rounded-xl flex items-center gap-2.5 text-left transition-all cursor-pointer ${
                     view === "bangunan_sarana"
-                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-xs"
                       : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                   }`}
                 >
-                  <Shield className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
-                  <span>Sarana Pengamanan</span>
+                  <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#00753A] dark:text-emerald-400 shrink-0">
+                    <Shield className="w-4 h-4" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold">Sarana Pengamanan</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal leading-tight">CCTV, Alarm & APAR</span>
+                  </div>
                 </button>
               </div>
             )}
@@ -908,30 +1078,40 @@ export default function Navbar({
             {/* CATEGORY: SETTINGS */}
             {activeRailCategory === "settings" && (
               <div className="space-y-1.5 animate-in fade-in duration-200">
-                <div className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#00753A] dark:text-emerald-400">Pengaturan & Hak Akses</div>
+                <div className="px-3.5 py-1 text-[11px] font-bold uppercase tracking-wider text-[#00753A] dark:text-emerald-400">Pengaturan & Hak Akses</div>
                 {isAdmin && (
                   <button
                     onClick={() => handleNavClick("kelola_user")}
-                    className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
+                    className={`w-full px-3 py-2 rounded-xl flex items-center gap-2.5 text-left transition-all cursor-pointer ${
                       view === "kelola_user"
-                        ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                        ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-xs"
                         : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                     }`}
                   >
-                    <Users className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
-                    <span>Manajemen User</span>
+                    <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#00753A] dark:text-emerald-400 shrink-0">
+                      <Users className="w-4 h-4" />
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-xs font-semibold">Manajemen User</span>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal leading-tight">Hak Akses & Akun Staff</span>
+                    </div>
                   </button>
                 )}
                 <button
                   onClick={() => handleNavClick("log_aktivitas")}
-                  className={`w-full px-4 py-2.5 rounded-xl flex items-center gap-3 text-left transition-colors ${
+                  className={`w-full px-3 py-2 rounded-xl flex items-center gap-2.5 text-left transition-all cursor-pointer ${
                     view === "log_aktivitas"
-                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-xs"
                       : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
                   }`}
                 >
-                  <Activity className="w-4 h-4 shrink-0 text-[#00753A] dark:text-emerald-400" />
-                  <span>Log Aktivitas Sistem</span>
+                  <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#00753A] dark:text-emerald-400 shrink-0">
+                    <Activity className="w-4 h-4" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold">Log Aktivitas Sistem</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal leading-tight">Audit Trail Riwayat Kerja</span>
+                  </div>
                 </button>
               </div>
             )}

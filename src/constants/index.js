@@ -10,8 +10,8 @@ export const createInitialFormData = (jenis = "Barang Keluar") => {
     asalOutlet: "",
     kodeOutlet: "",
     // Pihak 1 (Yang Menyerahkan)
-    pihak1Nama: isMasuk ? "" : "Ahmad Dendy Syaputra",
-    pihak1Jabatan: isMasuk ? "" : "Staff Pengadaan dan Logistik",
+    pihak1Nama: isMasuk ? "" : "Dio Haris Kurniawan",
+    pihak1Jabatan: isMasuk ? "" : "Junior Officer",
     pihak1Instansi: isMasuk ? "" : "PT Pegadaian (Persero)",
     // Pihak Mengetahui (Hanya untuk Surat Keluar)
     pihakMengetahuiNama: isMasuk ? "" : "Zoni Rahmawan Putra",

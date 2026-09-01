@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { X, Edit, Database, Plus, Loader2, Package, Calendar, Building2, ChevronDown } from "lucide-react";
+import { X, Edit, Database, Plus, Loader2, Package, Calendar, Building2, ChevronDown, Check, Sparkles } from "lucide-react";
 
 export default function BarangFormModal({ isOpen, editingInv, isSaving, inventory = [], vendors = [], onClose, onSubmit }) {
   const [namaBarang, setNamaBarang] = useState("");
   const [vendorNama, setVendorNama] = useState("");
   const [tglMulai, setTglMulai] = useState("");
   const [tglSelesai, setTglSelesai] = useState("");
-  const [isBarangDropdownOpen, setIsBarangDropdownOpen] = useState(false);
   const [isVendorDropdownOpen, setIsVendorDropdownOpen] = useState(false);
+  const [isSuggestionOpen, setIsSuggestionOpen] = useState(false);
 
   useEffect(() => {
     if (editingInv) {
@@ -33,17 +33,19 @@ export default function BarangFormModal({ isOpen, editingInv, isSaving, inventor
       { nama: "Dell Optiplex SFF 7010", satuan: "Unit", kategori: "IT Hardware" },
       { nama: "EPSON L4260 ECO TANK", satuan: "Unit", kategori: "IT Hardware" },
       { nama: "LQ-310 DOT MATRIX", satuan: "Unit", kategori: "IT Hardware" },
+      { nama: "Dell Pro Slim QCT 1250", satuan: "Unit", kategori: "IT Hardware" },
+      { nama: "Dell Pro Tower QCT1250", satuan: "Unit", kategori: "IT Hardware" },
     ];
 
-    defaults.forEach(item => uniqueMap.set(item.nama.toLowerCase(), item));
+    defaults.forEach((item) => uniqueMap.set(item.nama.toLowerCase(), item));
 
     if (Array.isArray(inventory)) {
-      inventory.forEach(item => {
+      inventory.forEach((item) => {
         if (item.nama && !uniqueMap.has(item.nama.toLowerCase())) {
           uniqueMap.set(item.nama.toLowerCase(), {
             nama: item.nama,
-            satuan: item.satuan || "Pcs",
-            kategori: item.kategori || "Inventaris"
+            satuan: item.satuan || "Unit",
+            kategori: item.kategori || "Inventaris",
           });
         }
       });
@@ -97,18 +99,28 @@ export default function BarangFormModal({ isOpen, editingInv, isSaving, inventor
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col max-h-[90vh] overflow-hidden transform transition-all animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 bg-black/60 dark:bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-4xl flex flex-col max-h-[90vh] overflow-hidden transform transition-all animate-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/90 shrink-0">
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50/80 dark:bg-slate-900/90 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="bg-emerald-500/10 p-2.5 rounded-xl border border-emerald-500/20 text-emerald-400">{editingInv ? <Edit className="w-5 h-5" /> : <Database className="w-5 h-5" />}</div>
+            <div className="bg-[#E6F4EA] dark:bg-emerald-950/80 p-2.5 rounded-xl border border-emerald-200 dark:border-emerald-800/40 text-[#00753A] dark:text-emerald-400">
+              {editingInv ? <Edit className="w-5 h-5" /> : <Database className="w-5 h-5" />}
+            </div>
             <div>
-              <h3 className="font-bold text-lg text-slate-100">{editingInv ? "Edit Data Barang / Asset" : "Tambah Master Barang / Asset"}</h3>
-              <p className="text-xs text-slate-400">{editingInv ? "Perbarui informasi rincian katalog barang" : "Masukkan informasi barang baru ke dalam database master"}</p>
+              <h3 className="font-bold text-lg text-slate-900 dark:text-slate-100">
+                {editingInv ? "Edit Data Barang / Asset" : "Tambah Master Barang / Asset"}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {editingInv ? "Perbarui informasi rincian katalog barang" : "Masukkan informasi barang baru ke dalam database master"}
+              </p>
             </div>
           </div>
-          <button onClick={onClose} disabled={isSaving} className="text-slate-400 hover:text-slate-200 hover:bg-slate-800 p-2 rounded-xl cursor-pointer transition-colors disabled:opacity-50">
+          <button
+            onClick={onClose}
+            disabled={isSaving}
+            className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 p-2 rounded-xl cursor-pointer transition-colors disabled:opacity-50"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -118,27 +130,60 @@ export default function BarangFormModal({ isOpen, editingInv, isSaving, inventor
           <form id="formBarang" onSubmit={onSubmit} className="space-y-6">
             {/* Section 1: Informasi Utama */}
             <div className="space-y-3">
-              <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 uppercase tracking-wider">
+              <div className="flex items-center gap-2 text-xs font-bold text-[#00753A] dark:text-emerald-400 uppercase tracking-wider">
                 <Package className="w-4 h-4" /> Informasi Utama Barang
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-slate-950/40 p-4 rounded-xl border border-slate-800/60">
-                <div className="md:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                    Nama Barang <span className="text-rose-400">*</span>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-slate-50 dark:bg-slate-950/40 p-4 rounded-xl border border-slate-200 dark:border-slate-800/60">
+                <div className="md:col-span-2 relative">
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Nama Barang <span className="text-rose-500">*</span>
                   </label>
                   <input
                     name="nama"
                     type="text"
-                    defaultValue={editingInv?.nama || ""}
+                    value={namaBarang}
+                    onChange={(e) => setNamaBarang(e.target.value)}
+                    onFocus={() => setIsSuggestionOpen(true)}
                     required
                     placeholder="Contoh: Dell Optiplex SFF 7010"
-                    className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs text-slate-100 placeholder:text-slate-500 outline-none focus:border-[#00753A] focus:ring-1 focus:ring-[#00753A]/40 transition-all"
+                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 outline-none focus:border-[#00753A] focus:ring-1 focus:ring-[#00753A]/40 transition-all"
                   />
+
+                  {/* Suggestions Popover */}
+                  {isSuggestionOpen && !editingInv && (
+                    <>
+                      <div className="fixed inset-0 z-10" onClick={() => setIsSuggestionOpen(false)} />
+                      <div className="absolute left-0 right-0 top-full mt-1 max-h-48 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-20 divide-y divide-slate-100 dark:divide-slate-800 text-xs custom-scrollbar">
+                        <div className="p-2 bg-slate-50 dark:bg-slate-950 text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
+                          <Sparkles className="w-3 h-3 text-[#00753A] dark:text-emerald-400" /> Rekomendasi / Riwayat Barang
+                        </div>
+                        {barangSuggestions
+                          .filter((b) => b.nama.toLowerCase().includes((namaBarang || "").toLowerCase()))
+                          .slice(0, 8)
+                          .map((b, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => {
+                                setNamaBarang(b.nama);
+                                setIsSuggestionOpen(false);
+                              }}
+                              className="w-full text-left px-3 py-2 hover:bg-[#E6F4EA] dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 hover:text-[#00753A] dark:hover:text-emerald-400 flex items-center justify-between transition-colors cursor-pointer"
+                            >
+                              <span className="font-medium">{b.nama}</span>
+                              <span className="text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">
+                                {b.kategori} • {b.satuan}
+                              </span>
+                            </button>
+                          ))}
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                    Stok Barang <span className="text-rose-400">*</span>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Stok Barang <span className="text-rose-500">*</span>
                   </label>
                   <input
                     name="kuantitas"
@@ -146,23 +191,24 @@ export default function BarangFormModal({ isOpen, editingInv, isSaving, inventor
                     defaultValue={editingInv?.kuantitas !== undefined ? editingInv.kuantitas : editingInv?.stok || 0}
                     min="0"
                     required
-                    className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs text-slate-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 transition-all"
+                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-[#00753A] focus:ring-1 focus:ring-[#00753A]/40 transition-all font-mono"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                    Satuan <span className="text-rose-400">*</span>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Satuan <span className="text-rose-500">*</span>
                   </label>
                   <select
                     name="satuan"
-                    defaultValue={editingInv?.satuan || "Pcs"}
+                    defaultValue={editingInv?.satuan || "Unit"}
                     required
-                    className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs text-slate-100 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 transition-all cursor-pointer"
+                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-[#00753A] focus:ring-1 focus:ring-[#00753A]/40 transition-all cursor-pointer"
                   >
-                    <option value="Pcs">Pcs</option>
                     <option value="Unit">Unit</option>
+                    <option value="Pcs">Pcs</option>
                     <option value="Box">Box</option>
+                    <option value="Rim">Rim</option>
                     <option value="Set">Set</option>
                     <option value="Paket">Paket</option>
                     <option value="Roll">Roll</option>
@@ -171,14 +217,14 @@ export default function BarangFormModal({ isOpen, editingInv, isSaving, inventor
               </div>
             </div>
 
-            {/* Section 2: Vendor & Kontrak */}
+            {/* Section 2: Vendor & Legalitas Kontrak */}
             <div className="space-y-3">
-              <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 uppercase tracking-wider">
+              <div className="flex items-center gap-2 text-xs font-bold text-[#00753A] dark:text-emerald-400 uppercase tracking-wider">
                 <Building2 className="w-4 h-4" /> Vendor & Legalitas Kontrak
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-950/40 p-4 rounded-xl border border-slate-800/60">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 dark:bg-slate-950/40 p-4 rounded-xl border border-slate-200 dark:border-slate-800/60">
                 <div className="relative">
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">Nama Vendor</label>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Nama Vendor</label>
                   <div className="relative">
                     <input
                       name="vendor_nama"
@@ -190,7 +236,7 @@ export default function BarangFormModal({ isOpen, editingInv, isSaving, inventor
                       }}
                       onFocus={() => setIsVendorDropdownOpen(true)}
                       placeholder="Pilih / ketik nama vendor..."
-                      className="w-full pl-9 pr-8 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs text-slate-100 placeholder:text-slate-500 outline-none focus:border-[#00753A] focus:ring-1 focus:ring-[#00753A]/40 transition-all"
+                      className="w-full pl-9 pr-8 py-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 outline-none focus:border-[#00753A] focus:ring-1 focus:ring-[#00753A]/40 transition-all"
                     />
                     <Building2 className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
                     <ChevronDown
@@ -203,7 +249,7 @@ export default function BarangFormModal({ isOpen, editingInv, isSaving, inventor
                   {isVendorDropdownOpen && (
                     <>
                       <div className="fixed inset-0 z-10" onClick={() => setIsVendorDropdownOpen(false)} />
-                      <div className="absolute left-0 right-0 top-full mt-1.5 max-h-60 overflow-y-auto bg-slate-900 border border-slate-700/90 rounded-xl shadow-2xl z-20 divide-y divide-slate-800 text-xs custom-scrollbar">
+                      <div className="absolute left-0 right-0 top-full mt-1.5 max-h-60 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700/90 rounded-xl shadow-2xl z-20 divide-y divide-slate-100 dark:divide-slate-800 text-xs custom-scrollbar">
                         {vendors.filter((v) => {
                           const q = (vendorNama || "").toLowerCase();
                           const name = (v.nama_perusahaan || v.nama || "").toLowerCase();
@@ -233,12 +279,12 @@ export default function BarangFormModal({ isOpen, editingInv, isSaving, inventor
                                     setVendorNama(displayName);
                                     setIsVendorDropdownOpen(false);
                                   }}
-                                  className="w-full text-left p-3 hover:bg-[#E6F4EA] dark:hover:bg-slate-800 text-slate-100 hover:text-[#00753A] flex flex-col gap-1 transition-colors cursor-pointer group"
+                                  className="w-full text-left p-3 hover:bg-[#E6F4EA] dark:hover:bg-slate-800 text-slate-800 dark:text-slate-100 hover:text-[#00753A] flex flex-col gap-1 transition-colors cursor-pointer group"
                                 >
-                                  <span className="font-bold group-hover:text-[#00753A]">
+                                  <span className="font-bold group-hover:text-[#00753A] dark:group-hover:text-emerald-400">
                                     {displayName}
                                   </span>
-                                  <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300">
+                                  <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
                                     {v.pimpinan && (
                                       <span>
                                         {v.pimpinan} ({v.jabatan || "Direktur"})
@@ -246,7 +292,7 @@ export default function BarangFormModal({ isOpen, editingInv, isSaving, inventor
                                     )}
                                     {v.kota && <span>• {v.kota}</span>}
                                     {v.keterangan && (
-                                      <span className="px-1.5 py-0.5 bg-emerald-950 text-emerald-300 rounded text-[9px] font-extrabold border border-emerald-800/40">
+                                      <span className="px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 rounded text-[9px] font-extrabold border border-emerald-200 dark:border-emerald-800/40">
                                         {v.keterangan}
                                       </span>
                                     )}
@@ -261,22 +307,22 @@ export default function BarangFormModal({ isOpen, editingInv, isSaving, inventor
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">No. SPK</label>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">No. SPK</label>
                   <input
                     name="no_spk"
                     defaultValue={editingInv?.no_spk || ""}
                     placeholder="Contoh: PO/3567/00108.04/2026"
-                    className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs text-slate-100 placeholder:text-slate-500 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 transition-all font-mono"
+                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 outline-none focus:border-[#00753A] focus:ring-1 focus:ring-[#00753A]/40 transition-all font-mono"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">No. PKS</label>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">No. PKS</label>
                   <input
                     name="no_pks"
                     defaultValue={editingInv?.no_pks || ""}
                     placeholder="Contoh: 2503/00108.04/2026"
-                    className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-700/80 rounded-xl text-xs text-slate-100 placeholder:text-slate-500 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 transition-all font-mono"
+                    className="w-full px-3.5 py-2.5 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 outline-none focus:border-[#00753A] focus:ring-1 focus:ring-[#00753A]/40 transition-all font-mono"
                   />
                 </div>
               </div>
@@ -284,12 +330,12 @@ export default function BarangFormModal({ isOpen, editingInv, isSaving, inventor
 
             {/* Section 3: Tanggal & Status Sewa */}
             <div className="space-y-3">
-              <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 uppercase tracking-wider">
+              <div className="flex items-center gap-2 text-xs font-bold text-[#00753A] dark:text-emerald-400 uppercase tracking-wider">
                 <Calendar className="w-4 h-4" /> Jangka Waktu & Status Otomatis
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-slate-950/40 p-4 rounded-xl border border-slate-800/60">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-slate-50 dark:bg-slate-950/40 p-4 rounded-xl border border-slate-200 dark:border-slate-800/60">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">Tgl Mulai Sewa</label>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Tgl Mulai Sewa</label>
                   <input
                     name="tanggal_mulai"
                     type="date"
@@ -298,14 +344,14 @@ export default function BarangFormModal({ isOpen, editingInv, isSaving, inventor
                     onChange={(e) => setTglMulai(e.target.value)}
                     className={`w-full px-3.5 py-2.5 rounded-xl text-xs outline-none transition-all ${
                       !isVendorFilled
-                        ? "bg-slate-950 border border-slate-800/80 text-slate-500 cursor-not-allowed opacity-60"
-                        : "bg-slate-900 border border-slate-700/80 text-slate-100 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30"
+                        ? "bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800/80 text-slate-400 cursor-not-allowed opacity-60"
+                        : "bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700/80 text-slate-900 dark:text-slate-100 focus:border-[#00753A] focus:ring-1 focus:ring-[#00753A]/40"
                     }`}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">Tgl Selesai Sewa</label>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Tgl Selesai Sewa</label>
                   <input
                     name="tanggal_selesai"
                     type="date"
@@ -314,46 +360,63 @@ export default function BarangFormModal({ isOpen, editingInv, isSaving, inventor
                     onChange={(e) => setTglSelesai(e.target.value)}
                     className={`w-full px-3.5 py-2.5 rounded-xl text-xs outline-none transition-all ${
                       !isVendorFilled
-                        ? "bg-slate-950 border border-slate-800/80 text-slate-500 cursor-not-allowed opacity-60"
-                        : "bg-slate-900 border border-slate-700/80 text-slate-100 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30"
+                        ? "bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800/80 text-slate-400 cursor-not-allowed opacity-60"
+                        : "bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700/80 text-slate-900 dark:text-slate-100 focus:border-[#00753A] focus:ring-1 focus:ring-[#00753A]/40"
                     }`}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">Status (Otomatis)</label>
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Status (Otomatis)</label>
                   <input type="hidden" name="status" value={statusVal} />
                   <input
                     type="text"
                     readOnly
                     value={statusVal}
-                    className={`w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs font-bold cursor-not-allowed transition-all ${
-                      statusVal === "Sewa Selesai" ? "text-amber-400" : statusVal === "Sewa Dibatalkan" ? "text-rose-400" : "text-emerald-400"
+                    className={`w-full px-3.5 py-2.5 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold cursor-not-allowed transition-all ${
+                      statusVal === "Sewa Selesai"
+                        ? "text-amber-600 dark:text-amber-400"
+                        : statusVal === "Sewa Dibatalkan"
+                        ? "text-rose-600 dark:text-rose-400"
+                        : statusVal === "Sewa Berjalan"
+                        ? "text-emerald-700 dark:text-emerald-400"
+                        : "text-slate-700 dark:text-slate-300"
                     }`}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">Masa Sewa (Bulan)</label>
-                  <input name="masa_sewa_bulan" type="number" readOnly value={masaSewa} className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-300 font-bold cursor-not-allowed" />
+                  <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Masa Sewa (Bulan)</label>
+                  <input
+                    name="masa_sewa_bulan"
+                    type="number"
+                    readOnly
+                    value={masaSewa}
+                    className="w-full px-3.5 py-2.5 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-800 dark:text-slate-300 font-bold cursor-not-allowed font-mono"
+                  />
                 </div>
               </div>
               {!isVendorFilled && (
-                <p className="text-[11px] text-amber-400/90 mt-2 font-medium flex items-center gap-1.5">
-                  <span>💡</span> Isi atau pilih <strong className="font-semibold text-amber-300">Nama Vendor</strong> terlebih dahulu untuk mengaktifkan tanggal sewa.
+                <p className="text-[11px] text-amber-700 dark:text-amber-400/90 mt-2 font-medium flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/30 p-2.5 rounded-lg border border-amber-200 dark:border-amber-900/40">
+                  <span>💡</span> Isi atau pilih <strong className="font-bold text-amber-900 dark:text-amber-300">Nama Vendor</strong> terlebih dahulu untuk mengaktifkan tanggal & masa sewa.
                 </p>
               )}
             </div>
 
             {/* Footer Actions */}
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-800 shrink-0">
-              <button type="button" onClick={onClose} disabled={isSaving} className="px-5 py-2.5 text-xs font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-xl transition-all cursor-pointer disabled:opacity-50">
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-slate-800 shrink-0">
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isSaving}
+                className="px-5 py-2.5 text-xs font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-all cursor-pointer disabled:opacity-50"
+              >
                 Batal
               </button>
               <button
                 type="submit"
                 disabled={isSaving}
-                className="px-6 py-2.5 text-xs font-semibold text-white bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-xl flex items-center gap-2 shadow-lg shadow-emerald-600/20 transition-all cursor-pointer disabled:opacity-50"
+                className="px-6 py-2.5 text-xs font-semibold text-white bg-[#00753A] hover:bg-[#005c2e] rounded-xl flex items-center gap-2 shadow-lg shadow-[#00753A]/20 transition-all cursor-pointer disabled:opacity-50"
               >
                 {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
                 {editingInv ? "Simpan Perubahan" : "Tambah Barang"}

@@ -161,7 +161,13 @@ export default function TabContent({
 
       {has("master_barang") && (
         <Panel id="master_barang" activeTab={activeTab}>
-          <DataMaster activeMenu="master_barang" inventory={inventory} outlets={outlets} vendors={vendors} userRole={userRole} loadAllData={loadAllData} />
+          <DataMaster activeMenu="master_barang" inventory={inventory} outlets={outlets} vendors={vendors} spkPksList={spkHistory} userRole={userRole} loadAllData={loadAllData} />
+        </Panel>
+      )}
+
+      {has("master_spk_pks") && (
+        <Panel id="master_spk_pks" activeTab={activeTab}>
+          <DataMaster activeMenu="master_spk_pks" spkPksList={spkHistory} inventory={inventory} outlets={outlets} vendors={vendors} userRole={userRole} loadAllData={loadAllData} />
         </Panel>
       )}
 

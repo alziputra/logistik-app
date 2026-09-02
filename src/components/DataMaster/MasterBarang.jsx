@@ -20,6 +20,7 @@ import {
   X,
   Layers,
   Sparkles,
+  Tag,
 } from "lucide-react";
 import { addInventory, updateInventory, deleteInventory } from "../../services/inventoryService";
 import BarangFormModal from "./BarangFormModal";
@@ -27,10 +28,12 @@ import { useNotification } from "../../context/NotificationContext";
 import ExcelActionButtons from "../Common/ExcelActionButtons";
 import Pagination from "../Common/Pagination";
 import ConfirmDeleteModal from "../Modal/ConfirmDeleteModal";
+import { BARANG_CATEGORIES, getCategoryBadgeStyle } from "../../constants/barangCategories";
 
 export default function MasterBarang({
   inventory = [],
   vendors = [],
+  spkList = [],
   userRole = "admin",
   loadAllData,
 }) {
@@ -39,6 +42,7 @@ export default function MasterBarang({
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("ALL");
+  const [selectedCategory, setSelectedCategory] = useState("ALL");
   const [selectedVendor, setSelectedVendor] = useState("ALL");
   const [selectedStockStatus, setSelectedStockStatus] = useState("ALL"); // ALL, AVAILABLE, EMPTY
 
@@ -81,6 +85,16 @@ export default function MasterBarang({
     return Array.from(vSet).sort();
   }, [inventory]);
 
+  // Category options list (merging predefined categories and any custom categories in inventory)
+  const categoryOptions = useMemo(() => {
+    const cSet = new Set(BARANG_CATEGORIES.map((c) => c.name));
+    inventory.forEach((item) => {
+      const c = (item.kategori || "").trim();
+      if (c) cSet.add(c);
+    });
+    return Array.from(cSet);
+  }, [inventory]);
+
   // Multi-field intelligent filtered inventory
   const filteredInventory = useMemo(() => {
     let result = [...inventory];
@@ -90,6 +104,14 @@ export default function MasterBarang({
       result = result.filter((item) => {
         const s = (item.status || "Inventaris").toUpperCase();
         return s === selectedStatus.toUpperCase();
+      });
+    }
+
+    // Category Filter
+    if (selectedCategory !== "ALL") {
+      result = result.filter((item) => {
+        const c = (item.kategori || "Lainnya").toLowerCase();
+        return c === selectedCategory.toLowerCase();
       });
     }
 
@@ -119,6 +141,7 @@ export default function MasterBarang({
       const tokens = searchQuery.toLowerCase().trim().split(/\s+/);
       result = result.filter((item) => {
         const itemNama = (item.nama || "").toLowerCase();
+        const itemKategori = (item.kategori || "Lainnya").toLowerCase();
         const itemVendor = (item.vendor_nama || item.vendor?.nama || "").toLowerCase();
         const itemSpk = (item.no_spk || "").toLowerCase();
         const itemPks = (item.no_pks || "").toLowerCase();
@@ -126,7 +149,7 @@ export default function MasterBarang({
         const itemSatuan = (item.satuan || "").toLowerCase();
         const itemMasa = item.masa_sewa_bulan ? `${item.masa_sewa_bulan} bulan` : "";
 
-        const fullSearchString = `${itemNama} ${itemVendor} ${itemSpk} ${itemPks} ${itemStatus} ${itemSatuan} ${itemMasa}`;
+        const fullSearchString = `${itemNama} ${itemKategori} ${itemVendor} ${itemSpk} ${itemPks} ${itemStatus} ${itemSatuan} ${itemMasa}`;
 
         // Every token must exist in the item string
         return tokens.every((token) => fullSearchString.includes(token));
@@ -144,6 +167,9 @@ export default function MasterBarang({
       } else if (sortField === "vendor") {
         aVal = (a.vendor_nama || a.vendor?.nama || "").toLowerCase();
         bVal = (b.vendor_nama || b.vendor?.nama || "").toLowerCase();
+      } else if (sortField === "kategori") {
+        aVal = (a.kategori || "Lainnya").toLowerCase();
+        bVal = (b.kategori || "Lainnya").toLowerCase();
       } else {
         aVal = String(aVal || "").toLowerCase();
         bVal = String(bVal || "").toLowerCase();
@@ -155,7 +181,7 @@ export default function MasterBarang({
     });
 
     return result;
-  }, [inventory, selectedStatus, selectedVendor, selectedStockStatus, searchQuery, sortField, sortDirection]);
+  }, [inventory, selectedStatus, selectedCategory, selectedVendor, selectedStockStatus, searchQuery, sortField, sortDirection]);
 
   // Handle Sort Click
   const handleSort = (field) => {
@@ -171,6 +197,7 @@ export default function MasterBarang({
   const handleResetFilters = () => {
     setSearchQuery("");
     setSelectedStatus("ALL");
+    setSelectedCategory("ALL");
     setSelectedVendor("ALL");
     setSelectedStockStatus("ALL");
     setCurrentPage(1);
@@ -179,6 +206,7 @@ export default function MasterBarang({
   const isFilterActive =
     searchQuery.trim() !== "" ||
     selectedStatus !== "ALL" ||
+    selectedCategory !== "ALL" ||
     selectedVendor !== "ALL" ||
     selectedStockStatus !== "ALL";
 
@@ -207,6 +235,7 @@ export default function MasterBarang({
 
     const payload = {
       nama: (form.get("nama") || "").trim(),
+      kategori: (form.get("kategori") || "").trim() || "Lainnya",
       kuantitas: Number(form.get("kuantitas") || 0),
       stok: Number(form.get("kuantitas") || 0),
       satuan: form.get("satuan") || "Unit",
@@ -387,6 +416,7 @@ export default function MasterBarang({
               fileName="Master_Barang_Pegadaian"
               headersMap={{
                 nama: "Nama Barang",
+                kategori: "Kategori",
                 kuantitas: "Kuantitas / Stok",
                 satuan: "Satuan",
                 status: "Status",
@@ -406,6 +436,7 @@ export default function MasterBarang({
                   try {
                     await addInventory({
                       nama,
+                      kategori: row.kategori || row["Kategori"] || row["Kategori Barang"] || "Lainnya",
                       kuantitas: Number(row.kuantitas || row["Kuantitas"] || row["Kuantitas / Stok"] || row["stok"] || 1),
                       stok: Number(row.kuantitas || row["Kuantitas"] || row["Kuantitas / Stok"] || row["stok"] || 1),
                       satuan: row.satuan || row["Satuan"] || "Unit",
@@ -450,7 +481,7 @@ export default function MasterBarang({
                 setSearchQuery(e.target.value);
                 setCurrentPage(1);
               }}
-              placeholder="Cari nama barang, vendor, no SPK/PKS, status, satuan..."
+              placeholder="Cari nama barang, kategori, vendor, SPK/PKS, status..."
               className="w-full pl-10 pr-9 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl text-xs text-slate-900 dark:text-slate-100 placeholder:text-slate-400 outline-none focus:border-[#00753A] focus:ring-1 focus:ring-[#00753A]/30 transition-all"
             />
             {searchQuery && (
@@ -466,6 +497,25 @@ export default function MasterBarang({
 
           {/* Filter Dropdowns & Reset */}
           <div className="flex flex-wrap items-center gap-2">
+            {/* Kategori Filter */}
+            <div className="relative">
+              <select
+                value={selectedCategory}
+                onChange={(e) => {
+                  setSelectedCategory(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="px-3 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-700 dark:text-slate-200 outline-none focus:border-[#00753A] cursor-pointer"
+              >
+                <option value="ALL">Semua Kategori ({categoryOptions.length})</option>
+                {categoryOptions.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* Vendor Filter */}
             <div className="relative">
               <select
@@ -587,6 +637,17 @@ export default function MasterBarang({
                   </div>
                 </th>
 
+                {/* Kategori */}
+                <th
+                  onClick={() => handleSort("kategori")}
+                  className="px-5 py-4 cursor-pointer hover:text-slate-900 dark:hover:text-slate-100 transition-colors group"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span>Kategori</span>
+                    {renderSortIcon("kategori")}
+                  </div>
+                </th>
+
                 {/* Stok */}
                 <th
                   onClick={() => handleSort("stok")}
@@ -641,7 +702,7 @@ export default function MasterBarang({
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filteredInventory.length === 0 ? (
                 <tr>
-                  <td colSpan={canEdit ? "8" : "7"} className="px-6 py-14 text-center">
+                  <td colSpan={canEdit ? "9" : "8"} className="px-6 py-14 text-center">
                     <div className="flex flex-col items-center justify-center gap-2 max-w-sm mx-auto">
                       <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-full text-slate-400">
                         <Search className="w-6 h-6" />
@@ -685,8 +746,20 @@ export default function MasterBarang({
                         <td className="px-5 py-3.5 font-bold text-slate-900 dark:text-slate-100">
                           <div className="flex items-center gap-2">
                             <Package className="w-4 h-4 text-[#00753A] dark:text-emerald-400 shrink-0" />
-                            <span className="truncate max-w-[260px] font-semibold">{item.nama || "-"}</span>
+                            <span className="truncate max-w-60 font-semibold">{item.nama || "-"}</span>
                           </div>
+                        </td>
+
+                        {/* Kategori Badge */}
+                        <td className="px-5 py-3.5">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-semibold border ${getCategoryBadgeStyle(
+                              item.kategori
+                            )}`}
+                          >
+                            <Tag className="w-2.5 h-2.5 opacity-70" />
+                            {item.kategori || "Lainnya"}
+                          </span>
                         </td>
 
                         {/* Stok */}
@@ -711,7 +784,7 @@ export default function MasterBarang({
                         <td className="px-5 py-3.5 text-slate-700 dark:text-slate-300">
                           <div className="flex items-center gap-1.5">
                             {isVendorValid && <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />}
-                            <span className={`truncate max-w-[220px] ${isVendorValid ? "font-medium" : "text-slate-400"}`}>
+                            <span className={`truncate max-w-50 ${isVendorValid ? "font-medium" : "text-slate-400"}`}>
                               {vendorName}
                             </span>
                           </div>
@@ -779,6 +852,7 @@ export default function MasterBarang({
         isSaving={isSaving}
         inventory={inventory}
         vendors={vendors}
+        spkList={spkList}
         onClose={() => setIsModalOpen(false)}
         onSubmit={handleSubmit}
       />

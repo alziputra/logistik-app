@@ -3,6 +3,7 @@ export const VIEW_TITLES = {
   notifikasi: "Notifikasi Peringatan",
   riwayat: "Riwayat Surat",
   master_barang: "Master Barang",
+  master_spk_pks: "SPK dan PKS",
   master_outlet: "Master Instansi",
   master_vendor: "Master Vendor",
   form: "Surat Serah Terima",

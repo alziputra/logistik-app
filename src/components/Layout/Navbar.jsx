@@ -505,6 +505,17 @@ export default function Navbar({
                     <span>Master Barang</span>
                   </button>
                   <button
+                    onClick={() => handleNavClick("master_spk_pks")}
+                    className={`w-full px-3 py-2 rounded-xl text-left flex items-center gap-2.5 transition-all ${
+                      view === "master_spk_pks"
+                        ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40"
+                        : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/50"
+                    }`}
+                  >
+                    <FileText className="w-3.5 h-3.5 text-[#00753A] dark:text-emerald-400 shrink-0" />
+                    <span>SPK dan PKS</span>
+                  </button>
+                  <button
                     onClick={() => handleNavClick("master_vendor")}
                     className={`w-full px-3 py-2 rounded-xl text-left flex items-center gap-2.5 transition-all ${
                       view === "master_vendor"
@@ -912,6 +923,22 @@ export default function Navbar({
                   <div className="flex flex-col min-w-0">
                     <span className="text-xs font-semibold">Master Barang</span>
                     <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal leading-tight">Katalog & Stok Logistik</span>
+                  </div>
+                </button>
+                <button
+                  onClick={() => handleNavClick("master_spk_pks")}
+                  className={`w-full px-3 py-2 rounded-xl flex items-center gap-2.5 text-left transition-all cursor-pointer ${
+                    view === "master_spk_pks"
+                      ? "bg-[#E6F4EA] dark:bg-emerald-950/80 text-[#00753A] dark:text-emerald-400 font-bold border border-emerald-200 dark:border-emerald-800/40 shadow-xs"
+                      : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60"
+                  }`}
+                >
+                  <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#00753A] dark:text-emerald-400 shrink-0">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-xs font-semibold">SPK dan PKS</span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal leading-tight">Kontrak & Nilai Sewa</span>
                   </div>
                 </button>
                 <button

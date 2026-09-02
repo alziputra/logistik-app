@@ -21,7 +21,7 @@ import { getAsetTanah } from "../services/asetTanahService";
 import { getMenuSewa } from "../services/menuSewaService";
 import { getRenovasi } from "../services/renovasiService";
 import { getPengamananKorporasi } from "../services/pengamananService";
-import { getSpkHistories } from "../services/spkService";
+import { getSpkPksList } from "../services/spkPksService";
 import { getSoppHistories } from "../services/soppService";
 import { getActivityLogs } from "../services/activityLogService";
 
@@ -110,7 +110,7 @@ export default function DashboardPage() {
         getMenuSewa(),
         getRenovasi(),
         getPengamananKorporasi(),
-        getSpkHistories(),
+        getSpkPksList(),
         getSoppHistories(),
         getActivityLogs(),
       ]);

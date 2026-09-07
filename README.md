@@ -70,28 +70,37 @@ npm install
 
 ---
 
-## 🔐 Konfigurasi Environment
+## 🔐 Konfigurasi Environment & Database
 
-Buat file `.env` di root project, lalu isi dengan konfigurasi Firebase:
+1. Salin `.env.example` menjadi `.env` di root project:
+   ```bash
+   cp .env.example .env
+   ```
+2. Isi konfigurasi dengan kredensial project Firebase Firestore Anda sendiri:
 
-```env
-# Firebase Config
-VITE_FIREBASE_API_KEY=your_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-VITE_FIREBASE_APP_ID=your_app_id
-```
+   ```env
+   VITE_FIREBASE_API_KEY=your_api_key
+   VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+   VITE_FIREBASE_PROJECT_ID=your_project_id
+   VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+   VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+   VITE_FIREBASE_APP_ID=your_app_id
+   ```
+
+3. **Inisialisasi Data Firestore Awal**:
+   Jalankan perintah seeder manual berikut untuk mengisi data master, perangkat (komputer, printer, laptop), outlet, dan akun awal ke Firestore Anda:
+   ```bash
+   npm run seed
+   ```
 
 > ⚠️ **Penting:**  
-> Jangan pernah commit file `.env` ke repository publik.
+> Aplikasi **tidak melakukan auto-seeding**. Setiap pengembang/pengguna baru wajib menyiapkan database Firestore sendiri dan menjalankan `npm run seed` secara mandiri.
 
 ---
 
 ## ▶️ Menjalankan Aplikasi
 
-Jalankan development server:
+Setelah database berhasil di-seed, jalankan development server:
 
 ```bash
 npm run dev

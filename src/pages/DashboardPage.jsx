@@ -300,6 +300,7 @@ export default function DashboardPage() {
               isSaving={isSaving}
               editDocument={editDocument}
               viewDocument={viewDocument}
+              startNewDocument={startNewDocument}
               setView={handleSetView}
               user={user}
               handleUpdateRole={handleUpdateRole}

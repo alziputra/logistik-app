@@ -56,7 +56,7 @@ const PreviewView = ({ formData = {}, items = [], activeTransaction = null, setV
   const tujuanStr = isMasuk ? formData.tujuan || formData.penerimaInstansi || "LOGISTIK KANWIL VIII" : formData.tujuan || formData.outletTujuan || formData.pihak2Instansi || formData.penerimaInstansi || "........................";
 
   const renderDocumentContent = () => (
-    <div className="p-5 sm:p-8 bg-white text-black flex flex-col justify-between min-h-[900px] sm:min-h-[950px] print:min-h-[270mm] print:max-h-[270mm] w-full min-w-[600px] sm:min-w-0" id="printable-area">
+    <div className="p-5 sm:p-8 bg-white text-black flex flex-col justify-between min-h-225 sm:min-h-237.5 print:min-h-[270mm] print:max-h-[270mm] w-full min-w-150 sm:min-w-0" id="printable-area">
       <div>
         {/* Kop Surat Header */}
         <div className="flex items-center justify-between pb-4 sm:pb-5">
@@ -140,7 +140,7 @@ const PreviewView = ({ formData = {}, items = [], activeTransaction = null, setV
           {/* Kolom Kiri: Rata Kiri */}
           <div className="text-left w-1/3">
             <p className="font-semibold mb-14 sm:mb-16">{isMasuk ? "Yang Menyerahkan," : "Yang Menerima,"}</p>
-            <p className="font-bold underline uppercase text-black break-words">
+            <p className="font-bold underline uppercase text-black wrap-break-word">
               {isMasuk ? formData.pihak1Nama || formData.pengirimNama || "........................" : formData.pihak2Nama || formData.penerimaNama || "........................"}
             </p>
             <p className="text-[9px] sm:text-[11px] text-gray-700 leading-tight mt-0.5">{isMasuk ? formData.pihak1Jabatan || formData.pengirimJabatan || "" : formData.pihak2Jabatan || formData.penerimaJabatan || ""}</p>
@@ -149,14 +149,14 @@ const PreviewView = ({ formData = {}, items = [], activeTransaction = null, setV
           {/* Kolom Tengah: Rata Tengah */}
           <div className="text-center w-1/3">
             <p className="font-semibold mb-14 sm:mb-16">{isMasuk ? "Yang Menerima," : "Yang Menyerahkan,"}</p>
-            <p className="font-bold underline uppercase text-black break-words">{isMasuk ? formData.pihak2Nama || formData.penerimaNama || "EVI NOVIAWATI" : formData.pihak1Nama || formData.pengirimNama || "EVI NOVIAWATI"}</p>
+            <p className="font-bold underline uppercase text-black wrap-break-word">{isMasuk ? formData.pihak2Nama || formData.penerimaNama || "EVI NOVIAWATI" : formData.pihak1Nama || formData.pengirimNama || "EVI NOVIAWATI"}</p>
             <p className="text-[9px] sm:text-[11px] text-gray-700 leading-tight mt-0.5">{isMasuk ? formData.pihak2Jabatan || formData.penerimaJabatan || "Officer" : formData.pihak1Jabatan || formData.pengirimJabatan || "Officer"}</p>
           </div>
 
           {/* Kolom Kanan: Rata Kanan */}
           <div className="text-right w-1/3">
             <p className="font-semibold mb-14 sm:mb-16">Mengetahui,</p>
-            <p className="font-bold underline uppercase text-black break-words">{formData.pihakMengetahuiNama || formData.mengetahuiNama || "ZONI RAHMAWAN PUTRA"}</p>
+            <p className="font-bold underline uppercase text-black wrap-break-word">{formData.pihakMengetahuiNama || formData.mengetahuiNama || "ZONI RAHMAWAN PUTRA"}</p>
             <p className="text-[9px] sm:text-[11px] text-gray-600 leading-tight mt-0.5">{formData.pihakMengetahuiJabatan || formData.mengetahuiJabatan || "Kabag Pengadaan dan Logistik"}</p>
           </div>
         </div>

@@ -77,6 +77,7 @@ export default function TabContent({
   isSaving = false,
   editDocument = () => {},
   viewDocument = () => {},
+  startNewDocument = () => {},
   setView = () => {},
   user = {},
   handleUpdateRole = () => {},
@@ -118,6 +119,9 @@ export default function TabContent({
             notifSewaKomputer={notifSewaKomputer}
             printers={printers}
             computers={computers}
+            laptops={laptops}
+            outlets={outlets}
+            startNewDocument={startNewDocument}
             buildingLands={buildingLands}
             buildingSewas={buildingSewas}
             buildingRenovations={buildingRenovations}

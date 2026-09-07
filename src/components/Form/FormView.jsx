@@ -91,7 +91,7 @@ const OutletCombobox = ({ outlets = [], value = "", onChange = () => {}, name = 
 
       {/* Custom Floating Dropdown Menu */}
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full mt-1.5 z-[9999] min-w-[220px] max-h-64 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl py-1.5 animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute left-0 right-0 top-full mt-1.5 z-9999 min-w-55 max-h-64 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl py-1.5 animate-in fade-in zoom-in-95 duration-150">
           {filteredOutlets.length === 0 ? (
             <div className="px-3.5 py-2.5 text-xs text-slate-400 italic text-center">Tidak ada instansi/outlet yang cocok. Anda dapat mengetikkan nama instansi manual.</div>
           ) : (
@@ -186,7 +186,7 @@ const ItemCombobox = ({ inventory = [], value = "", onChange = () => {}, placeho
 
       {/* Custom Floating Dropdown Menu */}
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full mt-1.5 z-[9999] min-w-[280px] max-h-64 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl py-1.5 animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute left-0 right-0 top-full mt-1.5 z-9999 min-w-70 max-h-64 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xl py-1.5 animate-in fade-in zoom-in-95 duration-150">
           {filteredItems.length === 0 ? (
             <div className="px-3.5 py-2.5 text-xs text-slate-400 italic text-center">Tidak ada barang di master. Anda dapat mengetikkan nama barang manual.</div>
           ) : (
@@ -743,21 +743,21 @@ const FormView = ({ formData = {}, handleInputChange = () => {}, items = [], han
                 {/* MODE 1: TABEL DENGAN PANJANG BARIS DIPERLEBAR */}
                 {itemViewMode === "table" ? (
                   <div className="space-y-2">
-                    <div className="overflow-x-auto overflow-y-visible min-h-[260px] bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-2 shadow-xs">
-                      <table className="w-full text-left border-collapse min-w-[1220px]">
+                    <div className="overflow-x-auto overflow-y-visible min-h-65 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-2 shadow-xs">
+                      <table className="w-full text-left border-collapse min-w-305">
                         <thead>
                           <tr className="border-b border-slate-200 dark:border-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                             <th className="py-2.5 px-2 text-center w-12">No</th>
-                            <th className="py-2.5 px-2 min-w-[340px] w-[340px]">
+                            <th className="py-2.5 px-2 min-w-85 w-85">
                               Nama Barang <span className="text-rose-500">*</span>
                             </th>
-                            <th className="py-2.5 px-2 min-w-[200px] w-[200px]">Nomor Seri (S/N)</th>
-                            <th className="py-2.5 px-2 min-w-[85px] w-[85px] text-center">
+                            <th className="py-2.5 px-2 min-w-50 w-50">Nomor Seri (S/N)</th>
+                            <th className="py-2.5 px-2 min-w-21.25 w-21.25 text-center">
                               Qty <span className="text-rose-500">*</span>
                             </th>
-                            <th className="py-2.5 px-2 min-w-[110px] w-[110px] text-center">Satuan</th>
-                            <th className="py-2.5 px-2 min-w-[260px] w-[260px]">{isMasuk ? "Outlet / Asal" : "Outlet Tujuan"}</th>
-                            <th className="py-2.5 px-2 min-w-[220px]">Keterangan</th>
+                            <th className="py-2.5 px-2 min-w-27.5 w-27.5 text-center">Satuan</th>
+                            <th className="py-2.5 px-2 min-w-65 w-65">{isMasuk ? "Outlet / Asal" : "Outlet Tujuan"}</th>
+                            <th className="py-2.5 px-2 min-w-55">Keterangan</th>
                             <th className="py-2.5 px-2 text-center w-12"></th>
                           </tr>
                         </thead>

@@ -110,6 +110,7 @@ export const AuthProvider = ({ children }) => {
 
       localStorage.setItem("token", authToken);
       localStorage.setItem("user", JSON.stringify(userData));
+      localStorage.setItem("last_active_timestamp", Date.now().toString());
       setToken(authToken);
       setUser(userData);
 
@@ -138,6 +139,7 @@ export const AuthProvider = ({ children }) => {
         const fallbackToken = "demo-token-12345";
         localStorage.setItem("token", fallbackToken);
         localStorage.setItem("user", JSON.stringify(fallbackUser));
+        localStorage.setItem("last_active_timestamp", Date.now().toString());
         setToken(fallbackToken);
         setUser(fallbackUser);
 
@@ -166,15 +168,16 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = async () => {
+  const logout = async (reason) => {
     if (user) {
+      const isTimeout = reason === "SESSION_TIMEOUT";
       addActivityLog({
         user: user.name || "Petugas Logistik",
         user_name: user.name || "Petugas Logistik",
         user_email: user.email || "",
         modul: "AUTENTIKASI",
         aksi: "LOGOUT",
-        keterangan: `Pengguna ${user.name || user.email} telah logout dari sistem`,
+        keterangan: isTimeout ? `Sesi pengguna ${user.name || user.email} ditutup otomatis oleh sistem karena tidak ada aktivitas (Session Timeout Keamanan)` : `Pengguna ${user.name || user.email} telah logout dari sistem`,
       });
     }
     try {
@@ -184,6 +187,7 @@ export const AuthProvider = ({ children }) => {
     }
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    localStorage.removeItem("last_active_timestamp");
     setToken(null);
     setUser(null);
   };

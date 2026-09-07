@@ -1,9 +1,22 @@
-import React from 'react';
-import { Navigate, Outlet } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import React from "react";
+import { Navigate, Outlet, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { useSessionTimeout } from "../hooks/useSessionTimeout";
+import SessionTimeoutModal from "./Common/SessionTimeoutModal";
 
 const ProtectedRoute = ({ allowedRoles }) => {
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, loading, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleTimeout = async () => {
+    await logout("SESSION_TIMEOUT");
+    navigate("/login?reason=session_timeout", { replace: true });
+  };
+
+  const { isWarningOpen, secondsRemaining, resetTimer } = useSessionTimeout({
+    enabled: isAuthenticated,
+    onTimeout: handleTimeout,
+  });
 
   if (loading) {
     return (
@@ -24,7 +37,12 @@ const ProtectedRoute = ({ allowedRoles }) => {
     return <Navigate to="/dashboard" replace />;
   }
 
-  return <Outlet />;
+  return (
+    <>
+      <SessionTimeoutModal isOpen={isWarningOpen} secondsRemaining={secondsRemaining} onExtend={resetTimer} onLogout={handleTimeout} />
+      <Outlet />
+    </>
+  );
 };
 
 export default ProtectedRoute;

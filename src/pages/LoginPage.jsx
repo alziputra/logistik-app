@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Package, Lock, Mail, LogIn, AlertCircle, Sun, Moon } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { Package, Lock, Mail, LogIn, AlertCircle, Sun, Moon, ShieldAlert } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import ServerStatusPill from "../components/Notification/ServerStatusPill";
@@ -22,6 +22,8 @@ export default function LoginPage() {
   const { login, isAuthenticated } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isSessionTimeout = searchParams.get("reason") === "session_timeout";
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -89,6 +91,16 @@ export default function LoginPage() {
 
         {/* Kartu Form */}
         <div className="bg-white dark:bg-slate-900/80 backdrop-blur-md py-8 px-6 shadow-xl dark:shadow-2xl dark:shadow-slate-950/80 border border-slate-200 dark:border-slate-800 sm:rounded-3xl sm:px-10 transition-colors">
+          {isSessionTimeout && !errorMsg && (
+            <div className="mb-6 flex items-start gap-3 text-xs sm:text-sm text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/80 border border-amber-300 dark:border-amber-800/60 p-4 rounded-2xl shadow-xs animate-in fade-in duration-300">
+              <ShieldAlert className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-bold">Sesi Anda Telah Berakhir</p>
+                <p className="mt-0.5 leading-relaxed text-slate-600 dark:text-slate-300">Demi keamanan akun dan kerahasiaan data logistik, Anda otomatis dikeluarkan karena tidak ada aktivitas. Silakan masuk kembali.</p>
+              </div>
+            </div>
+          )}
+
           {errorMsg && (
             <div className="mb-6 flex items-start gap-3 text-sm text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-950/80 border border-rose-200 dark:border-rose-800/50 p-4 rounded-2xl">
               <AlertCircle className="w-5 h-5 text-rose-500 dark:text-rose-400 shrink-0 mt-0.5" />

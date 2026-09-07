@@ -1,5 +1,5 @@
 import React from "react";
-import { Printer, CheckCircle2, ArrowLeft, AlertCircle } from "lucide-react";
+import { Printer, CheckCircle2, ArrowLeft, AlertCircle, History } from "lucide-react";
 
 const formatIndonesianDate = (dateStr) => {
   if (!dateStr) return "4 Agustus 2026";
@@ -262,19 +262,32 @@ const PreviewView = ({ formData = {}, items = [], activeTransaction = null, setV
               <span>Kembali ke Riwayat</span>
             </button>
           ) : (
-            <button
-              type="button"
-              onClick={() => setView("form")}
-              className="lg:hidden flex items-center gap-1.5 text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 font-semibold text-xs transition-colors cursor-pointer shrink-0"
-            >
-              <ArrowLeft className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <span>Edit Kembali</span>
-            </button>
+            <>
+              <button
+                type="button"
+                onClick={() => setView("form")}
+                className="lg:hidden flex items-center gap-1.5 text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 font-semibold text-xs transition-colors cursor-pointer shrink-0"
+              >
+                <ArrowLeft className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <span>Edit Kembali</span>
+              </button>
+              {(formData?.id || activeTransaction?.id) && (
+                <button
+                  type="button"
+                  onClick={() => setView("riwayat")}
+                  className="flex items-center gap-1.5 text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-700 font-bold text-xs transition-colors cursor-pointer shrink-0 active:scale-95 shadow-xs"
+                  title="Lihat transaksi ini pada tabel Riwayat"
+                >
+                  <History className="w-4 h-4 text-[#00753A] dark:text-emerald-400" />
+                  <span>Buka Riwayat</span>
+                </button>
+              )}
+            </>
           )}
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Tombol Cetak Surat */}
+          {/* Tombol Cetak Surat (Langsung siap diklik setelah simpan) */}
           <button
             type="button"
             onClick={handlePrint}
@@ -301,7 +314,7 @@ const PreviewView = ({ formData = {}, items = [], activeTransaction = null, setV
               }`}
             >
               <CheckCircle2 className="w-4 h-4" />
-              <span>{isSaving ? "Menyimpan..." : "Simpan Transaksi"}</span>
+              <span>{isSaving ? "Menyimpan..." : formData?.id || activeTransaction?.id ? "Perbarui Transaksi" : "Simpan Transaksi"}</span>
             </button>
           )}
         </div>

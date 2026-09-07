@@ -164,6 +164,7 @@ export function useTransaksi({ user, transactions = [], inventory = [], setTrans
 
     setIsSaving(true);
     try {
+      const now = new Date().toISOString();
       const isMasuk = formData.jenisTransaksi === "Barang Masuk";
       const payload = {
         nomorSurat: formData.nomorSurat,
@@ -182,6 +183,10 @@ export function useTransaksi({ user, transactions = [], inventory = [], setTrans
         mengetahuiNama: formData.pihakMengetahuiNama || formData.mengetahuiNama || "",
         mengetahuiJabatan: formData.pihakMengetahuiJabatan || formData.mengetahuiJabatan || "",
         lokasi: formData.lokasi || "Jakarta",
+        created_at: formData.created_at || formData.createdAt || now,
+        createdAt: formData.createdAt || formData.created_at || now,
+        updated_at: now,
+        updatedAt: now,
         items: items.map((item) => ({
           inventoryId: item.inventoryId || null,
           nama: item.namaBarang || item.nama || "",
@@ -197,13 +202,24 @@ export function useTransaksi({ user, transactions = [], inventory = [], setTrans
       let savedTrx;
       if (formData.id) {
         const res = await updateTransaksi(formData.id, payload);
-        savedTrx = res?.data?.transaksi || res?.transaction || res?.data || res || payload;
+        savedTrx = res?.data?.transaksi || res?.transaction || res?.data || res || { ...payload, id: formData.id };
         showNotif("Transaksi berhasil diperbarui!", "success");
       } else {
         const res = await addTransaksi(payload);
-        savedTrx = res?.data?.transaksi || res?.transaction || res?.data || res || payload;
+        savedTrx = res?.data?.transaksi || res?.transaction || res?.data || res || { ...payload, id: `trx_${Date.now()}` };
         showNotif("Transaksi berhasil disimpan!", "success");
       }
+
+      // Pastikan atribut ID & timestamp terisi sempurna pada objek transaksi
+      savedTrx = {
+        ...payload,
+        ...savedTrx,
+        id: savedTrx?.id || formData.id || `trx_${Date.now()}`,
+        createdAt: savedTrx?.createdAt || payload.createdAt,
+        created_at: savedTrx?.created_at || payload.created_at,
+        updatedAt: now,
+        updated_at: now,
+      };
 
       // Real-time Inventory Stock Synchronization
       try {
@@ -253,15 +269,26 @@ export function useTransaksi({ user, transactions = [], inventory = [], setTrans
         console.error("Gagal sinkronisasi stok inventaris:", stockErr);
       }
 
-      // Re-fetch all fresh data from database directly after saving
-      if (loadAllData) {
-        await loadAllData();
-      } else if (savedTrx) {
-        setTransactions((prev) => [savedTrx, ...prev.filter((t) => t.id !== savedTrx.id)]);
-      }
+      // 1. Optimistic state update: Tempatkan transaksi baru langsung di baris pertama
+      setTransactions((prev) => {
+        const others = (prev || []).filter((t) => t.id !== savedTrx.id && t.nomorSurat !== savedTrx.nomorSurat);
+        return [savedTrx, ...others];
+      });
 
+      // 2. Set active transaction & sinkronkan formData (tetap berada di halaman preview agar user bisa langsung cetak)
+      setFormData((prev) => ({
+        ...prev,
+        ...savedTrx,
+        id: savedTrx.id,
+      }));
       setActiveTransaction(savedTrx);
-      navigateTo("riwayat");
+
+      // Catatan: Tidak redirect ke riwayat transaksi agar user bisa langsung klik tombol Cetak.
+
+      // 3. Sinkronisasi database di latar belakang secara silent (tanpa loading spinner layar penuh)
+      if (loadAllData) {
+        loadAllData(true);
+      }
     } catch (error) {
       console.error(error);
       const errorMsg = error.response?.data?.message || "Gagal menyimpan transaksi.";

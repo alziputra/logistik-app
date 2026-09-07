@@ -45,6 +45,7 @@ export default function TabContent({
   transactions = [],
   setTransactions = () => {},
   inventory = [],
+  setInventory = () => {},
   outlets = [],
   printers = [],
   computers = [],
@@ -276,9 +277,11 @@ export default function TabContent({
           <RiwayatTransaksi
             transactions={transactions}
             inventory={inventory}
+            setInventory={setInventory}
             setTransactions={setTransactions}
             setFormData={setFormData}
             setItems={setItems}
+            activeTransaction={activeTransaction}
             setActiveTransaction={setActiveTransaction}
             setView={setView}
             loadAllData={loadAllData}

@@ -94,8 +94,8 @@ export default function DashboardPage() {
     return [];
   };
 
-  const loadAllData = async () => {
-    setLoadingData(true);
+  const loadAllData = async (silent = false) => {
+    if (!silent) setLoadingData(true);
     try {
       const [compRes, laptopRes, printRes, trxRes, invRes, venRes, userRes, instRes, landRes, sewaRes, renoRes, secRes, spkRes, soppRes, logRes] = await Promise.allSettled([
         getKomputer(),
@@ -118,7 +118,32 @@ export default function DashboardPage() {
       if (compRes.status === "fulfilled") setComputers(ensureArray(compRes.value));
       if (laptopRes.status === "fulfilled") setLaptops(ensureArray(laptopRes.value));
       if (printRes.status === "fulfilled") setPrinters(ensureArray(printRes.value));
-      if (trxRes.status === "fulfilled") setTransactions(ensureArray(trxRes.value));
+      if (trxRes.status === "fulfilled") {
+        const fetchedTrx = ensureArray(trxRes.value);
+        setTransactions((prev) => {
+          if (!prev || prev.length === 0) return fetchedTrx;
+          // Merge preserving existing local state and prioritizing freshly added documents
+          const fetchedMap = new Map();
+          fetchedTrx.forEach((t) => {
+            if (t.id) fetchedMap.set(t.id, t);
+          });
+
+          const merged = prev.map((local) => {
+            if (local.id && fetchedMap.has(local.id)) {
+              const serverDoc = fetchedMap.get(local.id);
+              fetchedMap.delete(local.id);
+              return { ...serverDoc, ...local };
+            }
+            return local;
+          });
+
+          // Append any remaining server docs that weren't in local state
+          fetchedMap.forEach((serverDoc) => {
+            merged.push(serverDoc);
+          });
+          return merged;
+        });
+      }
       if (invRes.status === "fulfilled") setInventory(ensureArray(invRes.value));
       if (venRes.status === "fulfilled") setVendors(ensureArray(venRes.value));
       if (userRes.status === "fulfilled") setUsersList(ensureArray(userRes.value));
@@ -133,7 +158,7 @@ export default function DashboardPage() {
     } catch (err) {
       console.error("Error loading dashboard data:", err);
     } finally {
-      setLoadingData(false);
+      if (!silent) setLoadingData(false);
     }
   };
 
@@ -243,6 +268,7 @@ export default function DashboardPage() {
               transactions={transactions}
               setTransactions={setTransactions}
               inventory={inventory}
+              setInventory={setInventory}
               outlets={outlets}
               printers={printers}
               computers={computers}

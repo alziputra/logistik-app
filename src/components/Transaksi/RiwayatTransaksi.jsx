@@ -1,24 +1,28 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { History, Search, FileText, ArrowLeftRight, Eye, Edit, Trash2, Package, ArrowUpDown, ArrowUp, ArrowDown, User, Building2, MapPin } from "lucide-react";
 import ExcelActionButtons from "../Common/ExcelActionButtons";
 import ConfirmDeleteModal from "../Modal/ConfirmDeleteModal";
 import Pagination from "../Common/Pagination";
 import { deleteTransaksi } from "../../services/transaksiService";
-import { updateInventoryStock } from "../../services/inventoryService";
+import { getInventory, updateInventoryStock } from "../../services/inventoryService";
 import { findMatchingInventoryItem } from "../../utils/inventoryMatcher";
+import { useNotif } from "../../hooks/useNotif";
 
 export default function RiwayatTransaksi({
   transactions = [],
   inventory = [],
+  setInventory = () => {},
   setTransactions = () => {},
   setFormData = () => {},
   setItems = () => {},
+  activeTransaction = null,
   setActiveTransaction = () => {},
   setView = () => {},
   loadAllData = () => {},
   editDocument = null,
   viewDocument = null,
 }) {
+  const { showNotif } = useNotif();
   const [search, setSearch] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [activeTabFilter, setActiveTabFilter] = useState("all"); // "all" | "masuk" | "keluar"
@@ -30,9 +34,52 @@ export default function RiwayatTransaksi({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  // Auto focus & bersihkan pencarian ketika surat baru saja disimpan
+  useEffect(() => {
+    if (activeTransaction && activeTransaction.id) {
+      // 1. Reset ke halaman pertama agar surat langsung tampak di baris atas
+      setCurrentPage(1);
+
+      // 2. Bersihkan pencarian lama agar tidak menyaring surat yang baru disimpan
+      setSearch("");
+
+      // 3. Pastikan tab filter menampilkan jenis surat tersebut
+      const isMasuk = activeTransaction.jenisTransaksi === "Barang Masuk" || activeTransaction.jenisTransaksi === "Surat Masuk";
+      if (isMasuk && activeTabFilter === "keluar") {
+        setActiveTabFilter("masuk");
+      } else if (!isMasuk && activeTabFilter === "masuk") {
+        setActiveTabFilter("keluar");
+      }
+
+      // 4. Pastikan sorting default adalah terbaru paling atas
+      setSortField("tanggal");
+      setSortDirection("desc");
+    }
+  }, [activeTransaction?.id]);
+
   const countAll = transactions.length;
   const countMasuk = transactions.filter((t) => t.jenisTransaksi === "Barang Masuk" || t.jenisTransaksi === "Surat Masuk").length;
   const countKeluar = transactions.filter((t) => t.jenisTransaksi === "Barang Keluar" || t.jenisTransaksi === "Surat Keluar").length;
+
+  const getSortTimestamp = (t) => {
+    if (!t) return 0;
+    const exact = t.updatedAt || t.updated_at || t.createdAt || t.created_at || t.timestamp;
+    if (exact) {
+      if (typeof exact.toDate === "function") return exact.toDate().getTime();
+      if (exact.seconds) return exact.seconds * 1000;
+      const parsed = new Date(exact).getTime();
+      if (!isNaN(parsed) && parsed > 0) return parsed;
+    }
+    if (t.tanggal) {
+      const parsed = new Date(t.tanggal).getTime();
+      if (!isNaN(parsed) && parsed > 0) return parsed;
+    }
+    if (typeof t.id === "string") {
+      const match = t.id.match(/\d{10,}/);
+      if (match) return Number(match[0]);
+    }
+    return 0;
+  };
 
   const filtered = useMemo(() => {
     let result = transactions.filter((t) => {
@@ -56,31 +103,37 @@ export default function RiwayatTransaksi({
 
     // 3. Sorting by Tanggal Descending (Terbaru paling atas)
     result.sort((a, b) => {
-      if (sortField === "tanggal") {
-        const dateA = new Date(a.tanggal || a.createdAt || 0).getTime();
-        const dateB = new Date(b.tanggal || b.createdAt || 0).getTime();
+      // Prioritas 1: Jika dokumen baru saja disimpan di sesi ini, selalu posisikan di urutan No. 1 teratas
+      if (activeTransaction && activeTransaction.id) {
+        if (a.id === activeTransaction.id) return -1;
+        if (b.id === activeTransaction.id) return 1;
+      }
 
-        if (!isNaN(dateA) && !isNaN(dateB) && dateA !== dateB) {
-          return sortDirection === "desc" ? dateB - dateA : dateA - dateB;
+      if (sortField === "tanggal") {
+        const timeA = getSortTimestamp(a);
+        const timeB = getSortTimestamp(b);
+
+        if (timeA !== timeB) {
+          return sortDirection === "desc" ? timeB - timeA : timeA - timeB;
         }
 
-        // Secondary fallback to nomorSurat
+        // Secondary fallback to nomorSurat with natural numeric sorting
         const numA = a.nomorSurat || "";
         const numB = b.nomorSurat || "";
-        return sortDirection === "desc" ? numB.localeCompare(numA) : numA.localeCompare(numB);
+        return sortDirection === "desc" ? numB.localeCompare(numA, undefined, { numeric: true, sensitivity: "base" }) : numA.localeCompare(numB, undefined, { numeric: true, sensitivity: "base" });
       }
 
       if (sortField === "nomorSurat") {
         const numA = a.nomorSurat || "";
         const numB = b.nomorSurat || "";
-        return sortDirection === "desc" ? numB.localeCompare(numA) : numA.localeCompare(numB);
+        return sortDirection === "desc" ? numB.localeCompare(numA, undefined, { numeric: true, sensitivity: "base" }) : numA.localeCompare(numB, undefined, { numeric: true, sensitivity: "base" });
       }
 
       return 0;
     });
 
     return result;
-  }, [transactions, activeTabFilter, search, sortField, sortDirection]);
+  }, [transactions, activeTabFilter, search, sortField, sortDirection, activeTransaction]);
 
   const handleSort = (field) => {
     if (sortField === field) {
@@ -174,34 +227,79 @@ export default function RiwayatTransaksi({
     if (!deleteTarget) return;
     try {
       if (deleteTarget.id) {
-        // Revert stock adjustment for the deleted transaction
+        // Logika Pengembalian Stok:
+        // - Surat Keluar (Barang Keluar): Pengiriman dibatalkan -> Stok DIKEMBALIKAN (+) ke inventaris
+        // - Surat Masuk (Barang Masuk): Penerimaan dibatalkan -> Stok DIKURANGI (-) dari inventaris
         const isMasuk = deleteTarget.jenisTransaksi === "Barang Masuk" || deleteTarget.jenisTransaksi === "Surat Masuk";
-        if (Array.isArray(deleteTarget.items) && inventory.length > 0) {
-          for (const itm of deleteTarget.items) {
+
+        // Pastikan daftar inventory terisi (gunakan props lokal atau ambil data fresh dari database)
+        let currentInvList = Array.isArray(inventory) && inventory.length > 0 ? [...inventory] : [];
+        if (currentInvList.length === 0) {
+          try {
+            const fresh = await getInventory();
+            if (Array.isArray(fresh) && fresh.length > 0) {
+              currentInvList = fresh;
+            }
+          } catch (fetchErr) {
+            console.warn("Gagal fetch fresh inventory saat hapus transaksi:", fetchErr);
+          }
+        }
+
+        // Ambil daftar barang dari transaksi yang akan dihapus
+        const targetItems =
+          Array.isArray(deleteTarget.items) && deleteTarget.items.length > 0
+            ? deleteTarget.items
+            : deleteTarget.namaBarang || deleteTarget.nama
+              ? [{ namaBarang: deleteTarget.namaBarang || deleteTarget.nama, jumlah: deleteTarget.jumlah || deleteTarget.kuantitas || 1 }]
+              : [];
+
+        if (targetItems.length > 0 && currentInvList.length > 0) {
+          for (const itm of targetItems) {
             const qty = Number(itm.kuantitas || itm.jumlah || 1);
             if (isNaN(qty) || qty <= 0) continue;
-            const matched = findMatchingInventoryItem(itm, inventory);
+
+            const matched = findMatchingInventoryItem(itm, currentInvList);
             if (matched && matched.id) {
               const cur = Number(matched.stok !== undefined ? matched.stok : matched.kuantitas) || 0;
-              // If it was Keluar, deleting letter restores stock (+); if Masuk, deleting letter removes stock (-)
+              // Kembalikan stok: Barang Keluar di-restore (+), Barang Masuk di-revert (-)
               const newStock = isMasuk ? Math.max(0, cur - qty) : cur + qty;
               matched.stok = newStock;
               matched.kuantitas = newStock;
               try {
                 await updateInventoryStock(matched.id, newStock);
               } catch (err) {
-                console.error("Gagal update stok saat hapus transaksi:", err);
+                console.error("Gagal update stok di Firestore saat hapus transaksi:", err);
               }
             }
           }
+
+          // Sinkronisasi state lokal inventory di React secara instan
+          if (setInventory) {
+            setInventory([...currentInvList]);
+          }
         }
 
+        // Hapus dokumen transaksi dari Firestore
         await deleteTransaksi(deleteTarget.id);
       }
+
+      // Hapus transaksi dari state lokal React
       setTransactions((prev) => prev.filter((t) => t.id !== deleteTarget.id));
-      if (loadAllData) await loadAllData();
+
+      // Jika transaksi yang dihapus adalah transaksi aktif, reset state-nya
+      if (activeTransaction && activeTransaction.id === deleteTarget.id) {
+        setActiveTransaction(null);
+      }
+
+      showNotif("Surat transaksi berhasil dihapus dan stok barang telah dikembalikan!", "success");
+
+      // Sinkronisasi database di background secara silent tanpa reload layar penuh
+      if (loadAllData) {
+        loadAllData(true);
+      }
     } catch (err) {
       console.error("Gagal menghapus surat transaksi:", err);
+      showNotif("Gagal menghapus transaksi: " + (err.message || "Terjadi kesalahan"), "error");
     } finally {
       setDeleteTarget(null);
     }
@@ -353,10 +451,32 @@ export default function RiwayatTransaksi({
                   const displayPenerimaNama = hasPenerima ? rawPenerima : rawTujuan || "-";
                   const displayTujuan = hasPenerima && rawTujuan && rawTujuan !== rawPenerima ? rawTujuan : "";
 
+                  const isRecentlySaved = Boolean(activeTransaction && trx.id && trx.id === activeTransaction.id);
+
                   return (
-                    <tr key={trx.id || idx} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors">
-                      <td className="px-5 py-4 text-center text-slate-400 font-mono font-medium">{(currentPage - 1) * itemsPerPage + idx + 1}</td>
-                      <td className="px-5 py-4 font-bold text-slate-900 dark:text-slate-100 font-mono">{trx.nomorSurat}</td>
+                    <tr
+                      key={trx.id || idx}
+                      className={`transition-all duration-300 ${
+                        isRecentlySaved ? "bg-emerald-50/80 dark:bg-emerald-950/40 border-l-4 border-l-[#00753A] dark:border-l-emerald-400 shadow-xs" : "hover:bg-slate-50/80 dark:hover:bg-slate-800/50"
+                      }`}
+                    >
+                      <td className="px-5 py-4 text-center font-mono font-medium">
+                        {isRecentlySaved ? (
+                          <span className="w-5 h-5 mx-auto rounded-full bg-[#00753A] text-white flex items-center justify-center text-[10px] font-bold shadow-xs">1</span>
+                        ) : (
+                          <span className="text-slate-400">{(currentPage - 1) * itemsPerPage + idx + 1}</span>
+                        )}
+                      </td>
+                      <td className="px-5 py-4">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-bold text-slate-900 dark:text-slate-100 font-mono">{trx.nomorSurat}</span>
+                          {isRecentlySaved && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E6F4EA] dark:bg-emerald-900/60 text-[#00753A] dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 animate-pulse shrink-0">
+                              ✨ Baru Disimpan
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td className="px-5 py-4 text-slate-700 dark:text-slate-300 font-medium">{trx.tanggal}</td>
 
                       {/* Pengirim (Pihak 1) */}

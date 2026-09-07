@@ -1,13 +1,5 @@
-import { db } from '../config/firebase';
-import { 
-  collection, 
-  getDocs, 
-  addDoc, 
-  setDoc, 
-  deleteDoc, 
-  doc, 
-  query 
-} from 'firebase/firestore';
+import { db } from "../config/firebase";
+import { collection, getDocs, addDoc, setDoc, deleteDoc, doc, query } from "firebase/firestore";
 
 /**
  * Direct Firebase Firestore SDK Operations Helper
@@ -15,20 +7,20 @@ import {
  */
 
 const getColRef = (p) => {
-  if (typeof p === 'string') {
+  if (typeof p === "string") {
     return collection(db, p);
   }
-  if (typeof p === 'object' && p.parentCol) {
+  if (typeof p === "object" && p.parentCol) {
     return collection(db, p.parentCol, p.parentDoc, p.subCol);
   }
   return null;
 };
 
 const getDocRef = (p, id) => {
-  if (typeof p === 'string') {
+  if (typeof p === "string") {
     return doc(db, `${p}/${id}`);
   }
-  if (typeof p === 'object' && p.parentCol) {
+  if (typeof p === "object" && p.parentCol) {
     return doc(db, p.parentCol, p.parentDoc, p.subCol, String(id));
   }
   return null;
@@ -42,7 +34,7 @@ export const fetchCollectionData = async (paths, fallbackData = []) => {
 
       const snap = await getDocs(query(colRef));
       if (!snap.empty) {
-        return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
       }
     } catch (e) {
       console.warn(`Firestore read error on path ${JSON.stringify(p)}:`, e.message);
@@ -54,22 +46,34 @@ export const fetchCollectionData = async (paths, fallbackData = []) => {
 export const addDocumentData = async (primaryPath, data) => {
   try {
     const colRef = getColRef(primaryPath);
-    const docRef = await addDoc(colRef, {
-      created_at: new Date().toISOString(),
-      ...data
-    });
-    return { id: docRef.id, ...data };
+    const now = new Date().toISOString();
+    const docData = {
+      created_at: now,
+      createdAt: now,
+      updated_at: now,
+      updatedAt: now,
+      ...data,
+    };
+    const docRef = await addDoc(colRef, docData);
+    return { id: docRef.id, ...docData };
   } catch (err) {
     console.error(`Firestore addDoc error:`, err);
-    return { id: `local_${Date.now()}`, ...data };
+    const now = new Date().toISOString();
+    return { id: `local_${Date.now()}`, created_at: now, createdAt: now, updated_at: now, updatedAt: now, ...data };
   }
 };
 
 export const updateDocumentData = async (primaryPath, id, data) => {
   try {
     const docRef = getDocRef(primaryPath, id);
-    await setDoc(docRef, data, { merge: true });
-    return { id, ...data };
+    const now = new Date().toISOString();
+    const updateData = {
+      updated_at: now,
+      updatedAt: now,
+      ...data,
+    };
+    await setDoc(docRef, updateData, { merge: true });
+    return { id, ...updateData };
   } catch (err) {
     console.error(`Firestore update error:`, err);
     return { id, ...data };
@@ -96,5 +100,3 @@ export const importCollectionCSV = async (addFn, rows) => {
   }
   return { success: true, count: added.length, items: added };
 };
-
-

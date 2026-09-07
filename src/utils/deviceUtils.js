@@ -3,7 +3,7 @@ export const formatBulanTahun = (dateString) => {
   try {
     return new Date(dateString).toLocaleDateString("id-ID", {
       month: "short",
-      year:  "numeric",
+      year: "numeric",
     });
   } catch {
     return dateString;
@@ -15,10 +15,7 @@ export const hitungSisaBulan = (tanggalSelesai) => {
   const tglSelesai = new Date(tanggalSelesai);
   if (isNaN(tglSelesai)) return null;
   const hariIni = new Date();
-  return (
-    (tglSelesai.getFullYear() - hariIni.getFullYear()) * 12 +
-    (tglSelesai.getMonth()   - hariIni.getMonth())
-  );
+  return (tglSelesai.getFullYear() - hariIni.getFullYear()) * 12 + (tglSelesai.getMonth() - hariIni.getMonth());
 };
 
 export const hitungSisaHari = (tanggalSelesai) => {
@@ -39,21 +36,55 @@ export const calculateAutoStatus = (startDate, endDate) => {
   return new Date(endDate) >= today ? "Sewa Berjalan" : "Sewa Habis";
 };
 
+export const calculateLease = (startDate, endDate) => {
+  if (!startDate || !endDate) {
+    return { status: "Inventaris", masaSewa: 0 };
+  }
+  const d1 = new Date(startDate);
+  const d2 = new Date(endDate);
+  if (isNaN(d1.getTime()) || isNaN(d2.getTime())) {
+    return { status: "Inventaris", masaSewa: 0 };
+  }
+  let months = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth());
+  if (months < 0) months = 0;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const status = d2 >= today ? "Sewa Berjalan" : "Sewa Habis";
+  return { status, masaSewa: months };
+};
+
 export const parseIndoDateToISO = (dateStr) => {
   if (!dateStr) return "";
   const monthMap = {
-    januari: "01", jan: "01",
-    februari: "02", feb: "02",
-    maret: "03",   mar: "03",
-    april: "04",   apr: "04",
-    mei: "05",     may: "05",
-    juni: "06",    jun: "06",
-    juli: "07",    jul: "07",
-    agustus: "08", agu: "08", aug: "08",
-    september: "09", sep: "09",
-    oktober: "10", okt: "10", oct: "10",
-    november: "11", nov: "11",
-    desember: "12", des: "12", dec: "12",
+    januari: "01",
+    jan: "01",
+    februari: "02",
+    feb: "02",
+    maret: "03",
+    mar: "03",
+    april: "04",
+    apr: "04",
+    mei: "05",
+    may: "05",
+    juni: "06",
+    jun: "06",
+    juli: "07",
+    jul: "07",
+    agustus: "08",
+    agu: "08",
+    aug: "08",
+    september: "09",
+    sep: "09",
+    oktober: "10",
+    okt: "10",
+    oct: "10",
+    november: "11",
+    nov: "11",
+    desember: "12",
+    des: "12",
+    dec: "12",
   };
   const parts = dateStr.trim().toLowerCase().split(" ");
   if (parts.length === 2) {
@@ -67,7 +98,7 @@ export const parseIndoDateToISO = (dateStr) => {
 export const parseRobustDate = (dateStr) => {
   if (!dateStr) return null;
   const cleanStr = dateStr.trim();
-  
+
   if (/^\d{4}-\d{2}-\d{2}$/.test(cleanStr)) {
     const [y, m, d] = cleanStr.split("-").map(Number);
     if (m > 12) {
@@ -75,13 +106,13 @@ export const parseRobustDate = (dateStr) => {
     }
     return cleanStr;
   }
-  
+
   const match = cleanStr.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/);
   if (match) {
     const part1 = Number(match[1]);
     const part2 = Number(match[2]);
     const y = match[3];
-    
+
     let d = part1;
     let m = part2;
     if (part1 > 12) {
@@ -105,22 +136,45 @@ export const parseRobustDate = (dateStr) => {
 
 export const getStatusBadge = (status) => {
   switch (status) {
-    case "Inventaris":    return "bg-blue-950/80 text-blue-300 border-blue-800/50";
-    case "Sewa Berjalan": return "bg-emerald-950/80 text-emerald-300 border-emerald-800/50";
-    case "Sewa Habis":    return "bg-rose-950/80 text-rose-300 border-rose-800/50";
-    default:              return "bg-slate-800/80 text-slate-300 border-slate-700/50";
+    case "Inventaris":
+      return "bg-blue-950/80 text-blue-300 border-blue-800/50";
+    case "Sewa Berjalan":
+      return "bg-emerald-950/80 text-emerald-300 border-emerald-800/50";
+    case "Sewa Habis":
+      return "bg-rose-950/80 text-rose-300 border-rose-800/50";
+    default:
+      return "bg-slate-800/80 text-slate-300 border-slate-700/50";
   }
 };
 
 export const emptyFormKomputer = {
-  idOutlet: "", outlet: "", ipAddress: "", produk: "", sn: "",
-  penyedia: "", tanggalMulai: "", tanggalSelesai: "",
-  status: "Inventaris", kondisi: "BAIK",
-  keterangan: "", macAddress: "", ram: "", storage: "", cpu: "", os: "",
+  idOutlet: "",
+  outlet: "",
+  ipAddress: "",
+  produk: "",
+  sn: "",
+  penyedia: "",
+  tanggalMulai: "",
+  tanggalSelesai: "",
+  status: "Inventaris",
+  kondisi: "BAIK",
+  keterangan: "",
+  macAddress: "",
+  ram: "",
+  storage: "",
+  cpu: "",
+  os: "",
 };
 
 export const emptyFormPrinter = {
-  idOutlet: "", outlet: "", produk: "", sn: "",
-  penyedia: "", tanggalMulai: "", tanggalSelesai: "",
-  status: "Inventaris", kondisi: "BAIK", deskripsi: "",
+  idOutlet: "",
+  outlet: "",
+  produk: "",
+  sn: "",
+  penyedia: "",
+  tanggalMulai: "",
+  tanggalSelesai: "",
+  status: "Inventaris",
+  kondisi: "BAIK",
+  deskripsi: "",
 };

@@ -15,7 +15,7 @@ import { getPrinter } from "../services/printerService";
 import { getTransaksi } from "../services/transaksiService";
 import { getInventory } from "../services/inventoryService";
 import { getVendors } from "../services/vendorService";
-import { getUsers } from "../services/userService";
+import { getUsers, updateUser } from "../services/userService";
 import { getInstansi } from "../services/instansiService";
 import { getAsetTanah } from "../services/asetTanahService";
 import { getMenuSewa } from "../services/menuSewaService";
@@ -143,7 +143,6 @@ export default function DashboardPage() {
 
   const handleUpdateRole = async (userId, newRole) => {
     try {
-      const { updateUser } = await import("../services/userService");
       await updateUser(userId, { role: newRole });
       showNotif(`Role user berhasil diubah menjadi ${newRole}`, "success");
       loadAllData();

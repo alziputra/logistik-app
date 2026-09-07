@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback } from "react";
 import { Printer, Search, Plus } from "lucide-react";
 
 import PrinterTable from "./PrinterTable";
@@ -8,6 +8,7 @@ import ConfirmDeleteModal from "../../Modal/ConfirmDeleteModal";
 import ToastNotif from "../../Modal/ToastNotif";
 import ExcelActionButtons from "../../Common/ExcelActionButtons";
 import { addPrinter, updatePrinter, deletePrinter } from "../../../services/printerService";
+import { useDeviceTableState } from "../../../hooks/useDeviceTableState";
 
 export default function DataPrinter({
   userRole = "admin",
@@ -23,100 +24,62 @@ export default function DataPrinter({
   setPrinterSearch,
   loadAllData,
 }) {
-  const [searchQuery, setSearchQuery] = useState(printerSearch || "");
-  const [filterStatusState, setFilterStatusState] = useState(printerFilter || propFilterStatus || "Semua");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({});
-  const [isSaving, setIsSaving] = useState(false);
-  const [qrModalData, setQrModalData] = useState(null);
-  const [deleteConfirm, setDeleteConfirm] = useState({ show: false, id: null, name: "" });
-  const [notif, setNotif] = useState({ show: false, message: "", type: "success" });
-
-  React.useEffect(() => {
-    if (typeof printerSearch === "string") {
-      setSearchQuery(printerSearch);
-      setCurrentPage(1);
-    }
-  }, [printerSearch]);
-
-  React.useEffect(() => {
-    if (printerFilter) {
-      setFilterStatusState(printerFilter);
-    } else if (propFilterStatus) {
-      setFilterStatusState(propFilterStatus);
-    }
-  }, [printerFilter, propFilterStatus]);
-
-  const handleSearchChange = (val) => {
-    setSearchQuery(val);
-    if (setPrinterSearch) setPrinterSearch(val);
-    setCurrentPage(1);
-  };
-
-  const handleFilterChange = (newStatus) => {
-    setFilterStatusState(newStatus);
-    if (setPrinterFilter) setPrinterFilter(newStatus);
-    if (setFilterStatus) setFilterStatus(newStatus);
-    setCurrentPage(1);
-  };
-
-  const filteredData = printers.filter((item) => {
-    const q = searchQuery.toLowerCase();
+  const filterPrinterFn = useCallback((item, search, statusFilter) => {
+    const q = (search || "").toLowerCase();
     const matchSearch = item.produk?.toLowerCase().includes(q) || item.sn?.toLowerCase().includes(q) || item.outlet?.toLowerCase().includes(q) || item.vendor?.toLowerCase().includes(q);
 
     let matchFilter = true;
-    if (filterStatusState === "warning" || filterStatusState === "Sewa Habis" || filterStatusState === "Habis") {
+    if (statusFilter === "warning" || statusFilter === "Sewa Habis" || statusFilter === "Habis") {
       const st = (item.status || "").toLowerCase();
       matchFilter = st.includes("habis") || st.includes("warning") || st.includes("akan habis") || (item.tanggalSelesai && new Date(item.tanggalSelesai) <= new Date(Date.now() + 30 * 86400000));
-    } else if (filterStatusState && filterStatusState !== "Semua") {
-      matchFilter = (item.status || "").toLowerCase() === filterStatusState.toLowerCase();
+    } else if (statusFilter && statusFilter !== "Semua") {
+      matchFilter = (item.status || "").toLowerCase() === statusFilter.toLowerCase();
     }
     return matchSearch && matchFilter;
+  }, []);
+
+  const {
+    searchQuery,
+    handleSearchChange,
+    filterStatusState,
+    handleFilterChange,
+    currentPage,
+    setCurrentPage,
+    itemsPerPage,
+    filteredData,
+    totalPages,
+    startIndex,
+    paginatedData,
+    isModalOpen,
+    setIsModalOpen,
+    editingId,
+    formData,
+    setFormData,
+    isSaving,
+    openAddModal,
+    openEditModal,
+    handleSave,
+    qrModalData,
+    setQrModalData,
+    deleteConfirm,
+    setDeleteConfirm,
+    requestDelete,
+    handleDeleteConfirm,
+    notif,
+    setNotif,
+  } = useDeviceTableState({
+    data: printers,
+    filterFn: filterPrinterFn,
+    externalSearch: printerSearch,
+    onExternalSearchChange: setPrinterSearch,
+    externalFilter: printerFilter,
+    onExternalFilterChange: (newSt) => {
+      if (setPrinterFilter) setPrinterFilter(newSt);
+      if (setFilterStatus) setFilterStatus(newSt);
+    },
+    initialFilter: propFilterStatus,
+    loadAllData,
   });
-
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage) || 1;
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedData = filteredData.slice(startIndex, startIndex + itemsPerPage);
-
-  const handleSave = async (e) => {
-    e.preventDefault();
-    setIsSaving(true);
-    try {
-      if (editingId) {
-        await updatePrinter(editingId, formData);
-        setNotif({ show: true, message: "Printer berhasil diupdate!", type: "success" });
-      } else {
-        await addPrinter(formData);
-        setNotif({ show: true, message: "Printer baru berhasil ditambahkan!", type: "success" });
-      }
-      setIsModalOpen(false);
-      if (loadAllData) loadAllData();
-    } catch (err) {
-      console.error("Gagal menyimpan data printer:", err);
-      setNotif({ show: true, message: "Gagal menyimpan data printer.", type: "error" });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!deleteConfirm.id) return;
-    setIsSaving(true);
-    try {
-      await deletePrinter(deleteConfirm.id);
-      setNotif({ show: true, message: "Data printer berhasil dihapus!", type: "success" });
-      setDeleteConfirm({ show: false, id: null, name: "" });
-      if (loadAllData) loadAllData();
-    } catch (err) {
-      console.error("Gagal menghapus printer:", err);
-      setNotif({ show: true, message: "Gagal menghapus data printer.", type: "error" });
-    } finally {
-      setIsSaving(false);
-    }
-  };
 
   return (
     <div className="max-w-7xl mx-auto p-6 animate-in fade-in duration-300 relative print:hidden">
@@ -162,14 +125,7 @@ export default function DataPrinter({
             }}
           />
           {userRole === "admin" && (
-            <button
-              onClick={() => {
-                setEditingId(null);
-                setFormData({});
-                setIsModalOpen(true);
-              }}
-              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-xl font-semibold shadow-sm transition-colors text-sm cursor-pointer"
-            >
+            <button onClick={() => openAddModal({})} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-xl font-semibold shadow-sm transition-colors text-sm cursor-pointer">
               <Plus className="w-4 h-4" /> Tambah Printer
             </button>
           )}
@@ -245,12 +201,8 @@ export default function DataPrinter({
           startIndex={startIndex}
           itemsPerPage={itemsPerPage}
           setCurrentPage={setCurrentPage}
-          onEdit={(printer) => {
-            setEditingId(printer.id);
-            setFormData(printer);
-            setIsModalOpen(true);
-          }}
-          onDelete={(id, nama) => setDeleteConfirm({ show: true, id, name: nama })}
+          onEdit={openEditModal}
+          onDelete={(id, nama) => requestDelete(id, nama)}
           onQr={setQrModalData}
         />
       </div>
@@ -265,12 +217,12 @@ export default function DataPrinter({
         inventoryList={inventory}
         vendorsList={vendors}
         onClose={() => setIsModalOpen(false)}
-        onSave={handleSave}
+        onSave={(e) => handleSave(e, addPrinter, updatePrinter, "Printer")}
       />
 
       <QrLabelModal data={qrModalData} onClose={() => setQrModalData(null)} />
 
-      <ConfirmDeleteModal show={deleteConfirm.show} name={deleteConfirm.name} onConfirm={handleDeleteConfirm} onCancel={() => setDeleteConfirm({ show: false, id: null, name: "" })} />
+      <ConfirmDeleteModal show={deleteConfirm.show} name={deleteConfirm.name} onConfirm={() => handleDeleteConfirm(deletePrinter, "Data printer")} onCancel={() => setDeleteConfirm({ show: false, id: null, name: "" })} />
 
       <ToastNotif notif={notif} onClose={() => setNotif({ show: false, message: "", type: "success" })} />
     </div>

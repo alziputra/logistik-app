@@ -1,27 +1,28 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
-import { X, Loader2, ChevronDown } from "lucide-react";
+import React, { useState, useEffect, useMemo } from "react";
+import { X, Loader2 } from "lucide-react";
+import SearchableSelect from "../../Common/SearchableSelect";
+import { calculateLease } from "../../../utils/deviceUtils";
 
-export default function LaptopModal({
-  isOpen,
-  editingId,
-  formData = {},
-  setFormData = () => {},
-  isSaving = false,
-  vendorsList = [],
-  inventoryList = [],
-  onClose = () => {},
-  onSave = () => {},
-}) {
+const DEFAULT_DEPARTMENTS = ["Departemen Logistik & Umum", "Departemen Manajemen Risiko", "Departemen Business Support", "Departemen Keuangan", "Departemen Sumber Daya Manusia", "Departemen TI & Digital", "Departemen Operasional"];
+
+const DEFAULT_MASTER_LAPTOPS = [
+  { id: "l1", nama: "HP EliteBook 840 G8", kategori: "LAPTOP" },
+  { id: "l2", nama: "Dell Latitude 5420", kategori: "LAPTOP" },
+  { id: "l3", nama: "Lenovo ThinkPad L14", kategori: "LAPTOP" },
+  { id: "l4", nama: "MacBook Pro M2 14-inch", kategori: "LAPTOP" },
+];
+
+const DEFAULT_MASTER_VENDORS = [
+  { id: "v1", nama_perusahaan: "PT GLOBAL SOLUSINDO KOMPUDATA", pimpinan: "Global Solusindo", kota: "Bandung" },
+  { id: "v2", nama_perusahaan: "PT PESONNA OPTIMA JASA", pimpinan: "Achmad Suadi", kota: "Jakarta Central" },
+  { id: "v3", nama_perusahaan: "CV YODERINDO INTI PRIMA", pimpinan: "Yoderindo", kota: "Surabaya" },
+  { id: "v4", nama_perusahaan: "PT DANAKAR", pimpinan: "Danakar", kota: "Jakarta" },
+  { id: "v5", nama_perusahaan: "PT FRESH UTAMA PERKASA", pimpinan: "Fresh Utama", kota: "Jakarta" },
+];
+
+export default function LaptopModal({ isOpen, editingId, formData = {}, setFormData = () => {}, isSaving = false, vendorsList = [], inventoryList = [], onClose = () => {}, onSave = () => {} }) {
   const [tglMulai, setTglMulai] = useState(formData.tanggalMulai || formData.tanggal_mulai || "");
   const [tglSelesai, setTglSelesai] = useState(formData.tanggalSelesai || formData.tanggal_selesai || "");
-
-  const [showDeptDropdown, setShowDeptDropdown] = useState(false);
-  const [showVendorDropdown, setShowVendorDropdown] = useState(false);
-  const [showProdukDropdown, setShowProdukDropdown] = useState(false);
-
-  const deptRef = useRef(null);
-  const vendorRef = useRef(null);
-  const produkRef = useRef(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -30,77 +31,12 @@ export default function LaptopModal({
     }
   }, [isOpen, editingId]);
 
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (deptRef.current && !deptRef.current.contains(e.target)) setShowDeptDropdown(false);
-      if (vendorRef.current && !vendorRef.current.contains(e.target)) setShowVendorDropdown(false);
-      if (produkRef.current && !produkRef.current.contains(e.target)) setShowProdukDropdown(false);
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const filteredInventory = useMemo(() => {
-    const masterLaptops = inventoryList.length > 0 ? inventoryList : [
-      { id: "l1", nama: "HP EliteBook 840 G8", kategori: "LAPTOP" },
-      { id: "l2", nama: "Dell Latitude 5420", kategori: "LAPTOP" },
-      { id: "l3", nama: "Lenovo ThinkPad L14", kategori: "LAPTOP" },
-      { id: "l4", nama: "MacBook Pro M2 14-inch", kategori: "LAPTOP" },
-    ];
-    const q = (formData.namaUnit || formData.produk || "").toLowerCase().trim();
-    if (!q) return masterLaptops;
-    return masterLaptops.filter((item) => (item.nama || item.produk || "").toLowerCase().includes(q));
-  }, [inventoryList, formData.namaUnit, formData.produk]);
-
   const { status, masaSewa } = useMemo(() => {
-    if (!tglMulai || !tglSelesai) {
-      return { status: "Sewa Berjalan", masaSewa: 24 };
-    }
-    const d1 = new Date(tglMulai);
-    const d2 = new Date(tglSelesai);
-    if (isNaN(d1.getTime()) || isNaN(d2.getTime())) {
-      return { status: "Sewa Berjalan", masaSewa: 24 };
-    }
-    let months = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth());
-    if (months < 0) months = 0;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const st = d2 >= today ? "Sewa Berjalan" : "Sewa Habis";
-    return { status: st, masaSewa: months };
+    return calculateLease(tglMulai, tglSelesai);
   }, [tglMulai, tglSelesai]);
 
-  const defaultDeptList = [
-    "Departemen Logistik & Umum",
-    "Departemen Manajemen Risiko",
-    "Departemen Business Support",
-    "Departemen Keuangan",
-    "Departemen Sumber Daya Manusia",
-    "Departemen TI & Digital",
-    "Departemen Operasional",
-  ];
-
-  const filteredDepts = useMemo(() => {
-    const q = (formData.departemen || "").toLowerCase().trim();
-    if (!q) return defaultDeptList;
-    return defaultDeptList.filter((d) => d.toLowerCase().includes(q));
-  }, [formData.departemen]);
-
-  const filteredVendors = useMemo(() => {
-    const masterVendors = vendorsList.length > 0 ? vendorsList : [
-      { id: "v1", nama_perusahaan: "PT GLOBAL SOLUSINDO KOMPUDATA", pimpinan: "Global Solusindo", kota: "Bandung" },
-      { id: "v2", nama_perusahaan: "PT PESONNA OPTIMA JASA", pimpinan: "Achmad Suadi", kota: "Jakarta Central" },
-      { id: "v3", nama_perusahaan: "CV YODERINDO INTI PRIMA", pimpinan: "Yoderindo", kota: "Surabaya" },
-      { id: "v4", nama_perusahaan: "PT DANAKAR", pimpinan: "Danakar", kota: "Jakarta" },
-      { id: "v5", nama_perusahaan: "PT FRESH UTAMA PERKASA", pimpinan: "Fresh Utama", kota: "Jakarta" },
-    ];
-    const q = (formData.vendor || formData.penyedia || "").toLowerCase().trim();
-    if (!q) return masterVendors;
-    return masterVendors.filter(
-      (v) => (v.nama_perusahaan || v.nama || "").toLowerCase().includes(q) || (v.pimpinan || "").toLowerCase().includes(q)
-    );
-  }, [vendorsList, formData.vendor, formData.penyedia]);
+  const activeInventory = inventoryList.length > 0 ? inventoryList : DEFAULT_MASTER_LAPTOPS;
+  const activeVendors = vendorsList.length > 0 ? vendorsList : DEFAULT_MASTER_VENDORS;
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
@@ -117,8 +53,7 @@ export default function LaptopModal({
 
   if (!isOpen) return null;
 
-  const inputCls =
-    "w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-slate-100 outline-none focus:border-emerald-500 placeholder:text-slate-500 transition-colors";
+  const inputCls = "w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-slate-100 outline-none focus:border-emerald-500 placeholder:text-slate-500 transition-colors";
   const labelCls = "block text-[11px] font-semibold text-slate-300 mb-1";
 
   return (
@@ -126,15 +61,8 @@ export default function LaptopModal({
       <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col max-h-[92vh] overflow-hidden">
         {/* HEADER */}
         <div className="px-5 py-4 border-b border-slate-800 flex justify-between items-center bg-slate-900 shrink-0">
-          <h3 className="font-bold text-base text-slate-100">
-            {editingId ? "Edit Data Laptop" : "Tambah Laptop Baru"}
-          </h3>
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={isSaving}
-            className="text-slate-400 hover:text-slate-200 hover:bg-slate-800 p-1.5 rounded-lg transition-colors cursor-pointer"
-          >
+          <h3 className="font-bold text-base text-slate-100">{editingId ? "Edit Data Laptop" : "Tambah Laptop Baru"}</h3>
+          <button type="button" onClick={onClose} disabled={isSaving} className="text-slate-400 hover:text-slate-200 hover:bg-slate-800 p-1.5 rounded-lg transition-colors cursor-pointer">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -142,23 +70,13 @@ export default function LaptopModal({
         {/* FORM BODY */}
         <form onSubmit={handleFormSubmit} className="flex flex-col flex-1 overflow-hidden">
           <div className="p-5 overflow-y-auto flex-1 custom-scrollbar space-y-5">
-            
             {/* INFORMASI PENGGUNA */}
             <div className="space-y-3">
-              <h4 className="font-bold text-xs text-emerald-400 border-b border-slate-800 pb-2 uppercase tracking-wider">
-                Informasi Pengguna & Jabatan
-              </h4>
+              <h4 className="font-bold text-xs text-emerald-400 border-b border-slate-800 pb-2 uppercase tracking-wider">Informasi Pengguna & Jabatan</h4>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
                   <label className={labelCls}>NIK Pegawai</label>
-                  <input
-                    type="text"
-                    value={formData.nik || ""}
-                    onChange={(e) => setFormData((p) => ({ ...p, nik: e.target.value }))}
-                    disabled={isSaving}
-                    className={`${inputCls} font-mono`}
-                    placeholder="P80524..."
-                  />
+                  <input type="text" value={formData.nik || ""} onChange={(e) => setFormData((p) => ({ ...p, nik: e.target.value }))} disabled={isSaving} className={`${inputCls} font-mono`} placeholder="P80524..." />
                 </div>
 
                 <div className="sm:col-span-2">
@@ -187,129 +105,70 @@ export default function LaptopModal({
                 </div>
 
                 {/* Departemen Combobox */}
-                <div className="relative sm:col-span-2" ref={deptRef}>
-                  <label className={labelCls}>Departemen</label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={formData.departemen || ""}
-                      onFocus={() => setShowDeptDropdown(true)}
-                      onChange={(e) => {
-                        setFormData((p) => ({ ...p, departemen: e.target.value }));
-                        setShowDeptDropdown(true);
-                      }}
-                      disabled={isSaving}
-                      className={`${inputCls} pr-8`}
-                      placeholder="Pilih atau ketik departemen..."
-                    />
-                    <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  </div>
-
-                  {showDeptDropdown && (
-                    <div className="absolute left-0 right-0 top-full mt-1 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-30 max-h-56 overflow-y-auto custom-scrollbar p-1">
-                      {filteredDepts.map((dept, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => {
-                            setFormData((p) => ({ ...p, departemen: dept }));
-                            setShowDeptDropdown(false);
-                          }}
-                          className="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-[#00753A]/30 hover:text-emerald-300 transition-colors cursor-pointer text-slate-200"
-                        >
-                          {dept}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <SearchableSelect
+                  label="Departemen"
+                  className="sm:col-span-2"
+                  inputClassName={inputCls}
+                  labelClassName={labelCls}
+                  value={formData.departemen || ""}
+                  options={DEFAULT_DEPARTMENTS}
+                  disabled={isSaving}
+                  placeholder="Pilih atau ketik departemen..."
+                  onChange={(val) => setFormData((p) => ({ ...p, departemen: val }))}
+                  onSelect={(dept) => setFormData((p) => ({ ...p, departemen: dept }))}
+                />
               </div>
             </div>
 
             {/* INFORMASI HARDWARE LAPTOP */}
             <div className="space-y-3 pt-2">
-              <h4 className="font-bold text-xs text-emerald-400 border-b border-slate-800 pb-2 uppercase tracking-wider">
-                Spesifikasi Laptop & Jaringan
-              </h4>
+              <h4 className="font-bold text-xs text-emerald-400 border-b border-slate-800 pb-2 uppercase tracking-wider">Spesifikasi Laptop & Jaringan</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Produk / Model Laptop Combobox Dropdown */}
-                <div className="relative sm:col-span-2" ref={produkRef}>
-                  <label className={labelCls}>Produk / Model Laptop</label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={formData.namaUnit || formData.produk || ""}
-                      onFocus={() => setShowProdukDropdown(true)}
-                      onChange={(e) => {
-                        setFormData((p) => ({ ...p, namaUnit: e.target.value, produk: e.target.value }));
-                        setShowProdukDropdown(true);
-                      }}
-                      disabled={isSaving}
-                      className={`${inputCls} pr-8`}
-                      placeholder="Pilih atau ketik model laptop..."
-                    />
-                    <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  </div>
-
-                  {showProdukDropdown && (
-                    <div className="absolute left-0 right-0 top-full mt-1 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-30 max-h-56 overflow-y-auto custom-scrollbar p-1.5">
-                      {filteredInventory.length === 0 ? (
-                        <div className="px-3 py-2 text-xs text-slate-400 italic">
-                          Gunakan model custom: "{formData.namaUnit || formData.produk}"
+                {/* Produk / Model Laptop */}
+                <SearchableSelect
+                  label="Produk / Model Laptop"
+                  className="sm:col-span-2"
+                  inputClassName={inputCls}
+                  labelClassName={labelCls}
+                  value={formData.namaUnit || formData.produk || ""}
+                  options={activeInventory}
+                  disabled={isSaving}
+                  placeholder="Pilih atau ketik model laptop..."
+                  onChange={(val) => setFormData((p) => ({ ...p, namaUnit: val, produk: val }))}
+                  onSelect={(item) => {
+                    const name = item.nama || item.produk;
+                    const spkNo = item.no_spk || item.no_pks || "";
+                    const vendorName = item.vendor_nama || item.vendor?.nama || (typeof item.vendor === "string" ? item.vendor : "");
+                    setFormData((p) => ({
+                      ...p,
+                      namaUnit: name,
+                      produk: name,
+                      vendor: vendorName || p.vendor,
+                      penyedia: vendorName || p.penyedia,
+                      no_spk: spkNo || p.no_spk,
+                      tanggalMulai: item.tgl_mulai_sewa || p.tanggalMulai,
+                      tanggalSelesai: item.tgl_selesai_sewa || p.tanggalSelesai,
+                    }));
+                    if (item.tgl_mulai_sewa) setTglMulai(item.tgl_mulai_sewa);
+                    if (item.tgl_selesai_sewa) setTglSelesai(item.tgl_selesai_sewa);
+                  }}
+                  renderOption={(item) => {
+                    const name = item.nama || item.produk;
+                    const spkNo = item.no_spk || item.no_pks || "";
+                    const vendorName = item.vendor_nama || item.vendor?.nama || (typeof item.vendor === "string" ? item.vendor : "");
+                    const stok = item.kuantitas !== undefined ? item.kuantitas : item.stok || 0;
+                    return (
+                      <div className="w-full text-left px-3 py-2.5 text-xs rounded-lg hover:bg-[#00753A]/30 hover:text-emerald-300 transition-colors border-b border-slate-700/50 last:border-0 group">
+                        <div className="font-semibold text-slate-200 group-hover:text-emerald-300 truncate">{name}</div>
+                        <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                          {spkNo && <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800/60">SPK: {spkNo}</span>}
+                          {vendorName && <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-800/60">{vendorName}</span>}
+                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-700 font-mono">Stok: {stok}</span>
                         </div>
-                      ) : (
-                        filteredInventory.map((item, idx) => {
-                          const name = item.nama || item.produk;
-                          const spkNo = item.no_spk || item.no_pks || "";
-                          const vendorName = item.vendor_nama || item.vendor?.nama || (typeof item.vendor === "string" ? item.vendor : "");
-                          const stok = item.kuantitas !== undefined ? item.kuantitas : (item.stok || 0);
-
-                          return (
-                            <button
-                              key={item.id || idx}
-                              type="button"
-                              onClick={() => {
-                                setFormData((p) => ({
-                                  ...p,
-                                  namaUnit: name,
-                                  produk: name,
-                                  vendor: vendorName || p.vendor,
-                                  penyedia: vendorName || p.penyedia,
-                                  no_spk: spkNo || p.no_spk,
-                                  tanggalMulai: item.tgl_mulai_sewa || p.tanggalMulai,
-                                  tanggalSelesai: item.tgl_selesai_sewa || p.tanggalSelesai,
-                                }));
-                                if (item.tgl_mulai_sewa) setTglMulai(item.tgl_mulai_sewa);
-                                if (item.tgl_selesai_sewa) setTglSelesai(item.tgl_selesai_sewa);
-                                setShowProdukDropdown(false);
-                              }}
-                              className="w-full text-left px-3 py-2.5 text-xs rounded-lg hover:bg-[#00753A]/30 hover:text-emerald-300 transition-colors border-b border-slate-700/50 last:border-0 group cursor-pointer"
-                            >
-                              <div className="font-semibold text-slate-200 group-hover:text-emerald-300 truncate">
-                                {name}
-                              </div>
-                              <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                                {spkNo && (
-                                  <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800/60">
-                                    SPK: {spkNo}
-                                  </span>
-                                )}
-                                {vendorName && (
-                                  <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-950 text-blue-300 border border-blue-800/60">
-                                    {vendorName}
-                                  </span>
-                                )}
-                                <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-700 font-mono">
-                                  Stok: {stok}
-                                </span>
-                              </div>
-                            </button>
-                          );
-                        })
-                      )}
-                    </div>
-                  )}
-                </div>
+                      </div>
+                    );
+                  }}
+                />
 
                 <div>
                   <label className={labelCls}>Hostname / Device Name</label>
@@ -337,12 +196,7 @@ export default function LaptopModal({
 
                 <div>
                   <label className={labelCls}>Operating System (OS)</label>
-                  <select
-                    value={formData.os || "Windows"}
-                    onChange={(e) => setFormData((p) => ({ ...p, os: e.target.value }))}
-                    disabled={isSaving}
-                    className={`${inputCls} cursor-pointer`}
-                  >
+                  <select value={formData.os || "Windows"} onChange={(e) => setFormData((p) => ({ ...p, os: e.target.value }))} disabled={isSaving} className={`${inputCls} cursor-pointer`}>
                     <option value="Windows">Windows</option>
                     <option value="Ubuntu / Linux">Ubuntu / Linux</option>
                     <option value="macOS">macOS</option>
@@ -351,12 +205,7 @@ export default function LaptopModal({
 
                 <div>
                   <label className={labelCls}>Kondisi Laptop</label>
-                  <select
-                    value={formData.kondisi || "BAIK"}
-                    onChange={(e) => setFormData((p) => ({ ...p, kondisi: e.target.value }))}
-                    disabled={isSaving}
-                    className={`${inputCls} cursor-pointer`}
-                  >
+                  <select value={formData.kondisi || "BAIK"} onChange={(e) => setFormData((p) => ({ ...p, kondisi: e.target.value }))} disabled={isSaving} className={`${inputCls} cursor-pointer`}>
                     <option value="BAIK">BAIK</option>
                     <option value="KURANG BAIK">KURANG BAIK</option>
                     <option value="RUSAK">RUSAK</option>
@@ -367,104 +216,47 @@ export default function LaptopModal({
 
             {/* VENDOR & KONTRAK SEWA */}
             <div className="space-y-3 pt-2">
-              <h4 className="font-bold text-xs text-emerald-400 border-b border-slate-800 pb-2 uppercase tracking-wider">
-                Penyedia Vendor & Masa Kontrak
-              </h4>
+              <h4 className="font-bold text-xs text-emerald-400 border-b border-slate-800 pb-2 uppercase tracking-wider">Penyedia Vendor & Masa Kontrak</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* Vendor Combobox */}
-                <div className="relative sm:col-span-2" ref={vendorRef}>
-                  <label className={labelCls}>Penyedia / Vendor</label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={formData.vendor || formData.penyedia || ""}
-                      onFocus={() => setShowVendorDropdown(true)}
-                      onChange={(e) => {
-                        setFormData((p) => ({ ...p, vendor: e.target.value, penyedia: e.target.value }));
-                        setShowVendorDropdown(true);
-                      }}
-                      disabled={isSaving}
-                      className={`${inputCls} pr-8`}
-                      placeholder="Pilih atau ketik vendor..."
-                    />
-                    <ChevronDown className="w-4 h-4 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  </div>
-
-                  {showVendorDropdown && (
-                    <div className="absolute left-0 right-0 top-full mt-1 bg-slate-800 border border-slate-700 rounded-xl shadow-2xl z-30 max-h-56 overflow-y-auto custom-scrollbar p-1">
-                      {filteredVendors.map((v, idx) => (
-                        <button
-                          key={v.id || idx}
-                          type="button"
-                          onClick={() => {
-                            setFormData((p) => ({ ...p, vendor: v.nama_perusahaan || v.nama, penyedia: v.nama_perusahaan || v.nama }));
-                            setShowVendorDropdown(false);
-                          }}
-                          className="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-[#00753A]/30 hover:text-emerald-300 transition-colors flex items-center justify-between group cursor-pointer"
-                        >
-                          <span className="font-bold text-slate-200 group-hover:text-emerald-300">
-                            {v.nama_perusahaan || v.nama}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                <SearchableSelect
+                  label="Penyedia / Vendor"
+                  className="sm:col-span-2"
+                  inputClassName={inputCls}
+                  labelClassName={labelCls}
+                  value={formData.vendor || formData.penyedia || ""}
+                  options={activeVendors}
+                  disabled={isSaving}
+                  placeholder="Pilih atau ketik vendor..."
+                  onChange={(val) => setFormData((p) => ({ ...p, vendor: val, penyedia: val }))}
+                  onSelect={(v) => setFormData((p) => ({ ...p, vendor: v.nama_perusahaan || v.nama, penyedia: v.nama_perusahaan || v.nama }))}
+                />
 
                 <div>
                   <label className={labelCls}>Tgl Mulai Sewa</label>
-                  <input
-                    type="date"
-                    value={tglMulai}
-                    onChange={(e) => setTglMulai(e.target.value)}
-                    disabled={isSaving}
-                    className={inputCls}
-                  />
+                  <input type="date" value={tglMulai} onChange={(e) => setTglMulai(e.target.value)} disabled={isSaving} className={inputCls} />
                 </div>
 
                 <div>
                   <label className={labelCls}>Tgl Selesai Sewa</label>
-                  <input
-                    type="date"
-                    value={tglSelesai}
-                    onChange={(e) => setTglSelesai(e.target.value)}
-                    disabled={isSaving}
-                    className={inputCls}
-                  />
+                  <input type="date" value={tglSelesai} onChange={(e) => setTglSelesai(e.target.value)} disabled={isSaving} className={inputCls} />
                 </div>
 
                 <div>
                   <label className={labelCls}>Status (Otomatis)</label>
-                  <input
-                    type="text"
-                    readOnly
-                    value={status}
-                    className={`${inputCls} bg-slate-950 font-semibold text-emerald-400 cursor-not-allowed`}
-                  />
+                  <input type="text" readOnly value={status} className={`${inputCls} bg-slate-950 font-semibold text-emerald-400 cursor-not-allowed`} />
                 </div>
 
                 <div>
                   <label className={labelCls}>Masa Sewa (Bln)</label>
-                  <input
-                    type="number"
-                    readOnly
-                    value={masaSewa}
-                    className={`${inputCls} bg-slate-950 font-semibold text-slate-300 cursor-not-allowed`}
-                  />
+                  <input type="number" readOnly value={masaSewa} className={`${inputCls} bg-slate-950 font-semibold text-slate-300 cursor-not-allowed`} />
                 </div>
               </div>
             </div>
-
           </div>
 
           {/* FOOTER */}
           <div className="px-5 py-4 border-t border-slate-800 bg-slate-900 shrink-0 flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={onClose}
-              disabled={isSaving}
-              className="px-4 py-2 text-xs font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors cursor-pointer"
-            >
+            <button type="button" onClick={onClose} disabled={isSaving} className="px-4 py-2 text-xs font-semibold text-slate-300 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors cursor-pointer">
               Batal
             </button>
             <button

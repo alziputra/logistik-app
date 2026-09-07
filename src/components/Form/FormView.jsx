@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { FileText, ArrowRight, Plus, Trash2, AlertCircle, PackageCheck, PackageMinus, Hash, MapPin, Calendar, ClipboardList, Building2, ChevronDown, Check, Package } from "lucide-react";
+import { FileText, ArrowRight, ArrowLeft, Plus, Trash2, AlertCircle, PackageCheck, PackageMinus, Hash, MapPin, Calendar, ClipboardList, Building2, ChevronDown, Check, Package, FileCheck, Users, LayoutList, Layers } from "lucide-react";
 import { normalizeItemName } from "../../utils/inventoryMatcher";
 
 const isNomorValid = (nomor, jenis = "Barang Keluar") => {
@@ -234,6 +234,23 @@ const FormView = ({ formData = {}, handleInputChange = () => {}, items = [], han
   const [kodeOutlet, setKodeOutlet] = useState(formData.kodeOutlet || "");
   const [selectedOutletName, setSelectedOutletName] = useState(formData.asalOutlet || "");
   const [jenisTransaksi, setJenisTransaksi] = useState(formData.jenisTransaksi || "Barang Keluar");
+  const [activeFormTab, setActiveFormTab] = useState("kop");
+  const [itemViewMode, setItemViewMode] = useState(() => {
+    try {
+      return localStorage.getItem("bast_item_view_mode") || "table";
+    } catch {
+      return "table";
+    }
+  });
+
+  const handleViewModeChange = (mode) => {
+    setItemViewMode(mode);
+    try {
+      localStorage.setItem("bast_item_view_mode", mode);
+    } catch {
+      // ignore
+    }
+  };
 
   const tahun = new Date().getFullYear();
   const isMasuk = jenisTransaksi === "Barang Masuk";
@@ -375,18 +392,19 @@ const FormView = ({ formData = {}, handleInputChange = () => {}, items = [], han
   const nomorIsValid = isNomorValid(formData.nomorSurat, jenisTransaksi);
 
   return (
-    <div className="w-full pt-5 sm:pt-2 pb-6 print:hidden">
-      <form onSubmit={(e) => e.preventDefault()} className="space-y-4 sm:space-y-6">
-        {/* Header Card Form */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-6 border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+    <div className="w-full pt-4 sm:pt-2 pb-6 print:hidden">
+      <form onSubmit={(e) => e.preventDefault()} className="space-y-4">
+        {/* Editor Card Container */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-5 flex flex-col">
+          {/* Header Editor (SPK Reference Style) */}
+          <div className="flex items-center justify-between gap-3 mb-4">
             <div className="flex items-center gap-3">
-              <div className="bg-emerald-500/10 dark:bg-emerald-950/50 p-2.5 rounded-2xl border border-emerald-500/20">
-                <FileText className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
+              <div className="bg-[#00753A] p-2.5 rounded-xl text-white">
+                <FileCheck className="w-5 h-5" />
               </div>
               <div>
-                <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-slate-100">{formData.id ? "Edit Surat Serah Terima" : "Buat Surat Serah Terima"}</h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{formData.id ? "Perbarui data surat transaksi yang dipilih" : "Isi data surat di bawah untuk memperbarui pratinjau secara live"}</p>
+                <h2 className="font-bold text-base text-slate-900 dark:text-slate-100">{formData.id ? "Edit Berita Acara (BAST)" : "Buat Berita Acara (BAST)"}</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Editor Berita Acara Serah Terima Barang</p>
               </div>
             </div>
 
@@ -394,270 +412,551 @@ const FormView = ({ formData = {}, handleInputChange = () => {}, items = [], han
             <button
               type="button"
               onClick={() => setView("preview")}
-              className="lg:hidden flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-sm transition-all cursor-pointer active:scale-95 shrink-0"
+              className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 bg-[#00753A] hover:bg-[#005c2e] text-white rounded-xl font-bold text-xs shadow-xs transition-all cursor-pointer active:scale-95 shrink-0"
             >
-              <span>Lihat Preview</span>
+              <span>Preview</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
 
-          {/* SECTION 1: INFORMASI DOKUMEN */}
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
-            {/* Jenis Transaksi Toggle */}
-            <div className="md:col-span-12 xl:col-span-4">
-              <Field label="Jenis Transaksi" icon={FileText}>
-                <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700">
-                  <button
-                    type="button"
-                    onClick={() => handleJenisChange("Barang Keluar")}
-                    className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      jenisTransaksi === "Barang Keluar" ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-                    }`}
-                  >
-                    <PackageMinus className="w-3.5 h-3.5" />
-                    <span>Keluar</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleJenisChange("Barang Masuk")}
-                    className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      jenisTransaksi === "Barang Masuk"
-                        ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shadow-sm"
-                        : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
-                    }`}
-                  >
-                    <PackageCheck className="w-3.5 h-3.5" />
-                    <span>Masuk</span>
-                  </button>
-                </div>
-              </Field>
-            </div>
-
-            {/* Nomor Surat */}
-            <div className="md:col-span-12 xl:col-span-5">
-              <Field label="Nomor Surat" icon={Hash}>
-                <div
-                  className={`flex items-center rounded-xl border overflow-hidden transition-all ${
-                    nomorIsValid
-                      ? "border-emerald-500 bg-white dark:bg-slate-800 shadow-sm"
-                      : nomorIs000
-                        ? "border-rose-500 bg-white dark:bg-slate-800 shadow-sm"
-                        : "border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm"
-                  }`}
-                >
-                  <input
-                    type="text"
-                    placeholder="001"
-                    value={nomorUrut}
-                    onChange={handleNomorChange}
-                    className="w-20 sm:w-24 py-2 px-2.5 text-center font-mono font-bold text-sm outline-none bg-transparent text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-600 shrink-0"
-                  />
-                  <span className="text-slate-600 dark:text-slate-400 font-mono text-[11px] px-2 border-l border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 py-2 select-none truncate flex-1 min-w-0" title={suffix}>
-                    {suffix}
-                  </span>
-                </div>
-                {nomorIs000 && (
-                  <p className="flex items-center gap-1 text-[11px] text-rose-500 dark:text-rose-400 mt-1 font-medium">
-                    <AlertCircle className="w-3 h-3" /> Nomor tidak boleh 000
-                  </p>
-                )}
-                {isMasuk && !nomorIsEmpty && (!kodeOutlet || kodeOutlet === ".....") && (
-                  <p className="flex items-center gap-1 text-[11px] text-amber-500 dark:text-amber-400 mt-1 font-medium">
-                    <AlertCircle className="w-3 h-3" /> Pilih nama outlet di bawah untuk melengkapi kode outlet
-                  </p>
-                )}
-                {!nomorIsEmpty && nomorIsValid && <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1 font-mono font-semibold truncate">✓ {formData.nomorSurat}</p>}
-              </Field>
-            </div>
-
-            {/* Tanggal */}
-            <div className="md:col-span-12 xl:col-span-3">
-              <Field label="Tanggal" icon={Calendar}>
-                <input type="date" name="tanggal" value={formData.tanggal || ""} onChange={handleInputChange} className={inputCls} />
-              </Field>
-            </div>
-
-            {/* Lokasi */}
-            <div className="md:col-span-4">
-              <Field label="Lokasi" icon={MapPin}>
-                <input type="text" name="lokasi" value={formData.lokasi || ""} onChange={handleInputChange} placeholder="Contoh: Jakarta" className={inputCls} />
-              </Field>
-            </div>
-
-            {/* Kolom Khusus: Jika Barang Masuk -> Input Nama Outlet Asal Pembentuk Nomor Surat; Jika Keluar -> Tujuan (Instansi / Outlet) */}
-            {isMasuk ? (
-              <div className="md:col-span-8">
-                <Field label="Nama Outlet (Asal Barang)" icon={Building2}>
-                  <OutletCombobox outlets={outlets} value={selectedOutletName || formData.asalOutlet || ""} onChange={handleOutletAsalChange} name="asalOutlet" placeholder="Pilih nama outlet (kode otomatis masuk ke nomor surat)..." />
-                  <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 px-0.5">
-                    <span className="flex items-center gap-1.5">
-                      <span className="font-semibold text-emerald-600 dark:text-emerald-400">Penerima:</span>
-                      <span className="font-medium text-slate-700 dark:text-slate-300">Logistik Kanwil VIII</span>
-                    </span>
-                    {kodeOutlet && kodeOutlet !== "....." && (
-                      <span className="font-mono text-[10px] bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800/40">Kode: {kodeOutlet}</span>
-                    )}
-                  </div>
-                </Field>
-              </div>
-            ) : (
-              <div className="md:col-span-8">
-                <Field label="Tujuan (Instansi / Outlet)" icon={Building2}>
-                  <OutletCombobox
-                    outlets={outlets}
-                    value={formData.tujuan || formData.outletTujuan || formData.pihak2Instansi || ""}
-                    onChange={handleInputChange}
-                    name="tujuan"
-                    placeholder="Pilih dari daftar master instansi / outlet atau ketik manual..."
-                  />
-                </Field>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* PIHAK YANG TERLIBAT */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
-          <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Pihak Yang Terlibat</h3>
-          {/* 3 Pihak (Yang Menyerahkan, Mengetahui, Yang Menerima) untuk Surat Masuk & Surat Keluar */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
-            {/* Card 1: Yang Menyerahkan */}
-            <div className="p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5 transition-colors">
-              <div className="flex items-center gap-2">
-                <span className="w-4 h-4 rounded-full bg-emerald-600 text-white font-bold text-[10px] flex items-center justify-center shadow-sm">1</span>
-                <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">Yang Menyerahkan</span>
-              </div>
-              <input
-                type="text"
-                name="pihak1Nama"
-                value={formData.pihak1Nama || formData.pengirimNama || ""}
-                onChange={handleInputChange}
-                placeholder={isMasuk ? "Nama yang menyerahkan (Outlet)..." : "Nama pengirim (Logistik)..."}
-                className={inputCls}
-              />
-              <input type="text" name="pihak1Jabatan" value={formData.pihak1Jabatan || formData.pengirimJabatan || ""} onChange={handleInputChange} placeholder="Jabatan..." className={inputCls} />
-            </div>
-
-            {/* Card 2: Mengetahui */}
-            <div className="p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5 transition-colors">
-              <div className="flex items-center gap-2">
-                <span className="w-4 h-4 rounded-full bg-purple-600 text-white font-bold text-[10px] flex items-center justify-center shadow-sm">2</span>
-                <span className="text-[11px] font-bold text-purple-600 dark:text-purple-400 uppercase">Mengetahui</span>
-              </div>
-              <input type="text" name="pihakMengetahuiNama" value={formData.pihakMengetahuiNama || formData.mengetahuiNama || ""} onChange={handleInputChange} placeholder="Nama pejabat mengetahui..." className={inputCls} />
-              <input type="text" name="pihakMengetahuiJabatan" value={formData.pihakMengetahuiJabatan || formData.mengetahuiJabatan || ""} onChange={handleInputChange} placeholder="Jabatan..." className={inputCls} />
-            </div>
-
-            {/* Card 3: Yang Menerima */}
-            <div className="p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5 transition-colors">
-              <div className="flex items-center gap-2">
-                <span className="w-4 h-4 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center shadow-sm">3</span>
-                <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase">Yang Menerima</span>
-              </div>
-              <input type="text" name="pihak2Nama" value={formData.pihak2Nama || formData.penerimaNama || ""} onChange={handleInputChange} placeholder={isMasuk ? "Nama penerima (Logistik)..." : "Nama penerima..."} className={inputCls} />
-              <input type="text" name="pihak2Jabatan" value={formData.pihak2Jabatan || formData.penerimaJabatan || ""} onChange={handleInputChange} placeholder="Jabatan..." className={inputCls} />
-            </div>
-          </div>
-        </div>
-
-        {/* DAFTAR BARANG TABLE CARD */}
-        <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm transition-colors overflow-visible pb-24">
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-2">
-              <ClipboardList className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-              <h3 className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">Daftar Barang</h3>
-              <span className="px-2 py-0.5 text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-full border border-slate-200 dark:border-slate-700">{items.length} baris</span>
-            </div>
-
-            <button type="button" onClick={addItem} className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow-sm transition-all cursor-pointer active:scale-95">
-              <Plus className="w-3.5 h-3.5" />
-              <span>Tambah Baris</span>
+          {/* Form Section Tabs (Pill Container Sesuai Gambar) */}
+          <div className="grid grid-cols-3 bg-[#00753A] text-white rounded-xl p-1 mb-5 text-center text-xs font-bold shadow-xs">
+            <button
+              type="button"
+              onClick={() => setActiveFormTab("kop")}
+              className={`py-2 rounded-lg transition-colors cursor-pointer ${activeFormTab === "kop" ? "bg-white text-[#00753A] shadow-sm font-bold" : "hover:bg-[#005c2e] text-emerald-100 font-semibold"}`}
+            >
+              Kop & Pihak
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveFormTab("pihak")}
+              className={`py-2 rounded-lg transition-colors cursor-pointer ${activeFormTab === "pihak" ? "bg-white text-[#00753A] shadow-sm font-bold" : "hover:bg-[#005c2e] text-emerald-100 font-semibold"}`}
+            >
+              Pihak Terlibat
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveFormTab("barang")}
+              className={`py-2 rounded-lg transition-colors cursor-pointer ${activeFormTab === "barang" ? "bg-white text-[#00753A] shadow-sm font-bold" : "hover:bg-[#005c2e] text-emerald-100 font-semibold"}`}
+            >
+              Daftar Barang ({items.length})
             </button>
           </div>
 
-          <div className="overflow-x-auto overflow-y-visible min-h-[260px]">
-            <table className="w-full text-left border-collapse min-w-[750px]">
-              <thead>
-                <tr className="border-b border-slate-200 dark:border-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                  <th className="py-2.5 px-2 text-center w-10">No</th>
-                  <th className="py-2.5 px-2 w-52">Nama Barang</th>
-                  <th className="py-2.5 px-2 w-28">S/N</th>
-                  <th className="py-2.5 px-2 w-16 text-center">Qty</th>
-                  <th className="py-2.5 px-2 w-20 text-center">Satuan</th>
-                  <th className="py-2.5 px-2 w-48">{isMasuk ? "Outlet / Asal" : "Outlet Tujuan"}</th>
-                  <th className="py-2.5 px-2">Keterangan</th>
-                  <th className="py-2.5 px-2 text-center w-10"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
-                {items.map((item, idx) => (
-                  <tr key={item.id || idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors relative">
-                    <td className="py-2 px-2 text-center font-bold text-slate-400 text-[11px]">{idx + 1}</td>
+          {/* Tab 1: KOP & TANGGAL SURAT */}
+          {activeFormTab === "kop" && (
+            <div className="space-y-4 animate-in fade-in duration-200">
+              <div className="bg-slate-50 dark:bg-slate-950/60 p-4 rounded-xl border border-slate-100 dark:border-slate-800 space-y-4">
+                <h3 className="text-xs font-bold text-[#00753A] dark:text-emerald-400 uppercase tracking-wider">KOP & TANGGAL SURAT</h3>
 
-                    {/* Nama Barang via ItemCombobox Kustom */}
-                    <td className="py-2 px-2">
-                      <ItemCombobox
-                        inventory={inventory}
-                        value={item.namaBarang || item.nama || ""}
-                        onChange={(val, selectedInv) => {
-                          handleItemChange(item.id || idx, "namaBarang", val);
-                          if (selectedInv) {
-                            if (selectedInv.id) handleItemChange(item.id || idx, "inventoryId", selectedInv.id);
-                            if (selectedInv.satuan) handleItemChange(item.id || idx, "satuan", selectedInv.satuan);
-                          }
-                        }}
-                      />
-                    </td>
+                {/* Jenis Transaksi Toggle */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Jenis Transaksi Serah Terima <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
+                    <button
+                      type="button"
+                      onClick={() => handleJenisChange("Barang Keluar")}
+                      className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        jenisTransaksi === "Barang Keluar" ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 shadow-xs" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                      }`}
+                    >
+                      <PackageMinus className="w-3.5 h-3.5" />
+                      <span>Barang Keluar</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleJenisChange("Barang Masuk")}
+                      className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        jenisTransaksi === "Barang Masuk"
+                          ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 shadow-xs"
+                          : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+                      }`}
+                    >
+                      <PackageCheck className="w-3.5 h-3.5" />
+                      <span>Barang Masuk</span>
+                    </button>
+                  </div>
+                </div>
 
-                    {/* S/N */}
-                    <td className="py-2 px-2">
-                      <input type="text" value={item.sn || ""} onChange={(e) => handleItemChange(item.id || idx, "sn", e.target.value)} placeholder="S/N..." className={`${inputCls} font-mono text-[11px]`} />
-                    </td>
+                {/* Nomor Urut BAST (Running Number) Sesuai Referensi Gambar */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                    Nomor Urut BAST (Running Number) <span className="text-rose-500">*</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      placeholder="Contoh: 1506"
+                      value={nomorUrut}
+                      onChange={handleNomorChange}
+                      className="w-28 sm:w-36 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-2 rounded-xl text-xs font-mono font-bold text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#00753A]"
+                    />
+                    <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 shrink-0 font-mono" title={suffix}>
+                      {suffix}
+                    </span>
+                  </div>
+                  {nomorIs000 && (
+                    <p className="flex items-center gap-1 text-[11px] text-rose-500 dark:text-rose-400 mt-1 font-medium">
+                      <AlertCircle className="w-3 h-3" /> Nomor tidak boleh 000
+                    </p>
+                  )}
+                  {isMasuk && !nomorIsEmpty && (!kodeOutlet || kodeOutlet === ".....") && (
+                    <p className="flex items-center gap-1 text-[11px] text-amber-500 dark:text-amber-400 mt-1 font-medium">
+                      <AlertCircle className="w-3 h-3" /> Pilih nama outlet di bawah untuk melengkapi kode outlet
+                    </p>
+                  )}
+                  {!nomorIsEmpty && nomorIsValid && <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1 font-mono font-semibold truncate">✓ {formData.nomorSurat}</p>}
+                </div>
 
-                    {/* Qty */}
-                    <td className="py-2 px-2 text-center">
-                      <input type="number" min="1" value={item.jumlah || item.kuantitas || 1} onChange={(e) => handleItemChange(item.id || idx, "jumlah", e.target.value)} className={`${inputCls} text-center font-bold`} />
-                    </td>
+                {/* Grid 2 Cols: Tempat Surat & Tanggal Surat */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                      Tempat Surat <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="lokasi"
+                      placeholder="Contoh: Jakarta"
+                      value={formData.lokasi || ""}
+                      onChange={handleInputChange}
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-2 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#00753A]"
+                    />
+                  </div>
 
-                    {/* Satuan */}
-                    <td className="py-2 px-2 text-center">
-                      <input type="text" value={item.satuan || "Unit"} onChange={(e) => handleItemChange(item.id || idx, "satuan", e.target.value)} placeholder="Satuan..." className={`${inputCls} text-center`} />
-                    </td>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                      Tanggal Surat <span className="text-rose-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      name="tanggal"
+                      value={formData.tanggal || ""}
+                      onChange={handleInputChange}
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-2 rounded-xl text-xs font-medium text-slate-900 dark:text-slate-100 focus:outline-none focus:border-[#00753A]"
+                    />
+                  </div>
+                </div>
 
-                    {/* Outlet Tujuan / Asal via OutletCombobox Kustom */}
-                    <td className="py-2 px-2">
-                      <OutletCombobox
-                        outlets={outlets}
-                        value={item.outlet || ""}
-                        placeholder={isMasuk ? (selectedOutletName ? `Asal: ${selectedOutletName}` : "Sesuai asal...") : "Sesuai tujuan..."}
-                        onChange={(e) => handleItemChange(item.id || idx, "outlet", e.target.value)}
-                      />
-                    </td>
-
-                    {/* Keterangan */}
-                    <td className="py-2 px-2">
-                      <input type="text" value={item.keterangan || ""} onChange={(e) => handleItemChange(item.id || idx, "keterangan", e.target.value)} placeholder="Catatan barang..." className={inputCls} />
-                    </td>
-
-                    {/* Hapus Baris */}
-                    <td className="py-2 px-2 text-center">
-                      {items.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => removeItem(item.id || idx)}
-                          className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
-                          title="Hapus baris ini"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                {/* Outlet Asal (Masuk) / Tujuan (Keluar) */}
+                {isMasuk ? (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                      Nama Outlet Asal Barang <span className="text-rose-500">*</span>
+                    </label>
+                    <OutletCombobox
+                      outlets={outlets}
+                      value={selectedOutletName || formData.asalOutlet || ""}
+                      onChange={handleOutletAsalChange}
+                      name="asalOutlet"
+                      placeholder="Pilih nama outlet asal (kode otomatis masuk ke nomor surat)..."
+                    />
+                    <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 px-0.5">
+                      <span className="flex items-center gap-1.5">
+                        <span className="font-semibold text-emerald-600 dark:text-emerald-400">Penerima Barang:</span>
+                        <span className="font-medium text-slate-700 dark:text-slate-300">Logistik Kanwil VIII</span>
+                      </span>
+                      {kodeOutlet && kodeOutlet !== "....." && (
+                        <span className="font-mono text-[10px] bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800/40">
+                          Kode Outlet: {kodeOutlet}
+                        </span>
                       )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+                      Tujuan (Instansi / Outlet Penerima) <span className="text-rose-500">*</span>
+                    </label>
+                    <OutletCombobox
+                      outlets={outlets}
+                      value={formData.tujuan || formData.outletTujuan || formData.pihak2Instansi || ""}
+                      onChange={handleInputChange}
+                      name="tujuan"
+                      placeholder="Pilih dari daftar master instansi / outlet atau ketik manual..."
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Next Navigation Button */}
+              <div className="flex justify-end pt-1">
+                <button
+                  type="button"
+                  onClick={() => setActiveFormTab("pihak")}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-[#00753A] hover:bg-[#005c2e] text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95"
+                >
+                  <span>Lanjut: Pihak Terlibat</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 2: PIHAK YANG TERLIBAT */}
+          {activeFormTab === "pihak" && (
+            <div className="space-y-4 animate-in fade-in duration-200">
+              <div className="bg-slate-50 dark:bg-slate-950/60 p-4 sm:p-5 rounded-xl border border-slate-100 dark:border-slate-800 space-y-4">
+                <h3 className="text-xs font-bold text-[#00753A] dark:text-emerald-400 uppercase tracking-wider">PIHAK YANG TERLIBAT</h3>
+
+                <div className="space-y-3">
+                  {/* Card 1: Yang Menyerahkan */}
+                  <div className="p-3.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="w-4 h-4 rounded-full bg-[#00753A] text-white font-bold text-[10px] flex items-center justify-center shadow-xs">1</span>
+                      <span className="text-[11px] font-bold text-[#00753A] dark:text-emerald-400 uppercase">Yang Menyerahkan (Pihak Pertama)</span>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 mb-1">Nama Lengkap</label>
+                      <input
+                        type="text"
+                        name="pihak1Nama"
+                        value={formData.pihak1Nama || formData.pengirimNama || ""}
+                        onChange={handleInputChange}
+                        placeholder={isMasuk ? "Nama yang menyerahkan (Outlet)..." : "Nama pengirim (Logistik)..."}
+                        className={inputCls}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 mb-1">Jabatan</label>
+                      <input type="text" name="pihak1Jabatan" value={formData.pihak1Jabatan || formData.pengirimJabatan || ""} onChange={handleInputChange} placeholder="Jabatan pihak yang menyerahkan..." className={inputCls} />
+                    </div>
+                  </div>
+
+                  {/* Card 2: Mengetahui */}
+                  <div className="p-3.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="w-4 h-4 rounded-full bg-purple-600 text-white font-bold text-[10px] flex items-center justify-center shadow-xs">2</span>
+                      <span className="text-[11px] font-bold text-purple-600 dark:text-purple-400 uppercase">Pejabat Mengetahui</span>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 mb-1">Nama Lengkap</label>
+                      <input type="text" name="pihakMengetahuiNama" value={formData.pihakMengetahuiNama || formData.mengetahuiNama || ""} onChange={handleInputChange} placeholder="Nama pejabat mengetahui..." className={inputCls} />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 mb-1">Jabatan</label>
+                      <input
+                        type="text"
+                        name="pihakMengetahuiJabatan"
+                        value={formData.pihakMengetahuiJabatan || formData.mengetahuiJabatan || ""}
+                        onChange={handleInputChange}
+                        placeholder="Jabatan pejabat mengetahui..."
+                        className={inputCls}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Card 3: Yang Menerima */}
+                  <div className="p-3.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="w-4 h-4 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center shadow-xs">3</span>
+                      <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase">Yang Menerima (Pihak Kedua)</span>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 mb-1">Nama Lengkap</label>
+                      <input
+                        type="text"
+                        name="pihak2Nama"
+                        value={formData.pihak2Nama || formData.penerimaNama || ""}
+                        onChange={handleInputChange}
+                        placeholder={isMasuk ? "Nama penerima (Logistik)..." : "Nama penerima..."}
+                        className={inputCls}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-slate-500 mb-1">Jabatan</label>
+                      <input type="text" name="pihak2Jabatan" value={formData.pihak2Jabatan || formData.penerimaJabatan || ""} onChange={handleInputChange} placeholder="Jabatan penerima..." className={inputCls} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Prev & Next Navigation Buttons */}
+              <div className="flex justify-between items-center pt-1">
+                <button
+                  type="button"
+                  onClick={() => setActiveFormTab("kop")}
+                  className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Kembali ke Kop</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveFormTab("barang")}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-[#00753A] hover:bg-[#005c2e] text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95"
+                >
+                  <span>Lanjut: Daftar Barang</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 3: DAFTAR BARANG */}
+          {activeFormTab === "barang" && (
+            <div className="space-y-4 animate-in fade-in duration-200">
+              <div className="bg-slate-50 dark:bg-slate-950/60 p-4 rounded-xl border border-slate-100 dark:border-slate-800 space-y-4">
+                <div className="flex flex-wrap gap-2.5 justify-between items-center">
+                  <div>
+                    <h3 className="text-xs font-bold text-[#00753A] dark:text-emerald-400 uppercase tracking-wider">DAFTAR BARANG YANG DISERAHTERIMAKAN</h3>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Total {items.length} rincian barang</p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {/* View Mode Toggle: Tabel Lebar vs Form Kartu */}
+                    <div className="flex items-center bg-slate-200/80 dark:bg-slate-800 p-0.5 rounded-xl text-[11px] font-semibold">
+                      <button
+                        type="button"
+                        onClick={() => handleViewModeChange("table")}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                          itemViewMode === "table" ? "bg-white dark:bg-slate-700 text-[#00753A] dark:text-emerald-400 font-bold shadow-xs" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                        }`}
+                        title="Tampilan Tabel Melebar (Panjang Baris Luas)"
+                      >
+                        <LayoutList className="w-3.5 h-3.5" />
+                        <span>Tabel</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleViewModeChange("card")}
+                        className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
+                          itemViewMode === "card" ? "bg-white dark:bg-slate-700 text-[#00753A] dark:text-emerald-400 font-bold shadow-xs" : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                        }`}
+                        title="Tampilan Form Kartu (Lega & Nyaman Tanpa Scroll Horizontal)"
+                      >
+                        <Layers className="w-3.5 h-3.5" />
+                        <span>Form Kartu</span>
+                      </button>
+                    </div>
+
+                    <button type="button" onClick={addItem} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#00753A] hover:bg-[#005c2e] text-white rounded-xl text-xs font-bold shadow-xs transition-all cursor-pointer active:scale-95">
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Tambah Baris</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* MODE 1: TABEL DENGAN PANJANG BARIS DIPERLEBAR */}
+                {itemViewMode === "table" ? (
+                  <div className="space-y-2">
+                    <div className="overflow-x-auto overflow-y-visible min-h-[260px] bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-2 shadow-xs">
+                      <table className="w-full text-left border-collapse min-w-[1220px]">
+                        <thead>
+                          <tr className="border-b border-slate-200 dark:border-slate-800 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                            <th className="py-2.5 px-2 text-center w-12">No</th>
+                            <th className="py-2.5 px-2 min-w-[340px] w-[340px]">
+                              Nama Barang <span className="text-rose-500">*</span>
+                            </th>
+                            <th className="py-2.5 px-2 min-w-[200px] w-[200px]">Nomor Seri (S/N)</th>
+                            <th className="py-2.5 px-2 min-w-[85px] w-[85px] text-center">
+                              Qty <span className="text-rose-500">*</span>
+                            </th>
+                            <th className="py-2.5 px-2 min-w-[110px] w-[110px] text-center">Satuan</th>
+                            <th className="py-2.5 px-2 min-w-[260px] w-[260px]">{isMasuk ? "Outlet / Asal" : "Outlet Tujuan"}</th>
+                            <th className="py-2.5 px-2 min-w-[220px]">Keterangan</th>
+                            <th className="py-2.5 px-2 text-center w-12"></th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-xs">
+                          {items.map((item, idx) => (
+                            <tr key={item.id || idx} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors relative">
+                              <td className="py-2 px-2 text-center font-bold text-slate-400 text-[11px]">{idx + 1}</td>
+
+                              {/* Nama Barang via ItemCombobox Kustom (340px) */}
+                              <td className="py-2 px-2">
+                                <ItemCombobox
+                                  inventory={inventory}
+                                  value={item.namaBarang || item.nama || ""}
+                                  onChange={(val, selectedInv) => {
+                                    handleItemChange(item.id || idx, "namaBarang", val);
+                                    if (selectedInv) {
+                                      if (selectedInv.id) handleItemChange(item.id || idx, "inventoryId", selectedInv.id);
+                                      if (selectedInv.satuan) handleItemChange(item.id || idx, "satuan", selectedInv.satuan);
+                                    }
+                                  }}
+                                  placeholder="Cari atau ketik nama barang..."
+                                />
+                              </td>
+
+                              {/* S/N (200px) */}
+                              <td className="py-2 px-2">
+                                <input type="text" value={item.sn || ""} onChange={(e) => handleItemChange(item.id || idx, "sn", e.target.value)} placeholder="Nomor Seri / S/N..." className={`${inputCls} font-mono`} />
+                              </td>
+
+                              {/* Qty (85px) */}
+                              <td className="py-2 px-2 text-center">
+                                <input type="number" min="1" value={item.jumlah || item.kuantitas || 1} onChange={(e) => handleItemChange(item.id || idx, "jumlah", e.target.value)} className={`${inputCls} text-center font-bold`} />
+                              </td>
+
+                              {/* Satuan (110px) */}
+                              <td className="py-2 px-2 text-center">
+                                <input type="text" value={item.satuan || "Unit"} onChange={(e) => handleItemChange(item.id || idx, "satuan", e.target.value)} placeholder="Satuan..." className={`${inputCls} text-center`} />
+                              </td>
+
+                              {/* Outlet Tujuan / Asal (260px) */}
+                              <td className="py-2 px-2">
+                                <OutletCombobox
+                                  outlets={outlets}
+                                  value={item.outlet || ""}
+                                  placeholder={isMasuk ? (selectedOutletName ? `Asal: ${selectedOutletName}` : "Sesuai asal...") : "Sesuai tujuan..."}
+                                  onChange={(e) => handleItemChange(item.id || idx, "outlet", e.target.value)}
+                                />
+                              </td>
+
+                              {/* Keterangan (220px) */}
+                              <td className="py-2 px-2">
+                                <input type="text" value={item.keterangan || ""} onChange={(e) => handleItemChange(item.id || idx, "keterangan", e.target.value)} placeholder="Catatan barang..." className={inputCls} />
+                              </td>
+
+                              {/* Hapus Baris */}
+                              <td className="py-2 px-2 text-center">
+                                {items.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => removeItem(item.id || idx)}
+                                    className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
+                                    title="Hapus baris ini"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-[11px] text-slate-400">
+                      <span>
+                        💡 <em>Geser ke kanan untuk melihat kolom Outlet & Keterangan</em>
+                      </span>
+                      <button type="button" onClick={() => handleViewModeChange("card")} className="text-[#00753A] dark:text-emerald-400 hover:underline font-semibold cursor-pointer">
+                        Beralih ke Form Kartu agar tidak perlu geser →
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* MODE 2: FORM KARTU (PANJANG BARIS PENUH & SANGAT LEGA DIKETIK TANPA SCROLL) */
+                  <div className="space-y-3.5">
+                    {items.map((item, idx) => (
+                      <div key={item.id || idx} className="p-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xs space-y-3">
+                        {/* Header Kartu Item */}
+                        <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
+                          <div className="flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-full bg-[#00753A] text-white font-bold text-[10px] flex items-center justify-center shadow-xs">{idx + 1}</span>
+                            <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wide">Barang #{idx + 1}</span>
+                          </div>
+
+                          {items.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeItem(item.id || idx)}
+                              className="flex items-center gap-1 px-2.5 py-1 text-xs text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition-colors cursor-pointer"
+                              title="Hapus baris barang ini"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span className="text-[11px] font-semibold">Hapus Baris</span>
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Baris 1: Nama Barang (100% Full-Width) */}
+                        <div>
+                          <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+                            Nama Barang <span className="text-rose-500">*</span>
+                          </label>
+                          <ItemCombobox
+                            inventory={inventory}
+                            value={item.namaBarang || item.nama || ""}
+                            onChange={(val, selectedInv) => {
+                              handleItemChange(item.id || idx, "namaBarang", val);
+                              if (selectedInv) {
+                                if (selectedInv.id) handleItemChange(item.id || idx, "inventoryId", selectedInv.id);
+                                if (selectedInv.satuan) handleItemChange(item.id || idx, "satuan", selectedInv.satuan);
+                              }
+                            }}
+                            placeholder="Cari di inventaris master atau ketik nama barang lengkap..."
+                          />
+                        </div>
+
+                        {/* Baris 2: S/N (6 cols), Qty (3 cols), Satuan (3 cols) */}
+                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
+                          <div className="sm:col-span-6">
+                            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Nomor Seri (S/N)</label>
+                            <input type="text" value={item.sn || ""} onChange={(e) => handleItemChange(item.id || idx, "sn", e.target.value)} placeholder="Ketik nomor seri / S/N..." className={`${inputCls} font-mono`} />
+                          </div>
+
+                          <div className="sm:col-span-3">
+                            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">
+                              Jumlah (Qty) <span className="text-rose-500">*</span>
+                            </label>
+                            <input type="number" min="1" value={item.jumlah || item.kuantitas || 1} onChange={(e) => handleItemChange(item.id || idx, "jumlah", e.target.value)} className={`${inputCls} text-center font-bold`} />
+                          </div>
+
+                          <div className="sm:col-span-3">
+                            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Satuan</label>
+                            <input type="text" value={item.satuan || "Unit"} onChange={(e) => handleItemChange(item.id || idx, "satuan", e.target.value)} placeholder="Pcs / Unit..." className={`${inputCls} text-center`} />
+                          </div>
+                        </div>
+
+                        {/* Baris 3: Outlet Tujuan / Asal & Keterangan */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">{isMasuk ? "Asal Barang / Outlet" : "Outlet Tujuan"}</label>
+                            <OutletCombobox
+                              outlets={outlets}
+                              value={item.outlet || ""}
+                              placeholder={isMasuk ? (selectedOutletName ? `Asal: ${selectedOutletName}` : "Sesuai asal...") : "Sesuai tujuan..."}
+                              onChange={(e) => handleItemChange(item.id || idx, "outlet", e.target.value)}
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-300 mb-1">Keterangan / Catatan</label>
+                            <input type="text" value={item.keterangan || ""} onChange={(e) => handleItemChange(item.id || idx, "keterangan", e.target.value)} placeholder="Catatan kelengkapan / kondisi..." className={inputCls} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+
+                    {/* Tombol Tambah Baris Bawah */}
+                    <button
+                      type="button"
+                      onClick={addItem}
+                      className="w-full py-2.5 border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-[#00753A] dark:hover:border-emerald-500 rounded-xl text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-[#00753A] dark:hover:text-emerald-400 flex items-center justify-center gap-1.5 transition-all cursor-pointer bg-white/50 dark:bg-slate-900/50 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/20"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Tambah Rincian Barang Baru</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Prev & Next Navigation Buttons */}
+              <div className="flex justify-between items-center pt-1">
+                <button
+                  type="button"
+                  onClick={() => setActiveFormTab("pihak")}
+                  className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-all cursor-pointer active:scale-95"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Kembali: Pihak</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setView("preview")}
+                  className="lg:hidden flex items-center gap-1.5 px-4 py-2 bg-[#00753A] hover:bg-[#005c2e] text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95"
+                >
+                  <span>Lihat Preview Dokumen</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </form>
     </div>

@@ -135,47 +135,31 @@ const PreviewView = ({ formData = {}, items = [], activeTransaction = null, setV
         {/* Yellow Banner 2: NOTE */}
         <div className="bg-[#FFE600] px-3 py-1.5 mb-4 sm:mb-6 text-[11px] sm:text-xs font-bold text-black border border-black">NOTE : MOHON UNTUK DISIMPAN SEBAGAI BUKTI SAH SERAH TERIMA BARANG</div>
 
-        {/* Signature Section */}
-        {isMasuk ? (
-          /* Signature Khusus Barang Masuk: 2 Kolom (Kiri: Yang Menyerahkan | Kanan: Yang Menerima) */
-          <div className="flex justify-between items-start text-[10px] sm:text-xs text-black mb-4 sm:mb-6">
-            <div className="text-left">
-              <p className="font-semibold mb-14 sm:mb-16">Yang Menyerahkan,</p>
-              <p className="font-bold underline uppercase text-black break-words">{formData.pihak1Nama || formData.pengirimNama || "........................"}</p>
-              <p className="text-[9px] sm:text-[11px] text-gray-700 leading-tight mt-0.5">{formData.pihak1Jabatan || formData.pengirimJabatan || ""}</p>
-            </div>
-
-            <div className="text-right">
-              <p className="font-semibold mb-14 sm:mb-16">Yang Menerima,</p>
-              <p className="font-bold underline uppercase text-black break-words">{formData.pihak2Nama || formData.penerimaNama || "........................"}</p>
-              <p className="text-[9px] sm:text-[11px] text-gray-700 leading-tight mt-0.5">{formData.pihak2Jabatan || formData.penerimaJabatan || ""}</p>
-            </div>
+        {/* Signature Section: 3 Kolom untuk Surat Masuk & Surat Keluar */}
+        <div className="flex justify-between items-start text-[10px] sm:text-xs text-black mb-4 sm:mb-6">
+          {/* Kolom Kiri: Rata Kiri */}
+          <div className="text-left w-1/3">
+            <p className="font-semibold mb-14 sm:mb-16">{isMasuk ? "Yang Menyerahkan," : "Yang Menerima,"}</p>
+            <p className="font-bold underline uppercase text-black break-words">
+              {isMasuk ? formData.pihak1Nama || formData.pengirimNama || "........................" : formData.pihak2Nama || formData.penerimaNama || "........................"}
+            </p>
+            <p className="text-[9px] sm:text-[11px] text-gray-700 leading-tight mt-0.5">{isMasuk ? formData.pihak1Jabatan || formData.pengirimJabatan || "" : formData.pihak2Jabatan || formData.penerimaJabatan || ""}</p>
           </div>
-        ) : (
-          /* Signature Standard Barang Keluar: 3 Kolom (Kiri: Yang Menerima | Tengah: Yang Menyerahkan | Kanan: Mengetahui) */
-          <div className="flex justify-between items-start text-[10px] sm:text-xs text-black mb-4 sm:mb-6">
-            {/* Kolom Kiri: Rata Kiri */}
-            <div className="text-left w-1/3">
-              <p className="font-semibold mb-14 sm:mb-16">Yang Menerima,</p>
-              <p className="font-bold underline uppercase text-black break-words">{formData.pihak2Nama || formData.penerimaNama || "........................"}</p>
-              <p className="text-[9px] sm:text-[11px] text-gray-700 leading-tight mt-0.5">{formData.pihak2Jabatan || formData.penerimaJabatan || ""}</p>
-            </div>
 
-            {/* Kolom Tengah: Rata Tengah */}
-            <div className="text-center w-1/3">
-              <p className="font-semibold mb-14 sm:mb-16">Yang Menyerahkan,</p>
-              <p className="font-bold underline uppercase text-black break-words">{formData.pihak1Nama || formData.pengirimNama || "AHMAD DENDY SYAPUTRA"}</p>
-              <p className="text-[9px] sm:text-[11px] text-gray-700 leading-tight mt-0.5">{formData.pihak1Jabatan || formData.pengirimJabatan || "Staff Pengadaan dan Logistik"}</p>
-            </div>
-
-            {/* Kolom Kanan: Rata Kanan */}
-            <div className="text-right w-1/3">
-              <p className="font-semibold mb-14 sm:mb-16">Mengetahui,</p>
-              <p className="font-bold underline uppercase text-black break-words">{formData.pihakMengetahuiNama || formData.mengetahuiNama || "ZONI RAHMAWAN PUTRA"}</p>
-              <p className="text-[9px] sm:text-[11px] text-gray-600 leading-tight mt-0.5">{formData.pihakMengetahuiJabatan || formData.mengetahuiJabatan || "Kabag Pengadaan dan Logistik"}</p>
-            </div>
+          {/* Kolom Tengah: Rata Tengah */}
+          <div className="text-center w-1/3">
+            <p className="font-semibold mb-14 sm:mb-16">{isMasuk ? "Yang Menerima," : "Yang Menyerahkan,"}</p>
+            <p className="font-bold underline uppercase text-black break-words">{isMasuk ? formData.pihak2Nama || formData.penerimaNama || "EVI NOVIAWATI" : formData.pihak1Nama || formData.pengirimNama || "EVI NOVIAWATI"}</p>
+            <p className="text-[9px] sm:text-[11px] text-gray-700 leading-tight mt-0.5">{isMasuk ? formData.pihak2Jabatan || formData.penerimaJabatan || "Officer" : formData.pihak1Jabatan || formData.pengirimJabatan || "Officer"}</p>
           </div>
-        )}
+
+          {/* Kolom Kanan: Rata Kanan */}
+          <div className="text-right w-1/3">
+            <p className="font-semibold mb-14 sm:mb-16">Mengetahui,</p>
+            <p className="font-bold underline uppercase text-black break-words">{formData.pihakMengetahuiNama || formData.mengetahuiNama || "ZONI RAHMAWAN PUTRA"}</p>
+            <p className="text-[9px] sm:text-[11px] text-gray-600 leading-tight mt-0.5">{formData.pihakMengetahuiJabatan || formData.mengetahuiJabatan || "Kabag Pengadaan dan Logistik"}</p>
+          </div>
+        </div>
       </div>
 
       {/* Official Footer PT PEGADAIAN - Pinned to bottom of A4 paper */}

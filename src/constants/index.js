@@ -10,27 +10,27 @@ export const createInitialFormData = (jenis = "Barang Keluar") => {
     asalOutlet: "",
     kodeOutlet: "",
     // Pihak 1 (Yang Menyerahkan)
-    pihak1Nama: isMasuk ? "" : "Dio Haris Kurniawan",
-    pihak1Jabatan: isMasuk ? "" : "Junior Officer",
+    pihak1Nama: isMasuk ? "" : "Evi Noviawati",
+    pihak1Jabatan: isMasuk ? "" : "Officer",
     pihak1Instansi: isMasuk ? "" : "PT Pegadaian (Persero)",
-    // Pihak Mengetahui (Hanya untuk Surat Keluar)
-    pihakMengetahuiNama: isMasuk ? "" : "Zoni Rahmawan Putra",
-    pihakMengetahuiJabatan: isMasuk ? "" : "Kabag Pengadaan dan Logistik",
-    pihakMengetahuiInstansi: isMasuk ? "" : "PT Pegadaian (Persero)",
+    // Pihak Mengetahui (3 Pihak untuk Masuk & Keluar)
+    pihakMengetahuiNama: "Zoni Rahmawan Putra",
+    pihakMengetahuiJabatan: "Kabag Pengadaan dan Logistik",
+    pihakMengetahuiInstansi: "PT Pegadaian (Persero)",
     // Pihak 2 (Yang Menerima)
-    pihak2Nama: "",
-    pihak2Jabatan: "",
+    pihak2Nama: isMasuk ? "Evi Noviawati" : "",
+    pihak2Jabatan: isMasuk ? "Officer" : "",
     pihak2Instansi: isMasuk ? "Logistik Kanwil VIII" : "",
 
     // Aliases for compatibility
-    pengirimNama: isMasuk ? "" : "Ahmad Dendy Syaputra",
-    pengirimJabatan: isMasuk ? "" : "Staff Pengadaan dan Logistik",
+    pengirimNama: isMasuk ? "" : "Evi Noviawati",
+    pengirimJabatan: isMasuk ? "" : "Officer",
     pengirimInstansi: isMasuk ? "" : "PT Pegadaian (Persero)",
-    mengetahuiNama: isMasuk ? "" : "Zoni Rahmawan Putra",
-    mengetahuiJabatan: isMasuk ? "" : "Kabag Pengadaan dan Logistik",
-    mengetahuiInstansi: isMasuk ? "" : "PT Pegadaian (Persero)",
-    penerimaNama: "",
-    penerimaJabatan: "",
+    mengetahuiNama: "Zoni Rahmawan Putra",
+    mengetahuiJabatan: "Kabag Pengadaan dan Logistik",
+    mengetahuiInstansi: "PT Pegadaian (Persero)",
+    penerimaNama: isMasuk ? "Evi Noviawati" : "",
+    penerimaJabatan: isMasuk ? "Officer" : "",
     penerimaInstansi: isMasuk ? "Logistik Kanwil VIII" : "",
   };
 };

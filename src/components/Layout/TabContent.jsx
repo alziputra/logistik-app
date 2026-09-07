@@ -275,11 +275,13 @@ export default function TabContent({
         <Panel id="riwayat" activeTab={activeTab}>
           <RiwayatTransaksi
             transactions={transactions}
+            inventory={inventory}
             setTransactions={setTransactions}
             setFormData={setFormData}
             setItems={setItems}
             setActiveTransaction={setActiveTransaction}
             setView={setView}
+            loadAllData={loadAllData}
             editDocument={editDocument}
             viewDocument={viewDocument}
             currentTab={activeTab}

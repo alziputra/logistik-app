@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FileText, ArrowRight, Plus, Trash2, AlertCircle, PackageCheck, PackageMinus, Hash, MapPin, Calendar, ClipboardList, Building2, ChevronDown, Check, Package } from "lucide-react";
+import { normalizeItemName } from "../../utils/inventoryMatcher";
 
 const isNomorValid = (nomor, jenis = "Barang Keluar") => {
   if (!nomor || typeof nomor !== "string") return false;
@@ -150,20 +151,20 @@ const ItemCombobox = ({ inventory = [], value = "", onChange = () => {}, placeho
   }, []);
 
   const filteredItems = inventory.filter((inv) => {
-    const q = query.toLowerCase();
-    const nama = (inv.nama || inv.namaBarang || inv.name || "").toLowerCase();
-    const merk = (inv.merk || inv.brand || "").toLowerCase();
+    const qNorm = normalizeItemName(query);
+    const namaNorm = normalizeItemName(inv.nama || inv.namaBarang || inv.name || "");
+    const merkNorm = normalizeItemName(inv.merk || inv.brand || "");
     const sn = (inv.sn || inv.serialNumber || "").toLowerCase();
     const jenis = (inv.jenis || inv.kategori || "").toLowerCase();
     const spk = (inv.no_spk || inv.no_pks || "").toLowerCase();
     const vendor = (inv.vendor_nama || inv.vendor?.nama || (typeof inv.vendor === "string" ? inv.vendor : "")).toLowerCase();
-    return nama.includes(q) || merk.includes(q) || sn.includes(q) || jenis.includes(q) || spk.includes(q) || vendor.includes(q);
+    return namaNorm.includes(qNorm) || qNorm.includes(namaNorm) || merkNorm.includes(qNorm) || sn.includes(qNorm) || jenis.includes(qNorm) || spk.includes(qNorm) || vendor.includes(qNorm);
   });
 
   const handleSelect = (inv) => {
     const name = inv.nama || inv.namaBarang || inv.name;
     setQuery(name);
-    onChange(name);
+    onChange(name, inv);
     setIsOpen(false);
   };
 
@@ -194,7 +195,7 @@ const ItemCombobox = ({ inventory = [], value = "", onChange = () => {}, placeho
               const isSelected = query === name;
               const spkNo = inv.no_spk || inv.no_pks || "";
               const vendorName = inv.vendor_nama || inv.vendor?.nama || (typeof inv.vendor === "string" ? inv.vendor : "");
-              const stok = inv.kuantitas !== undefined ? inv.kuantitas : (inv.stok || 0);
+              const stok = inv.kuantitas !== undefined ? inv.kuantitas : inv.stok || 0;
 
               return (
                 <div
@@ -209,16 +210,8 @@ const ItemCombobox = ({ inventory = [], value = "", onChange = () => {}, placeho
                     <div className="truncate">
                       <p className="text-xs font-bold truncate">{name}</p>
                       <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
-                        {spkNo && (
-                          <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                            SPK: {spkNo}
-                          </span>
-                        )}
-                        {vendorName && (
-                          <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
-                            {vendorName}
-                          </span>
-                        )}
+                        {spkNo && <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">SPK: {spkNo}</span>}
+                        {vendorName && <span className="text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">{vendorName}</span>}
                         <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 font-mono">
                           Stok: {stok} {inv.satuan || "Pcs"}
                         </span>
@@ -345,13 +338,13 @@ const FormView = ({ formData = {}, handleInputChange = () => {}, items = [], han
       handleInputChange({ target: { name: "penerimaInstansi", value: "Logistik Kanwil VIII" } });
       handleInputChange({ target: { name: "pihak2Instansi", value: "Logistik Kanwil VIII" } });
 
-      // Surat Masuk: inputan pihak harus kosong
+      // Surat Masuk: 3 Pihak (Yang Menyerahkan: Outlet, Mengetahui: Kabag, Yang Menerima: Logistik)
       handleInputChange({ target: { name: "pihak1Nama", value: "" } });
       handleInputChange({ target: { name: "pihak1Jabatan", value: "" } });
-      handleInputChange({ target: { name: "pihakMengetahuiNama", value: "" } });
-      handleInputChange({ target: { name: "pihakMengetahuiJabatan", value: "" } });
-      handleInputChange({ target: { name: "pihak2Nama", value: "" } });
-      handleInputChange({ target: { name: "pihak2Jabatan", value: "" } });
+      handleInputChange({ target: { name: "pihakMengetahuiNama", value: "Zoni Rahmawan Putra" } });
+      handleInputChange({ target: { name: "pihakMengetahuiJabatan", value: "Kabag Pengadaan dan Logistik" } });
+      handleInputChange({ target: { name: "pihak2Nama", value: "Evi Noviawati" } });
+      handleInputChange({ target: { name: "pihak2Jabatan", value: "Officer" } });
 
       const newNomor = buildNomorSurat(nomorUrut, kodeOutlet, true);
       handleInputChange({ target: { name: "nomorSurat", value: newNomor } });
@@ -365,10 +358,12 @@ const FormView = ({ formData = {}, handleInputChange = () => {}, items = [], han
       }
 
       // Surat Keluar: default 3 pihak Pegadaian
-      handleInputChange({ target: { name: "pihak1Nama", value: "Ahmad Dendy Syaputra" } });
-      handleInputChange({ target: { name: "pihak1Jabatan", value: "Staff Pengadaan dan Logistik" } });
+      handleInputChange({ target: { name: "pihak1Nama", value: "Evi Noviawati" } });
+      handleInputChange({ target: { name: "pihak1Jabatan", value: "Officer" } });
       handleInputChange({ target: { name: "pihakMengetahuiNama", value: "Zoni Rahmawan Putra" } });
       handleInputChange({ target: { name: "pihakMengetahuiJabatan", value: "Kabag Pengadaan dan Logistik" } });
+      handleInputChange({ target: { name: "pihak2Nama", value: "" } });
+      handleInputChange({ target: { name: "pihak2Jabatan", value: "" } });
 
       const newNomor = buildNomorSurat(nomorUrut, "", false);
       handleInputChange({ target: { name: "nomorSurat", value: newNomor } });
@@ -525,75 +520,45 @@ const FormView = ({ formData = {}, handleInputChange = () => {}, items = [], han
         {/* PIHAK YANG TERLIBAT */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm transition-colors">
           <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">Pihak Yang Terlibat</h3>
-          {isMasuk ? (
-            /* Mode Barang Masuk: Cukup 2 Pihak (Yang Menyerahkan & Yang Menerima) */
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {/* Card 1: Yang Menyerahkan */}
-              <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5 transition-colors">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="w-5 h-5 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shadow-sm">1</span>
-                  <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase">Yang Menyerahkan</span>
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">Nama</label>
-                  <input type="text" name="pihak1Nama" value={formData.pihak1Nama || formData.pengirimNama || ""} onChange={handleInputChange} placeholder="Masukkan nama yang menyerahkan..." className={inputCls} />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">Jabatan</label>
-                  <input type="text" name="pihak1Jabatan" value={formData.pihak1Jabatan || formData.pengirimJabatan || ""} onChange={handleInputChange} placeholder="Masukkan jabatan..." className={inputCls} />
-                </div>
+          {/* 3 Pihak (Yang Menyerahkan, Mengetahui, Yang Menerima) untuk Surat Masuk & Surat Keluar */}
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
+            {/* Card 1: Yang Menyerahkan */}
+            <div className="p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5 transition-colors">
+              <div className="flex items-center gap-2">
+                <span className="w-4 h-4 rounded-full bg-emerald-600 text-white font-bold text-[10px] flex items-center justify-center shadow-sm">1</span>
+                <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">Yang Menyerahkan</span>
               </div>
-
-              {/* Card 2: Yang Menerima */}
-              <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5 transition-colors">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shadow-sm">2</span>
-                  <span className="text-xs font-bold text-blue-600 dark:text-blue-400 uppercase">Yang Menerima</span>
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">Nama</label>
-                  <input type="text" name="pihak2Nama" value={formData.pihak2Nama || formData.penerimaNama || ""} onChange={handleInputChange} placeholder="Masukkan nama yang menerima..." className={inputCls} />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">Jabatan</label>
-                  <input type="text" name="pihak2Jabatan" value={formData.pihak2Jabatan || formData.penerimaJabatan || ""} onChange={handleInputChange} placeholder="Masukkan jabatan..." className={inputCls} />
-                </div>
-              </div>
+              <input
+                type="text"
+                name="pihak1Nama"
+                value={formData.pihak1Nama || formData.pengirimNama || ""}
+                onChange={handleInputChange}
+                placeholder={isMasuk ? "Nama yang menyerahkan (Outlet)..." : "Nama pengirim (Logistik)..."}
+                className={inputCls}
+              />
+              <input type="text" name="pihak1Jabatan" value={formData.pihak1Jabatan || formData.pengirimJabatan || ""} onChange={handleInputChange} placeholder="Jabatan..." className={inputCls} />
             </div>
-          ) : (
-            /* Mode Barang Keluar: 3 Pihak (Yang Menyerahkan, Mengetahui, Yang Menerima) */
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-3">
-              {/* Card 1: Yang Menyerahkan */}
-              <div className="p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5 transition-colors">
-                <div className="flex items-center gap-2">
-                  <span className="w-4 h-4 rounded-full bg-emerald-600 text-white font-bold text-[10px] flex items-center justify-center shadow-sm">1</span>
-                  <span className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">Yang Menyerahkan</span>
-                </div>
-                <input type="text" name="pihak1Nama" value={formData.pihak1Nama || formData.pengirimNama || ""} onChange={handleInputChange} placeholder="Nama pengirim..." className={inputCls} />
-                <input type="text" name="pihak1Jabatan" value={formData.pihak1Jabatan || formData.pengirimJabatan || ""} onChange={handleInputChange} placeholder="Jabatan..." className={inputCls} />
-              </div>
 
-              {/* Card 2: Mengetahui */}
-              <div className="p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5 transition-colors">
-                <div className="flex items-center gap-2">
-                  <span className="w-4 h-4 rounded-full bg-purple-600 text-white font-bold text-[10px] flex items-center justify-center shadow-sm">2</span>
-                  <span className="text-[11px] font-bold text-purple-600 dark:text-purple-400 uppercase">Mengetahui</span>
-                </div>
-                <input type="text" name="pihakMengetahuiNama" value={formData.pihakMengetahuiNama || formData.mengetahuiNama || ""} onChange={handleInputChange} placeholder="Nama pejabat mengetahui..." className={inputCls} />
-                <input type="text" name="pihakMengetahuiJabatan" value={formData.pihakMengetahuiJabatan || formData.mengetahuiJabatan || ""} onChange={handleInputChange} placeholder="Jabatan..." className={inputCls} />
+            {/* Card 2: Mengetahui */}
+            <div className="p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5 transition-colors">
+              <div className="flex items-center gap-2">
+                <span className="w-4 h-4 rounded-full bg-purple-600 text-white font-bold text-[10px] flex items-center justify-center shadow-sm">2</span>
+                <span className="text-[11px] font-bold text-purple-600 dark:text-purple-400 uppercase">Mengetahui</span>
               </div>
-
-              {/* Card 3: Yang Menerima */}
-              <div className="p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5 transition-colors">
-                <div className="flex items-center gap-2">
-                  <span className="w-4 h-4 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center shadow-sm">3</span>
-                  <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase">Yang Menerima</span>
-                </div>
-                <input type="text" name="pihak2Nama" value={formData.pihak2Nama || formData.penerimaNama || ""} onChange={handleInputChange} placeholder="Nama penerima..." className={inputCls} />
-                <input type="text" name="pihak2Jabatan" value={formData.pihak2Jabatan || formData.penerimaJabatan || ""} onChange={handleInputChange} placeholder="Jabatan..." className={inputCls} />
-              </div>
+              <input type="text" name="pihakMengetahuiNama" value={formData.pihakMengetahuiNama || formData.mengetahuiNama || ""} onChange={handleInputChange} placeholder="Nama pejabat mengetahui..." className={inputCls} />
+              <input type="text" name="pihakMengetahuiJabatan" value={formData.pihakMengetahuiJabatan || formData.mengetahuiJabatan || ""} onChange={handleInputChange} placeholder="Jabatan..." className={inputCls} />
             </div>
-          )}
+
+            {/* Card 3: Yang Menerima */}
+            <div className="p-3.5 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2.5 transition-colors">
+              <div className="flex items-center gap-2">
+                <span className="w-4 h-4 rounded-full bg-blue-600 text-white font-bold text-[10px] flex items-center justify-center shadow-sm">3</span>
+                <span className="text-[11px] font-bold text-blue-600 dark:text-blue-400 uppercase">Yang Menerima</span>
+              </div>
+              <input type="text" name="pihak2Nama" value={formData.pihak2Nama || formData.penerimaNama || ""} onChange={handleInputChange} placeholder={isMasuk ? "Nama penerima (Logistik)..." : "Nama penerima..."} className={inputCls} />
+              <input type="text" name="pihak2Jabatan" value={formData.pihak2Jabatan || formData.penerimaJabatan || ""} onChange={handleInputChange} placeholder="Jabatan..." className={inputCls} />
+            </div>
+          </div>
         </div>
 
         {/* DAFTAR BARANG TABLE CARD */}
@@ -632,7 +597,17 @@ const FormView = ({ formData = {}, handleInputChange = () => {}, items = [], han
 
                     {/* Nama Barang via ItemCombobox Kustom */}
                     <td className="py-2 px-2">
-                      <ItemCombobox inventory={inventory} value={item.namaBarang || item.nama || ""} onChange={(val) => handleItemChange(item.id || idx, "namaBarang", val)} />
+                      <ItemCombobox
+                        inventory={inventory}
+                        value={item.namaBarang || item.nama || ""}
+                        onChange={(val, selectedInv) => {
+                          handleItemChange(item.id || idx, "namaBarang", val);
+                          if (selectedInv) {
+                            if (selectedInv.id) handleItemChange(item.id || idx, "inventoryId", selectedInv.id);
+                            if (selectedInv.satuan) handleItemChange(item.id || idx, "satuan", selectedInv.satuan);
+                          }
+                        }}
+                      />
                     </td>
 
                     {/* S/N */}

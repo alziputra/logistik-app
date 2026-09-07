@@ -163,6 +163,7 @@ export default function DashboardPage() {
       setActivityLogs,
       showNotif,
       navigateTo: handleSetView,
+      loadAllData,
     });
 
   const activeUser = useMemo(() => {

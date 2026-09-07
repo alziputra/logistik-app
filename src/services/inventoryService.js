@@ -1,20 +1,17 @@
-import { fetchCollectionData, addDocumentData, updateDocumentData, deleteDocumentData } from './firestoreHelper';
+import { fetchCollectionData, addDocumentData, updateDocumentData, deleteDocumentData } from "./firestoreHelper";
 
-const PATHS = [
-  'logistik/master/inventory',
-  { parentCol: 'logistik', parentDoc: 'master', subCol: 'inventory' }
-];
+const PATHS = ["logistik/master/inventory", { parentCol: "logistik", parentDoc: "master", subCol: "inventory" }];
 
 export const getInventory = async () => {
   const items = await fetchCollectionData(PATHS, [
-    { id: 'ast-001', nama: 'Kertas HVS A4 80gsm', kategori: 'Alat Tulis Kantor (ATK)', kuantitas: 150, stok: 150, satuan: 'Rim', status: 'Tersedia' },
-    { id: 'ast-002', nama: 'Pulpen Standard Black 0.5', kategori: 'Alat Tulis Kantor (ATK)', kuantitas: 400, stok: 400, satuan: 'Pcs', status: 'Tersedia' },
-    { id: 'ast-003', nama: 'Kursi Kerja Ergonomis Mesh', kategori: 'Mebel & Furniture Kantor', kuantitas: 25, stok: 25, satuan: 'Unit', status: 'Tersedia' }
+    { id: "ast-001", nama: "Kertas HVS A4 80gsm", kategori: "Alat Tulis Kantor (ATK)", kuantitas: 150, stok: 150, satuan: "Rim", status: "Tersedia" },
+    { id: "ast-002", nama: "Pulpen Standard Black 0.5", kategori: "Alat Tulis Kantor (ATK)", kuantitas: 400, stok: 400, satuan: "Pcs", status: "Tersedia" },
+    { id: "ast-003", nama: "Kursi Kerja Ergonomis Mesh", kategori: "Mebel & Furniture Kantor", kuantitas: 25, stok: 25, satuan: "Unit", status: "Tersedia" },
   ]);
   return items.map((item) => ({
     ...item,
     kategori: item.kategori || "Lainnya",
-    kuantitas: item.stok !== undefined ? item.stok : (item.kuantitas || 0),
+    kuantitas: item.stok !== undefined ? item.stok : item.kuantitas || 0,
   }));
 };
 
@@ -52,6 +49,14 @@ export const updateInventory = async (id, formData) => {
     masa_sewa_bulan: Number(formData.masa_sewa_bulan || 0),
   };
   return updateDocumentData(PATHS[0], id, payload);
+};
+
+export const updateInventoryStock = async (id, newStock) => {
+  const stockNum = Math.max(0, Number(newStock) || 0);
+  return updateDocumentData(PATHS[0], id, {
+    stok: stockNum,
+    kuantitas: stockNum,
+  });
 };
 
 export const deleteInventory = async (id) => {

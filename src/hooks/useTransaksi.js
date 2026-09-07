@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { addTransaksi, updateTransaksi } from "../services/transaksiService";
+import { updateInventoryStock } from "../services/inventoryService";
+import { findMatchingInventoryItem } from "../utils/inventoryMatcher";
 import { createInitialFormData, createInitialItem } from "../constants";
 
 export function useTransaksi({ user, transactions = [], inventory = [], setTransactions = () => {}, setInventory = () => {}, setActivityLogs = () => {}, showNotif = () => {}, navigateTo = () => {}, loadAllData = () => {} }) {
@@ -61,6 +63,7 @@ export function useTransaksi({ user, transactions = [], inventory = [], setTrans
     const rawItems = trx.items && trx.items.length > 0 ? trx.items : [createInitialItem()];
     const mappedItems = rawItems.map((item, idx) => ({
       id: item.id || idx + 1,
+      inventoryId: item.inventoryId || null,
       namaBarang: item.namaBarang || item.nama || "",
       nama: item.nama || item.namaBarang || "",
       jumlah: Number(item.jumlah || item.kuantitas || 1),
@@ -180,7 +183,9 @@ export function useTransaksi({ user, transactions = [], inventory = [], setTrans
         mengetahuiJabatan: formData.pihakMengetahuiJabatan || formData.mengetahuiJabatan || "",
         lokasi: formData.lokasi || "Jakarta",
         items: items.map((item) => ({
+          inventoryId: item.inventoryId || null,
           nama: item.namaBarang || item.nama || "",
+          namaBarang: item.namaBarang || item.nama || "",
           kuantitas: Number(item.jumlah || item.kuantitas || 1),
           satuan: item.satuan || "Pcs",
           sn: item.sn || null,
@@ -198,6 +203,54 @@ export function useTransaksi({ user, transactions = [], inventory = [], setTrans
         const res = await addTransaksi(payload);
         savedTrx = res?.data?.transaksi || res?.transaction || res?.data || res || payload;
         showNotif("Transaksi berhasil disimpan!", "success");
+      }
+
+      // Real-time Inventory Stock Synchronization
+      try {
+        let currentInvList = Array.isArray(inventory) ? [...inventory] : [];
+        const isCurrentMasuk = payload.jenisTransaksi === "Barang Masuk" || payload.jenisTransaksi === "Surat Masuk";
+
+        // If updating an existing transaction, first revert old transaction stock effects
+        if (formData.id) {
+          const oldTrx = transactions.find((t) => t.id === formData.id);
+          if (oldTrx && Array.isArray(oldTrx.items)) {
+            const oldIsMasuk = oldTrx.jenisTransaksi === "Barang Masuk" || oldTrx.jenisTransaksi === "Surat Masuk";
+            for (const oldItm of oldTrx.items) {
+              const oldQty = Number(oldItm.kuantitas || oldItm.jumlah || 1);
+              if (isNaN(oldQty) || oldQty <= 0) continue;
+              const matchedOldInv = findMatchingInventoryItem(oldItm, currentInvList);
+              if (matchedOldInv && matchedOldInv.id) {
+                const cur = Number(matchedOldInv.stok !== undefined ? matchedOldInv.stok : matchedOldInv.kuantitas) || 0;
+                // Revert: if it was Keluar, restore (+); if Masuk, remove (-)
+                const revertedStock = oldIsMasuk ? Math.max(0, cur - oldQty) : cur + oldQty;
+                matchedOldInv.stok = revertedStock;
+                matchedOldInv.kuantitas = revertedStock;
+                await updateInventoryStock(matchedOldInv.id, revertedStock);
+              }
+            }
+          }
+        }
+
+        // Apply new transaction stock changes
+        for (const itm of payload.items) {
+          const qty = Number(itm.kuantitas || itm.jumlah || 1);
+          if (isNaN(qty) || qty <= 0) continue;
+          const matchedInv = findMatchingInventoryItem(itm, currentInvList);
+          if (matchedInv && matchedInv.id) {
+            const cur = Number(matchedInv.stok !== undefined ? matchedInv.stok : matchedInv.kuantitas) || 0;
+            // Barang Keluar reduces stock (-), Barang Masuk increases stock (+)
+            const newStock = isCurrentMasuk ? cur + qty : Math.max(0, cur - qty);
+            matchedInv.stok = newStock;
+            matchedInv.kuantitas = newStock;
+            await updateInventoryStock(matchedInv.id, newStock);
+          }
+        }
+
+        if (setInventory) {
+          setInventory([...currentInvList]);
+        }
+      } catch (stockErr) {
+        console.error("Gagal sinkronisasi stok inventaris:", stockErr);
       }
 
       // Re-fetch all fresh data from database directly after saving

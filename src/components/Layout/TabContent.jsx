@@ -56,6 +56,7 @@ export default function TabContent({
   vendors = [],
   loadAllData = () => {},
   activityLogs = [],
+  setActivityLogs = () => {},
   buildingLands = [],
   buildingSewas = [],
   buildingRenovations = [],
@@ -290,6 +291,8 @@ export default function TabContent({
             currentTab={activeTab}
             spkHistoryProp={spkHistory}
             soppHistoryProp={soppHistory}
+            user={user}
+            setActivityLogs={setActivityLogs}
           />
         </Panel>
       )}
@@ -302,7 +305,7 @@ export default function TabContent({
 
       {has("log_aktivitas") && (
         <Panel id="log_aktivitas" activeTab={activeTab}>
-          {userRole === "admin" ? <LogAktivitas logs={activityLogs} /> : <AccessDenied />}
+          {userRole === "admin" ? <LogAktivitas logs={activityLogs} currentUser={user} usersList={usersList} transactions={transactions} /> : <AccessDenied />}
         </Panel>
       )}
 

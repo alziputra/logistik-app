@@ -5,6 +5,7 @@ import ConfirmDeleteModal from "../Modal/ConfirmDeleteModal";
 import Pagination from "../Common/Pagination";
 import { deleteTransaksi } from "../../services/transaksiService";
 import { getInventory, updateInventoryStock } from "../../services/inventoryService";
+import { addActivityLog } from "../../services/activityLogService";
 import { findMatchingInventoryItem } from "../../utils/inventoryMatcher";
 import { useNotif } from "../../hooks/useNotif";
 
@@ -21,6 +22,8 @@ export default function RiwayatTransaksi({
   loadAllData = () => {},
   editDocument = null,
   viewDocument = null,
+  user = null,
+  setActivityLogs = () => {},
 }) {
   const { showNotif } = useNotif();
   const [search, setSearch] = useState("");
@@ -292,6 +295,27 @@ export default function RiwayatTransaksi({
       }
 
       showNotif("Surat transaksi berhasil dihapus dan stok barang telah dikembalikan!", "success");
+
+      // Catat aktivitas penghapusan ke Log Aktivitas Sistem
+      try {
+        const currentUserName = user?.name || (user?.email === "officer@gmail.com" ? "Dio Haris Kurniawan" : user?.email === "admin@logistik.com" ? "Alzi Rahmana Putra" : user?.email?.split("@")[0] || "Petugas Logistik");
+
+        const logEntry = {
+          user: currentUserName,
+          user_name: currentUserName,
+          user_email: user?.email || "",
+          modul: "TRANSAKSI",
+          aksi: "HAPUS",
+          keterangan: `Menghapus Surat ${deleteTarget.jenisTransaksi || ""} No: ${deleteTarget.nomorSurat || deleteTarget.id}`,
+          timestamp: new Date().toISOString(),
+        };
+        addActivityLog(logEntry);
+        if (setActivityLogs) {
+          setActivityLogs((prev) => [logEntry, ...(prev || [])]);
+        }
+      } catch (logErr) {
+        console.warn("Gagal mencatat log hapus transaksi:", logErr);
+      }
 
       // Sinkronisasi database di background secara silent tanpa reload layar penuh
       if (loadAllData) {

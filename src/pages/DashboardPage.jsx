@@ -279,6 +279,7 @@ export default function DashboardPage() {
               vendors={vendors}
               loadAllData={loadAllData}
               activityLogs={activityLogs}
+              setActivityLogs={setActivityLogs}
               buildingLands={buildingLands}
               buildingSewas={buildingSewas}
               buildingRenovations={buildingRenovations}

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { addTransaksi, updateTransaksi } from "../services/transaksiService";
+import { addActivityLog } from "../services/activityLogService";
 import { updateInventoryStock } from "../services/inventoryService";
 import { findMatchingInventoryItem } from "../utils/inventoryMatcher";
 import { createInitialFormData, createInitialItem } from "../constants";
@@ -285,7 +286,29 @@ export function useTransaksi({ user, transactions = [], inventory = [], setTrans
 
       // Catatan: Tidak redirect ke riwayat transaksi agar user bisa langsung klik tombol Cetak.
 
-      // 3. Sinkronisasi database di latar belakang secara silent (tanpa loading spinner layar penuh)
+      // 3. Catat aktivitas transaksi ke Audit Log
+      try {
+        const actionType = formData.id ? "EDIT" : "BUAT";
+        const currentUserName = user?.name || (user?.email === "officer@gmail.com" ? "Dio Haris Kurniawan" : user?.email === "admin@logistik.com" ? "Alzi Rahmana Putra" : user?.email?.split("@")[0] || "Petugas Logistik");
+
+        const logEntry = {
+          user: currentUserName,
+          user_name: currentUserName,
+          user_email: user?.email || "",
+          modul: "TRANSAKSI",
+          aksi: actionType,
+          keterangan: `Surat ${payload.jenisTransaksi} No: ${payload.nomorSurat}`,
+          timestamp: now,
+        };
+        addActivityLog(logEntry);
+        if (setActivityLogs) {
+          setActivityLogs((prev) => [logEntry, ...(prev || [])]);
+        }
+      } catch (logErr) {
+        console.warn("Gagal mencatat log transaksi:", logErr);
+      }
+
+      // 4. Sinkronisasi database di latar belakang secara silent (tanpa loading spinner layar penuh)
       if (loadAllData) {
         loadAllData(true);
       }

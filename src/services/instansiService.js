@@ -17,29 +17,33 @@ export const getInstansi = async () => {
 };
 
 export const addInstansi = async (formData) => {
+  const isBranch = ["UPC", "CABANG", "UPS", "AREA"].includes(String(formData.status || "").toUpperCase());
   const payload = {
     kode: formData.kode || formData.code || "",
+    code: formData.kode || formData.code || "",
     nama: formData.nama || "",
     status: formData.status || "UPC",
-    kodeCabang: formData.kodeCabang || "",
-    cabangInduk: formData.cabangInduk || "",
-    clustering: formData.clustering || "NON CLUSTER",
-    jenis: formData.jenis || "KONVEN",
-    area: formData.area || "AREA BEKASI",
+    kodeCabang: formData.kodeCabang !== undefined ? formData.kodeCabang : (isBranch ? "" : "-"),
+    cabangInduk: formData.cabangInduk !== undefined ? formData.cabangInduk : (isBranch ? "" : "-"),
+    clustering: formData.clustering !== undefined ? formData.clustering : (isBranch ? "NON CLUSTER" : "-"),
+    jenis: formData.jenis !== undefined ? formData.jenis : (isBranch ? "KONVEN" : "-"),
+    area: formData.area !== undefined ? formData.area : (isBranch ? "AREA BEKASI" : "-"),
   };
   return addDocumentData(PATHS[0], payload);
 };
 
 export const updateInstansi = async (id, formData) => {
+  const isBranch = ["UPC", "CABANG", "UPS", "AREA"].includes(String(formData.status || "").toUpperCase());
   const payload = {
     kode: formData.kode || formData.code || "",
+    code: formData.kode || formData.code || "",
     nama: formData.nama || "",
     status: formData.status,
-    kodeCabang: formData.kodeCabang,
-    cabangInduk: formData.cabangInduk,
-    clustering: formData.clustering,
-    jenis: formData.jenis,
-    area: formData.area,
+    kodeCabang: formData.kodeCabang !== undefined ? formData.kodeCabang : (isBranch ? "" : "-"),
+    cabangInduk: formData.cabangInduk !== undefined ? formData.cabangInduk : (isBranch ? "" : "-"),
+    clustering: formData.clustering !== undefined ? formData.clustering : (isBranch ? "NON CLUSTER" : "-"),
+    jenis: formData.jenis !== undefined ? formData.jenis : (isBranch ? "KONVEN" : "-"),
+    area: formData.area !== undefined ? formData.area : (isBranch ? "AREA BEKASI" : "-"),
   };
   return updateDocumentData(PATHS[0], id, payload);
 };

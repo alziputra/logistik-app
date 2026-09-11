@@ -536,33 +536,65 @@ export default function RiwayatTransaksi({
                         </div>
                       </td>
 
-                      {/* Outlet Tujuan */}
+                      {/* Outlet Tujuan — diambil dari item.outlet per barang, grouped */}
                       <td className="px-5 py-4">
-                        {displayTujuan ? (
-                          <div className="flex items-start gap-1.5 max-w-45">
-                            <MapPin className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0 mt-0.5" />
-                            <span className="text-slate-700 dark:text-slate-300 font-medium text-xs leading-snug">{displayTujuan}</span>
-                          </div>
-                        ) : (
-                          <span className="text-slate-300 dark:text-slate-600 text-xs">—</span>
-                        )}
+                        {(() => {
+                          // Hitung jumlah item per outlet
+                          const outletMap = {};
+                          (trx.items || []).forEach((it) => {
+                            const ol = (it.outlet || "").trim();
+                            if (!ol) return;
+                            outletMap[ol] = (outletMap[ol] || 0) + 1;
+                          });
+                          const outletEntries = Object.entries(outletMap);
+                          return outletEntries.length > 0 ? (
+                            <div className="flex flex-col gap-1.5 max-w-45">
+                              {outletEntries.map(([ol, count], oi) => (
+                                <div key={oi} className="flex items-start gap-1.5">
+                                  <MapPin className="w-3 h-3 text-emerald-500 dark:text-emerald-400 shrink-0 mt-0.5" />
+                                  <div className="flex flex-col gap-0.5 min-w-0">
+                                    <span className="text-slate-700 dark:text-slate-300 font-medium text-[11px] leading-snug break-words">{ol}</span>
+                                    {count > 1 && (
+                                      <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">{count} item</span>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-slate-300 dark:text-slate-600 text-xs">—</span>
+                          );
+                        })()}
                       </td>
 
-                      {/* Rincian Nama Barang & Kuantitas/Satuan */}
+                      {/* Rincian Nama Barang & Kuantitas/Satuan — dikelompokkan by nama */}
                       <td className="px-5 py-4">
-                        {trx.items && trx.items.length > 0 ? (
-                          <div className="space-y-1">
-                            {trx.items.map((it, i) => (
-                              <div key={i} className="flex items-center gap-1.5 text-xs">
-                                <Package className="w-3.5 h-3.5 text-[#00753A] dark:text-emerald-400 shrink-0" />
-                                <span className="font-semibold text-slate-900 dark:text-slate-100">{it.namaBarang || it.nama || "Barang"}</span>
-                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#E6F4EA] dark:bg-slate-800 text-[#00753A] dark:text-emerald-400 border border-emerald-200 dark:border-slate-700">
-                                  {it.jumlah || it.kuantitas || 1} {it.satuan || "Unit"}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
+                        {trx.items && trx.items.length > 0 ? (() => {
+                          // Kelompokkan item dengan nama yang sama, jumlahkan qty
+                          const grouped = {};
+                          (trx.items || []).forEach((it) => {
+                            const nama = (it.namaBarang || it.nama || "Barang").trim();
+                            const satuan = it.satuan || "Unit";
+                            const key = `${nama}||${satuan}`;
+                            if (!grouped[key]) {
+                              grouped[key] = { nama, satuan, totalQty: 0 };
+                            }
+                            grouped[key].totalQty += Number(it.jumlah || it.kuantitas || 1);
+                          });
+                          return (
+                            <div className="space-y-1">
+                              {Object.values(grouped).map((g, i) => (
+                                <div key={i} className="flex items-center gap-1.5 text-xs">
+                                  <Package className="w-3.5 h-3.5 text-[#00753A] dark:text-emerald-400 shrink-0" />
+                                  <span className="font-semibold text-slate-900 dark:text-slate-100">{g.nama}</span>
+                                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#E6F4EA] dark:bg-slate-800 text-[#00753A] dark:text-emerald-400 border border-emerald-200 dark:border-slate-700">
+                                    {g.totalQty} {g.satuan}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })() : (
                           <span className="text-slate-400 italic text-xs">- Tidak ada rincian -</span>
                         )}
                       </td>

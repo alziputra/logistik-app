@@ -101,10 +101,11 @@ export default function RiwayatTransaksi({
       // 2. Search Query Filter
       const q = search.toLowerCase();
       const itemNames = (t.items || []).map((i) => (i.namaBarang || i.nama || "").toLowerCase()).join(" ");
+      const itemOutlets = (t.items || []).map((i) => (i.outlet || "").toLowerCase()).join(" ");
       const penerima = `${t.penerimaNama || ""} ${t.pihak2Nama || ""} ${t.tujuan || ""} ${t.outletTujuan || ""} ${t.penerimaInstansi || ""}`.toLowerCase();
       const pengirim = `${t.pengirimNama || ""} ${t.pihak1Nama || ""} ${t.asalOutlet || ""}`.toLowerCase();
 
-      return t.nomorSurat?.toLowerCase().includes(q) || penerima.includes(q) || pengirim.includes(q) || t.tanggal?.toLowerCase().includes(q) || itemNames.includes(q);
+      return t.nomorSurat?.toLowerCase().includes(q) || penerima.includes(q) || pengirim.includes(q) || t.tanggal?.toLowerCase().includes(q) || itemNames.includes(q) || itemOutlets.includes(q);
     });
 
     // 3. Sorting by Tanggal Descending (Terbaru paling atas)
@@ -361,7 +362,7 @@ export default function RiwayatTransaksi({
                 setSearch(e.target.value);
                 setCurrentPage(1);
               }}
-              placeholder="Cari nomor / penerima / barang..."
+              placeholder="Cari nomor / penerima / barang / outlet tujuan..."
               className="w-full pl-9 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-900 dark:text-slate-100 outline-none focus:border-[#00753A]"
             />
           </div>

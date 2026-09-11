@@ -62,8 +62,8 @@ export default function MasterBarang({
   // Delete Confirm State
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  // Allow CRUD for admin and officer (or anyone except viewer)
-  const canEdit = userRole !== "viewer";
+  // Hanya Administrator dan Logistik Officer yang bisa CRUD di Master Barang
+  const canEdit = userRole === "admin" || userRole === "officer";
 
   // Quick Stats Calculations
   const stats = useMemo(() => {

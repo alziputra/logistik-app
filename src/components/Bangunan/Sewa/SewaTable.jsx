@@ -38,13 +38,13 @@ export default function SewaTable({
             <th className="px-4 py-3 text-center">Tgl Berakhir</th>
             <th className="px-4 py-3 text-center">Sisa Waktu</th>
             <th className="px-4 py-3 text-right">Harga Sewa</th>
-            {userRole === "admin" && <th className="px-4 py-3 text-center">Aksi</th>}
+            {(userRole === "admin" || userRole === "officer") && <th className="px-4 py-3 text-center">Aksi</th>}
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-800">
           {paginatedData.length === 0 ? (
             <tr>
-              <td colSpan={userRole === "admin" ? "9" : "8"} className="px-6 py-8 text-center text-slate-500 italic">
+              <td colSpan={(userRole === "admin" || userRole === "officer") ? "9" : "8"} className="px-6 py-8 text-center text-slate-500 italic">
                 Belum ada data sewa bangunan terdaftar.
               </td>
             </tr>
@@ -59,19 +59,17 @@ export default function SewaTable({
                   <td className="px-4 py-3 text-slate-300">{item.type_bangunan || item.type_outlet || "Ruko"}</td>
                   <td className="px-4 py-3 text-center text-slate-400 font-mono">{item.tgl_kontrak_mulai || "-"}</td>
                   <td className="px-4 py-3 text-center text-slate-300 font-mono">{item.tgl_kontrak_berakhir || "-"}</td>
-                  <td className="px-4 py-3 text-center font-mono text-xs">
-                    <span className={sisa.color}>{sisa.text}</span>
-                  </td>
-                  <td className="px-4 py-3 text-right font-mono text-emerald-400 font-bold">
+                  <td className={`px-4 py-3 text-center ${sisa.color}`}>{sisa.text}</td>
+                  <td className="px-4 py-3 text-right font-mono text-slate-200">
                     {item.harga_sewa ? `Rp ${Number(item.harga_sewa).toLocaleString("id-ID")}` : "-"}
                   </td>
-                  {userRole === "admin" && (
+                  {(userRole === "admin" || userRole === "officer") && (
                     <td className="px-4 py-3 text-center">
                       <div className="flex justify-center gap-2">
                         <button onClick={() => onEdit(item)} className="p-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-lg cursor-pointer">
                           <Edit className="w-4 h-4" />
                         </button>
-                        <button onClick={() => onDelete(item.id, item.nama_outlet || "Sewa")} className="p-1.5 bg-slate-800 hover:bg-slate-700 text-rose-400 rounded-lg cursor-pointer">
+                        <button onClick={() => onDelete(item.id)} className="p-1.5 bg-slate-800 hover:bg-slate-700 text-rose-400 rounded-lg cursor-pointer">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>

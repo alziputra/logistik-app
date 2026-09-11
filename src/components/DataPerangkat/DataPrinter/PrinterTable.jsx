@@ -50,7 +50,7 @@ export default function PrinterTable({
   return (
     <div className="flex flex-col">
       <div className="overflow-x-auto custom-scrollbar">
-        <table className="w-full text-left border-collapse border border-slate-200 dark:border-slate-800 min-w-[950px] bg-white dark:bg-slate-900 transition-colors">
+        <table className="w-full text-left border-collapse border border-slate-200 dark:border-slate-800 min-w-237.5 bg-white dark:bg-slate-900 transition-colors">
           <thead>
             <tr className="bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
               <th className="p-3.5 text-center w-12">No</th>
@@ -59,13 +59,13 @@ export default function PrinterTable({
               <th className="p-3.5">VENDOR & SEWA</th>
               <th className="p-3.5 text-center">STATUS & KONDISI</th>
               <th className="p-3.5">KETERANGAN</th>
-              {userRole === "admin" && <th className="p-3.5 text-center">AKSI</th>}
+              {(userRole === "admin" || userRole === "officer" || userRole === "user") && <th className="p-3.5 text-center">AKSI</th>}
             </tr>
           </thead>
           <tbody className="text-xs text-slate-800 dark:text-slate-200 divide-y divide-slate-200 dark:divide-slate-800">
             {paginatedData.length === 0 ? (
               <tr>
-                <td colSpan={userRole === "admin" ? "7" : "6"} className="p-6 text-center text-slate-500">
+                <td colSpan={(userRole === "admin" || userRole === "officer" || userRole === "user") ? "7" : "6"} className="p-6 text-center text-slate-500">
                   Tidak ada data printer ditemukan.
                 </td>
               </tr>
@@ -73,20 +73,16 @@ export default function PrinterTable({
               paginatedData.map((printer, index) => {
                 const outletName = printer.outlet || printer.nama_outlet || printer.lokasi || printer.cabang || "CP Medan Utama";
                 const outletId = printer.idOutlet || printer.id_outlet || printer.outletId || printer.kode || "12676";
-                const hardware = printer.produk || printer.namaUnit || printer.nama || printer.model || "Printer Laserjet Multi-Function";
-                const sn = printer.sn || printer.serialNumber || printer.no_sn || printer.serial_number || "SN-PR-99812";
-                const vendor = printer.vendor || printer.penyedia || printer.nama_vendor || "PT PrintSolusi Prima";
-                const tglMulai = printer.tanggalMulai || printer.tanggal_mulai;
-                const tglSelesai = printer.tanggalSelesai || printer.tanggal_selesai;
-                const sewaPeriod = (tglMulai || tglSelesai) 
-                  ? `${formatBulanTahun(tglMulai)} - ${formatBulanTahun(tglSelesai)}`
-                  : "Jan 2024 - Jan 2026";
-                const keterangan = printer.keterangan || printer.deskripsi || "-";
+                const hardware = printer.produk || printer.hardware || printer.namaUnit || printer.model || "Epson L3110";
+                const sn = printer.sn || printer.serialNumber || printer.serial_number || "L3110-MED-001";
+                const vendor = printer.vendor || printer.nama_vendor || printer.vendorNama || "PT ANEKA JAYA LOGISTIK";
+                const tglMulai = printer.tanggalMulai || printer.tanggal_mulai || printer.tglMulai;
+                const tglSelesai = printer.tanggalSelesai || printer.tanggal_selesai || printer.tglSelesai;
+                const sewaPeriod = tglMulai && tglSelesai ? `${tglMulai} s/d ${tglSelesai}` : "Inventaris";
+                const keterangan = printer.deskripsi || printer.keterangan || "-";
 
                 const enrichedPrinter = {
-                  kategori: "PRINTER",
-                  isPrinter: true,
-                  sn,
+                  id: printer.id || `prn-${index}`,
                   produk: hardware,
                   outlet: outletName,
                   idOutlet: outletId,
@@ -136,7 +132,7 @@ export default function PrinterTable({
                     <td className="p-3.5 text-slate-400">{keterangan}</td>
 
                     {/* AKSI */}
-                    {userRole === "admin" && (
+                    {(userRole === "admin" || userRole === "officer" || userRole === "user") && (
                       <td className="p-3.5 text-center">
                         <div className="flex justify-center gap-1.5">
                           <button onClick={() => onQr && onQr(enrichedPrinter)} title="Cetak QR" className="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg cursor-pointer transition-colors">

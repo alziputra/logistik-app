@@ -126,8 +126,8 @@ export default function DataKomputer({
               if (loadAllData) loadAllData();
             }}
           />
-          {userRole === "admin" && (
-            <button onClick={() => openAddModal({})} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-xl font-semibold shadow-sm transition-colors text-sm cursor-pointer">
+          {(userRole === "admin" || userRole === "officer" || userRole === "user") && (
+            <button onClick={() => openAddModal({})} className="flex items-center gap-2 bg-[#00753A] hover:bg-[#006030] text-white px-4 py-2.5 rounded-xl font-semibold shadow-sm transition-colors text-sm cursor-pointer">
               <Plus className="w-4 h-4" /> Tambah Komputer
             </button>
           )}
@@ -224,7 +224,13 @@ export default function DataKomputer({
 
       <QrLabelModal data={qrModalData} onClose={() => setQrModalData(null)} />
 
-      <ConfirmDeleteModal show={deleteConfirm.show} name={deleteConfirm.name} onConfirm={() => handleDeleteConfirm(deleteKomputer, "Data komputer")} onCancel={() => setDeleteConfirm({ show: false, id: null, name: "" })} />
+      <ConfirmDeleteModal
+        isOpen={deleteConfirm.show}
+        title="Hapus Data Komputer?"
+        message={`Apakah Anda yakin ingin menghapus data komputer "${deleteConfirm.name}"? Data yang dihapus tidak dapat dikembalikan.`}
+        onConfirm={() => handleDeleteConfirm(deleteKomputer, "Data komputer")}
+        onClose={() => setDeleteConfirm({ show: false, id: null, name: "" })}
+      />
 
       <ToastNotif notif={notif} onClose={() => setNotif({ show: false, message: "", type: "success" })} />
     </div>

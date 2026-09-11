@@ -28,12 +28,14 @@ function Panel({ id, activeTab, children }) {
   );
 }
 
-function AccessDenied() {
+function AccessDenied({ title = "Akses Ditolak", message = "Anda tidak memiliki izin untuk mengakses halaman ini." }) {
   return (
-    <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-      <div className="text-4xl mb-4">🔒</div>
-      <h2 className="text-xl font-bold text-slate-200">Akses Ditolak</h2>
-      <p className="text-sm mt-1">Anda tidak memiliki izin (Admin) untuk mengakses halaman ini.</p>
+    <div className="flex flex-col items-center justify-center py-24 px-4 text-slate-400 text-center animate-in fade-in max-w-md mx-auto">
+      <div className="w-16 h-16 bg-rose-500/10 border border-rose-500/20 rounded-3xl flex items-center justify-center text-3xl mb-4 text-rose-500 shadow-inner">
+        🔒
+      </div>
+      <h2 className="text-xl font-bold text-slate-100">{title}</h2>
+      <p className="text-xs text-slate-400 mt-2 leading-relaxed">{message}</p>
     </div>
   );
 }
@@ -147,8 +149,14 @@ export default function TabContent({
             {activeTab === "preview" ? (
               /* MODE LIHAT SURAT (👁️): Tampilan Dokumen Penuh di Tengah (Clean Full-Width View) */
               <div className="w-full max-w-4xl mx-auto">
-                <PreviewView formData={formData} items={items} activeTransaction={activeTransaction} setView={setView} handleSaveTransaction={handleSaveTransaction} isSaving={isSaving} isViewOnly={true} />
+                <PreviewView formData={formData} items={items} activeTransaction={activeTransaction} setView={setView} handleSaveTransaction={handleSaveTransaction} isSaving={isSaving} isViewOnly={true} userRole={userRole} />
               </div>
+            ) : userRole === "user" ? (
+              /* MODE BUAT/EDIT SURAT: DIBATASI JIKA ROLE USER */
+              <AccessDenied
+                title="Akses Pembuatan Surat Dibatasi"
+                message="Role User tidak diizinkan membuat atau mengubah dokumen Surat Serah Terima (BAST). Hak akses pembuatan transaksi surat hanya untuk Administrator dan Logistik Officer."
+              />
             ) : (
               /* MODE EDIT SURAT (✏️) ATAU BUAT SURAT BARU (➕): Split-View Form (Kiri) & Live Preview (Kanan) */
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -157,7 +165,7 @@ export default function TabContent({
                 </div>
 
                 <div className="lg:col-span-6 xl:col-span-6 sticky top-6">
-                  <PreviewView formData={formData} items={items} activeTransaction={activeTransaction} setView={setView} handleSaveTransaction={handleSaveTransaction} isSaving={isSaving} />
+                  <PreviewView formData={formData} items={items} activeTransaction={activeTransaction} setView={setView} handleSaveTransaction={handleSaveTransaction} isSaving={isSaving} userRole={userRole} />
                 </div>
               </div>
             )}
@@ -254,27 +262,51 @@ export default function TabContent({
       )}
 
       <Panel id="spk_renovasi" activeTab={activeTab}>
-        <BangunanSPK type="renovasi" setView={setView} activeTab={activeTab} />
+        {userRole === "user" ? (
+          <AccessDenied title="Akses SPK Dibatasi" message="Role User tidak diizinkan membuat dokumen SPK. Hak akses ini khusus untuk Administrator dan Logistik Officer." />
+        ) : (
+          <BangunanSPK type="renovasi" setView={setView} activeTab={activeTab} />
+        )}
       </Panel>
 
       <Panel id="spk_elektronik" activeTab={activeTab}>
-        <BangunanSPK type="elektronik" setView={setView} activeTab={activeTab} />
+        {userRole === "user" ? (
+          <AccessDenied title="Akses SPK Dibatasi" message="Role User tidak diizinkan membuat dokumen SPK. Hak akses ini khusus untuk Administrator dan Logistik Officer." />
+        ) : (
+          <BangunanSPK type="elektronik" setView={setView} activeTab={activeTab} />
+        )}
       </Panel>
 
       <Panel id="spk_kendaraan" activeTab={activeTab}>
-        <BangunanSPK type="kendaraan" setView={setView} activeTab={activeTab} />
+        {userRole === "user" ? (
+          <AccessDenied title="Akses SPK Dibatasi" message="Role User tidak diizinkan membuat dokumen SPK. Hak akses ini khusus untuk Administrator dan Logistik Officer." />
+        ) : (
+          <BangunanSPK type="kendaraan" setView={setView} activeTab={activeTab} />
+        )}
       </Panel>
 
       <Panel id="sopp_pengadaan" activeTab={activeTab}>
-        <SoppGenerator type="pengadaan" setView={setView} activeTab={activeTab} />
+        {userRole === "user" ? (
+          <AccessDenied title="Akses SOPP Dibatasi" message="Role User tidak diizinkan membuat dokumen SOPP. Hak akses ini khusus untuk Administrator dan Logistik Officer." />
+        ) : (
+          <SoppGenerator type="pengadaan" setView={setView} activeTab={activeTab} />
+        )}
       </Panel>
 
       <Panel id="sopp_sewa" activeTab={activeTab}>
-        <SoppGenerator type="sewa" setView={setView} activeTab={activeTab} />
+        {userRole === "user" ? (
+          <AccessDenied title="Akses SOPP Dibatasi" message="Role User tidak diizinkan membuat dokumen SOPP. Hak akses ini khusus untuk Administrator dan Logistik Officer." />
+        ) : (
+          <SoppGenerator type="sewa" setView={setView} activeTab={activeTab} />
+        )}
       </Panel>
 
       <Panel id="sopp_renovasi" activeTab={activeTab}>
-        <SoppGenerator type="renovasi" setView={setView} activeTab={activeTab} />
+        {userRole === "user" ? (
+          <AccessDenied title="Akses SOPP Dibatasi" message="Role User tidak diizinkan membuat dokumen SOPP. Hak akses ini khusus untuk Administrator dan Logistik Officer." />
+        ) : (
+          <SoppGenerator type="renovasi" setView={setView} activeTab={activeTab} />
+        )}
       </Panel>
 
       {has("riwayat") && (
@@ -296,6 +328,7 @@ export default function TabContent({
             spkHistoryProp={spkHistory}
             soppHistoryProp={soppHistory}
             user={user}
+            userRole={userRole}
             setActivityLogs={setActivityLogs}
           />
         </Panel>
@@ -303,13 +336,13 @@ export default function TabContent({
 
       {has("kelola_user") && (
         <Panel id="kelola_user" activeTab={activeTab}>
-          {userRole === "admin" ? <KelolaUser usersList={usersList} handleUpdateRole={handleUpdateRole} /> : <AccessDenied />}
+          {userRole === "admin" ? <KelolaUser usersList={usersList} handleUpdateRole={handleUpdateRole} /> : <AccessDenied title="Akses Ditolak" message="Hanya Administrator yang memiliki izin mengelola pengguna." />}
         </Panel>
       )}
 
       {has("log_aktivitas") && (
         <Panel id="log_aktivitas" activeTab={activeTab}>
-          {userRole === "admin" ? <LogAktivitas logs={activityLogs} currentUser={user} usersList={usersList} transactions={transactions} /> : <AccessDenied />}
+          {userRole === "admin" ? <LogAktivitas logs={activityLogs} currentUser={user} usersList={usersList} transactions={transactions} /> : <AccessDenied title="Akses Ditolak" message="Hanya Administrator yang memiliki izin melihat log aktivitas sistem." />}
         </Panel>
       )}
 
@@ -321,3 +354,4 @@ export default function TabContent({
     </div>
   );
 }
+

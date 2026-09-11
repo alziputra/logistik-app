@@ -24,6 +24,8 @@ export default function DataPrinter({
   setPrinterSearch,
   loadAllData,
 }) {
+  const canEdit = userRole === "admin" || userRole === "officer" || userRole === "user";
+
   const filterPrinterFn = useCallback((item, search, statusFilter) => {
     const q = (search || "").toLowerCase();
     const matchSearch = item.produk?.toLowerCase().includes(q) || item.sn?.toLowerCase().includes(q) || item.outlet?.toLowerCase().includes(q) || item.vendor?.toLowerCase().includes(q);
@@ -124,8 +126,8 @@ export default function DataPrinter({
               if (loadAllData) loadAllData();
             }}
           />
-          {userRole === "admin" && (
-            <button onClick={() => openAddModal({})} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-xl font-semibold shadow-sm transition-colors text-sm cursor-pointer">
+          {canEdit && (
+            <button onClick={() => openAddModal({})} className="flex items-center gap-2 bg-[#00753A] hover:bg-[#006030] text-white px-4 py-2.5 rounded-xl font-semibold shadow-sm transition-colors text-sm cursor-pointer">
               <Plus className="w-4 h-4" /> Tambah Printer
             </button>
           )}
@@ -222,7 +224,13 @@ export default function DataPrinter({
 
       <QrLabelModal data={qrModalData} onClose={() => setQrModalData(null)} />
 
-      <ConfirmDeleteModal show={deleteConfirm.show} name={deleteConfirm.name} onConfirm={() => handleDeleteConfirm(deletePrinter, "Data printer")} onCancel={() => setDeleteConfirm({ show: false, id: null, name: "" })} />
+      <ConfirmDeleteModal
+        isOpen={deleteConfirm.show}
+        title="Hapus Data Printer?"
+        message={`Apakah Anda yakin ingin menghapus data printer "${deleteConfirm.name}"? Data yang dihapus tidak dapat dikembalikan.`}
+        onConfirm={() => handleDeleteConfirm(deletePrinter, "Data printer")}
+        onClose={() => setDeleteConfirm({ show: false, id: null, name: "" })}
+      />
 
       <ToastNotif notif={notif} onClose={() => setNotif({ show: false, message: "", type: "success" })} />
     </div>

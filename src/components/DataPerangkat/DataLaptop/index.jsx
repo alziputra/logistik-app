@@ -95,7 +95,7 @@ export default function DataLaptop({ userRole = "admin", laptops = [], vendors =
         </div>
 
         <div className="flex items-center gap-3">
-          {userRole === "admin" && (
+          {(userRole === "admin" || userRole === "officer" || userRole === "user") && (
             <button onClick={() => openAddModal()} className="flex items-center gap-2 px-4 py-2.5 bg-[#00753A] hover:bg-[#005c2e] text-white rounded-xl text-xs font-semibold shadow-md transition-all cursor-pointer">
               <Plus className="w-4 h-4" /> Tambah Laptop Baru
             </button>
@@ -172,7 +172,13 @@ export default function DataLaptop({ userRole = "admin", laptops = [], vendors =
       <QrLabelModal data={qrModalData} onClose={() => setQrModalData(null)} />
 
       {/* DELETE CONFIRM MODAL */}
-      <ConfirmDeleteModal show={deleteConfirm.show} name={deleteConfirm.name} onClose={() => setDeleteConfirm({ show: false, id: null, name: "" })} onConfirm={() => handleDeleteConfirm(deleteLaptop, "Data laptop")} />
+      <ConfirmDeleteModal
+        isOpen={deleteConfirm.show}
+        title="Hapus Data Laptop?"
+        message={`Apakah Anda yakin ingin menghapus data laptop "${deleteConfirm.name}"? Data yang dihapus tidak dapat dikembalikan.`}
+        onConfirm={() => handleDeleteConfirm(deleteLaptop, "Data laptop")}
+        onClose={() => setDeleteConfirm({ show: false, id: null, name: "" })}
+      />
     </div>
   );
 }

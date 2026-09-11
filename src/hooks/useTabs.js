@@ -16,5 +16,18 @@ export function useTabs() {
     setActiveTab(viewId);
   };
 
-  return { tabs, setTabs, activeTab, setActiveTab, handleSetView };
+  const closeTab = (tabId) => {
+    const newTabs = tabs.filter((t) => t.id !== tabId);
+    if (newTabs.length === 0) {
+      setTabs([{ id: "dashboard", title: VIEW_TITLES.dashboard || "Dashboard" }]);
+      setActiveTab("dashboard");
+    } else {
+      if (activeTab === tabId) {
+        setActiveTab(newTabs[newTabs.length - 1].id);
+      }
+      setTabs(newTabs);
+    }
+  };
+
+  return { tabs, setTabs, activeTab, setActiveTab, handleSetView, closeTab };
 }

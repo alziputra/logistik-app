@@ -34,7 +34,7 @@ export default function LaptopTable({
   return (
     <div className="flex flex-col">
       <div className="overflow-x-auto custom-scrollbar">
-        <table className="w-full text-left border-collapse border border-slate-200 dark:border-slate-800 min-w-[1050px] bg-white dark:bg-slate-900 transition-colors">
+        <table className="w-full text-left border-collapse border border-slate-200 dark:border-slate-800 min-w-262.5 bg-white dark:bg-slate-900 transition-colors">
           <thead>
             <tr className="bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 text-[11px] font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
               <th className="p-3.5 text-center w-12">No</th>
@@ -43,13 +43,13 @@ export default function LaptopTable({
               <th className="p-3.5">DEPARTEMEN</th>
               <th className="p-3.5">OS & VENDOR</th>
               <th className="p-3.5">SEWA & STATUS</th>
-              {userRole === "admin" && <th className="p-3.5 text-center">AKSI</th>}
+              {(userRole === "admin" || userRole === "officer" || userRole === "user") && <th className="p-3.5 text-center">AKSI</th>}
             </tr>
           </thead>
           <tbody className="text-xs text-slate-800 dark:text-slate-200 divide-y divide-slate-200 dark:divide-slate-800">
             {paginatedData.length === 0 ? (
               <tr>
-                <td colSpan={userRole === "admin" ? "7" : "6"} className="p-6 text-center text-slate-500">
+                <td colSpan={(userRole === "admin" || userRole === "officer" || userRole === "user") ? "7" : "6"} className="p-6 text-center text-slate-500">
                   Tidak ada data laptop ditemukan.
                 </td>
               </tr>
@@ -136,7 +136,7 @@ export default function LaptopTable({
                     </td>
 
                     {/* AKSI */}
-                    {userRole === "admin" && (
+                    {(userRole === "admin" || userRole === "officer" || userRole === "user") && (
                       <td className="p-3.5 text-center">
                         <div className="flex justify-center gap-1.5">
                           <button onClick={() => onQr && onQr(enrichedLaptop)} title="Cetak QR Code" className="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg cursor-pointer transition-colors">

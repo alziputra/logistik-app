@@ -155,7 +155,7 @@ export default function MasterOutlet({ outlets = [], userRole = "admin", loadAll
               if (loadAllData) loadAllData();
             }}
           />
-          {userRole === "admin" && (
+          {(userRole === "admin" || userRole === "officer") && (
             <button
               onClick={handleOpenAdd}
               className="flex items-center gap-2 bg-[#00753A] hover:bg-[#006030] text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-sm transition-colors cursor-pointer shrink-0"
@@ -180,13 +180,13 @@ export default function MasterOutlet({ outlets = [], userRole = "admin", loadAll
                 <th className="px-5 py-4">Clustering</th>
                 <th className="px-5 py-4">Jenis</th>
                 <th className="px-5 py-4">Area</th>
-                {userRole === "admin" && <th className="px-5 py-4 text-center">Aksi</th>}
+                {(userRole === "admin" || userRole === "officer") && <th className="px-5 py-4 text-center">Aksi</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filteredOutlets.length === 0 ? (
                 <tr>
-                  <td colSpan={userRole === "admin" ? "10" : "9"} className="px-6 py-8 text-center text-slate-500 italic">
+                  <td colSpan={(userRole === "admin" || userRole === "officer") ? "10" : "9"} className="px-6 py-8 text-center text-slate-500 italic">
                     Belum ada data outlet / unit kerja terdaftar.
                   </td>
                 </tr>
@@ -216,7 +216,7 @@ export default function MasterOutlet({ outlets = [], userRole = "admin", loadAll
                       </td>
                       <td className="px-5 py-3.5 text-slate-600 dark:text-slate-300">{item.jenis || "-"}</td>
                       <td className="px-5 py-3.5 text-slate-500 dark:text-slate-400 text-[11px]">{item.area || "-"}</td>
-                      {userRole === "admin" && (
+                      {(userRole === "admin" || userRole === "officer") && (
                         <td className="px-5 py-3.5 text-center">
                           <div className="flex justify-center gap-1.5">
                             <button onClick={() => handleOpenEdit(item)} className="p-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-[#00753A] dark:text-emerald-400 rounded-lg cursor-pointer transition-colors" title="Edit Instansi">

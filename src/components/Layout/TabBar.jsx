@@ -2,22 +2,33 @@ import React from "react";
 import { X } from "lucide-react";
 import { VIEW_TITLES, PERMANENT_TABS } from "../../constants/tabConfig";
 
-export default function TabBar({ tabs, activeTab, setActiveTab, setTabs }) {
+export default function TabBar({ tabs, activeTab, setActiveTab, setTabs, closeTab: closeTabProp }) {
   if (!activeTab || activeTab === "dashboard" || activeTab.startsWith("dashboard_")) {
     return null;
   }
 
   const handleTabClick = (tabId) => setActiveTab(tabId);
 
-  const closeTab = (e, tabId) => {
+  const handleCloseTab = (e, tabId) => {
     e.stopPropagation();
-    const newTabs = tabs.filter((t) => t.id !== tabId);
-    if (newTabs.length === 0) {
-      setTabs([{ id: "dashboard", title: VIEW_TITLES.dashboard }]);
-      setActiveTab("dashboard");
-    } else {
-      if (activeTab === tabId) setActiveTab(newTabs[newTabs.length - 1].id);
-      setTabs(newTabs);
+    e.preventDefault();
+
+    if (closeTabProp) {
+      closeTabProp(tabId);
+      return;
+    }
+
+    if (typeof setTabs === "function") {
+      const newTabs = tabs.filter((t) => t.id !== tabId);
+      if (newTabs.length === 0) {
+        setTabs([{ id: "dashboard", title: VIEW_TITLES.dashboard || "Dashboard" }]);
+        setActiveTab("dashboard");
+      } else {
+        if (activeTab === tabId) {
+          setActiveTab(newTabs[newTabs.length - 1].id);
+        }
+        setTabs(newTabs);
+      }
     }
   };
 
@@ -44,14 +55,16 @@ export default function TabBar({ tabs, activeTab, setActiveTab, setTabs }) {
           <span className="text-xs">{tab.title}</span>
           {!PERMANENT_TABS.includes(tab.id) && (
             <button
-              onClick={(e) => closeTab(e, tab.id)}
-              className={`p-0.5 rounded-md transition-colors ${
+              type="button"
+              title={`Tutup tab ${tab.title}`}
+              onClick={(e) => handleCloseTab(e, tab.id)}
+              className={`p-0.5 rounded-md transition-colors cursor-pointer z-10 ${
                 activeTab === tab.id
                   ? "hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-rose-500"
                   : "hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
               }`}
             >
-              <X className="w-3.5 h-3.5" />
+              <X className="w-3.5 h-3.5 pointer-events-none" />
             </button>
           )}
         </div>

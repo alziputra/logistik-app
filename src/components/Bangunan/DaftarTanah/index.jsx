@@ -220,8 +220,8 @@ export default function BangunanTanah({ userRole = "admin", lands = [], landFilt
               if (loadAllData) loadAllData();
             }}
           />
-          {userRole === "admin" && (
-            <button onClick={openAdd} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-sm transition-colors cursor-pointer shrink-0">
+          {(userRole === "admin" || userRole === "officer") && (
+            <button onClick={openAdd} className="flex items-center gap-2 bg-[#00753A] hover:bg-[#006030] text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-sm transition-colors cursor-pointer shrink-0">
               <Plus className="w-4 h-4" /> Tambah Tanah
             </button>
           )}
@@ -265,13 +265,13 @@ export default function BangunanTanah({ userRole = "admin", lands = [], landFilt
                 <th className="px-4 py-3">No. Sertifikat</th>
                 <th className="px-4 py-3 text-center">Tgl Berakhir</th>
                 <th className="px-4 py-3 text-center">Luas Lahan (m²)</th>
-                {userRole === "admin" && <th className="px-4 py-3 text-center">Aksi</th>}
+                {(userRole === "admin" || userRole === "officer") && <th className="px-4 py-3 text-center">Aksi</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800">
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={userRole === "admin" ? "9" : "8"} className="px-6 py-8 text-center text-slate-500 italic">
+                  <td colSpan={(userRole === "admin" || userRole === "officer") ? "9" : "8"} className="px-6 py-8 text-center text-slate-500 italic">
                     Belum ada data tanah terdaftar.
                   </td>
                 </tr>
@@ -286,7 +286,7 @@ export default function BangunanTanah({ userRole = "admin", lands = [], landFilt
                     <td className="px-4 py-3 font-mono text-slate-400">{item.no_sertifikat || "-"}</td>
                     <td className="px-4 py-3 text-center text-slate-300 font-mono">{formatDate(item.tgl_shgb_berakhir || item.tgl_berakhir_shgb)}</td>
                     <td className="px-4 py-3 text-center font-bold text-slate-200">{item.luas_tanah_m2 || item.luas_tanah || "-"}</td>
-                    {userRole === "admin" && (
+                    {(userRole === "admin" || userRole === "officer") && (
                       <td className="px-4 py-3 text-center">
                         <div className="flex justify-center gap-2">
                           <button onClick={() => openEdit(item)} className="p-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-lg cursor-pointer">

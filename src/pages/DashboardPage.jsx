@@ -26,10 +26,12 @@ import { getSoppHistories } from "../services/soppService";
 import { getActivityLogs } from "../services/activityLogService";
 
 import ToastNotif from "../components/Modal/ToastNotif";
+import ForceChangePasswordModal from "../components/Modal/ForceChangePasswordModal";
+
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const { tabs, setTabs, activeTab, setActiveTab, handleSetView } = useTabs();
+  const { tabs, setTabs, activeTab, setActiveTab, handleSetView, closeTab } = useTabs();
   const { notif, showNotif } = useNotif();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -190,19 +192,35 @@ export default function DashboardPage() {
       loadAllData,
     });
 
-  const activeUser = useMemo(() => {
-    if (!user) return null;
-    const matched = (usersList || []).find((u) => u.email?.toLowerCase() === user.email?.toLowerCase());
-    const name = matched?.name || matched?.nama || user.name || (user.email === "officer@gmail.com" ? "Dio Haris Kurniawan" : user.email === "admin@logistik.com" ? "Alzi Rahmana Putra" : user.email?.split("@")[0] || "User Logistik");
-    const roleStr = matched?.role || user.role || "officer";
-    const r = String(roleStr).toLowerCase();
-    const roleLabel = r === "admin" || r === "administrator" ? "ADMINISTRATOR" : "LOGISTIK OFFICER";
-    return { ...user, name, role: roleLabel };
+  const matchedUser = useMemo(() => {
+    if (!user?.email) return null;
+    return (usersList || []).find((u) => u.email?.toLowerCase() === user.email?.toLowerCase());
   }, [user, usersList]);
 
+  const isMustChangePassword = useMemo(() => {
+    if (user?.mustChangePassword) return true;
+    if (matchedUser && matchedUser.mustChangePassword) return true;
+    return false;
+  }, [user, matchedUser]);
+
+  const activeUser = useMemo(() => {
+    if (!user) return null;
+    const name = matchedUser?.name || matchedUser?.nama || user.name || (user.email === "officer@gmail.com" ? "Dio Haris Kurniawan" : user.email === "admin@logistik.com" ? "Alzi Rahmana Putra" : user.email?.split("@")[0] || "User Logistik");
+    const roleStr = matchedUser?.role || user.role || "user";
+    const r = String(roleStr).toLowerCase();
+    let roleLabel = "USER (PENGGUNA)";
+    if (r === "admin" || r === "administrator") roleLabel = "ADMINISTRATOR";
+    else if (r === "officer" || r === "logistik officer" || r === "manager") roleLabel = "LOGISTIK OFFICER";
+
+    return { ...user, name, role: roleLabel, rawRole: roleStr };
+  }, [user, matchedUser]);
+
   const activeRole = useMemo(() => {
-    if (!activeUser) return "officer";
-    return activeUser.role === "ADMINISTRATOR" ? "admin" : "officer";
+    if (!activeUser) return "user";
+    const r = String(activeUser.role || activeUser.rawRole || "").toLowerCase();
+    if (r.includes("admin")) return "admin";
+    if (r.includes("officer")) return "officer";
+    return "user";
   }, [activeUser]);
 
   return (
@@ -218,47 +236,54 @@ export default function DashboardPage() {
         computers={computers}
         buildingLands={buildingLands}
         buildingSewas={buildingSewas}
-        setLandFilter={setLandFilter}
-        setSewaFilter={setSewaFilter}
-        setRenovationFilter={setRenovationFilter}
-        setSecurityFilter={setSecurityFilter}
-        setComputerFilter={setComputerFilter}
-        setPrinterFilter={setPrinterFilter}
-        setPrinterSearch={setPrinterSearch}
-        setComputerSearch={setComputerSearch}
-        setLandSearch={setLandSearch}
-        setSewaSearch={setSewaSearch}
+        buildingRenovations={buildingRenovations}
+        securityFacilities={securityFacilities}
+        user={activeUser}
+        userRole={activeRole}
       />
 
       {/* Main Content Area */}
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "md:pl-[336px]" : "md:pl-20"}`}>
+      <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? "md:ml-84" : "md:ml-20"} pt-16 md:pt-0`}>
+        {/* Header Bar */}
         <AppHeader
           user={activeUser}
-          title={activeTab.replace("_", " ").toUpperCase()}
+          userRole={activeRole}
+          isSidebarOpen={isSidebarOpen}
+          setIsSidebarOpen={setIsSidebarOpen}
+          title={activeTab}
           printers={printers}
           computers={computers}
           buildingLands={buildingLands}
           buildingSewas={buildingSewas}
-          setView={handleSetView}
+          setLandFilter={setLandFilter}
+          setSewaFilter={setSewaFilter}
+          setComputerFilter={setComputerFilter}
+          setPrinterFilter={setPrinterFilter}
           setPrinterSearch={setPrinterSearch}
           setComputerSearch={setComputerSearch}
           setLandSearch={setLandSearch}
           setSewaSearch={setSewaSearch}
-          setPrinterFilter={setPrinterFilter}
-          setComputerFilter={setComputerFilter}
-          setLandFilter={setLandFilter}
-          setSewaFilter={setSewaFilter}
-          isSidebarOpen={isSidebarOpen}
-          setIsSidebarOpen={setIsSidebarOpen}
+          setView={handleSetView}
+          usersList={usersList}
         />
 
-        <TabBar tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} setTabs={setTabs} />
+        {/* Tab Navigation & Search Bar */}
+        <TabBar
+          tabs={tabs}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          setTabs={setTabs}
+          closeTab={closeTab}
+          notifSewaCount={notifSewa.length}
+          notifSewaKomputerCount={notifSewaKomputer.length}
+        />
 
-        <main className="flex-1 p-4 md:p-6 bg-slate-100/70 dark:bg-slate-900/60 overflow-y-auto">
+        {/* Dynamic Content Views */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto animate-in fade-in duration-200">
           {loadingData ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-3">
-              <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-              <p className="text-sm font-medium text-slate-400">Sinkronisasi data dengan sistem...</p>
+            <div className="flex flex-col items-center justify-center min-h-[50vh] text-slate-400">
+              <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+              <p className="text-xs font-semibold">Memuat Data Sistem Logistik...</p>
             </div>
           ) : (
             <TabContent
@@ -328,6 +353,17 @@ export default function DashboardPage() {
           )}
         </main>
       </div>
+
+      {/* Modal Wajib Ganti Password saat pertama kali login */}
+      {isMustChangePassword && (
+        <ForceChangePasswordModal
+          isOpen={true}
+          onSuccess={() => {
+            showNotif("Password berhasil diganti. Selamat datang di sistem logistik!", "success");
+            loadAllData();
+          }}
+        />
+      )}
 
       <ToastNotif notif={notif} />
     </div>

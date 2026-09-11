@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { X, User, Lock, ShieldCheck, Key, Info, CheckCircle2, AlertCircle, Loader2, Sparkles, Building2 } from "lucide-react";
 import { auth } from "../../config/firebase";
-import { updatePassword } from "firebase/auth";
+import { useAuth } from "../../context/AuthContext";
 import { useNotification } from "../../context/NotificationContext";
 
 export default function UserProfileModal({ isOpen, onClose, user }) {
   const { showSuccess, showError } = useNotification();
+  const { changeUserPassword } = useAuth();
   const [activeTab, setActiveTab] = useState("info"); // 'info' | 'security' | 'app'
 
   // Change Password State
@@ -18,6 +19,10 @@ export default function UserProfileModal({ isOpen, onClose, user }) {
 
   const handleChangePasswordSubmit = async (e) => {
     e.preventDefault();
+    if (!currentPassword.trim()) {
+      showError("Password Saat Ini Wajib Diisi", "Masukkan password Anda saat ini untuk verifikasi keamanan.");
+      return;
+    }
     if (newPassword !== confirmPassword) {
       showError("Password Tidak Cocok", "Password baru dan konfirmasi password tidak cocok.");
       return;
@@ -29,21 +34,24 @@ export default function UserProfileModal({ isOpen, onClose, user }) {
 
     setIsSavingPassword(true);
     try {
-      if (auth.currentUser) {
-        await updatePassword(auth.currentUser, newPassword);
+      const res = await changeUserPassword(currentPassword, newPassword);
+      if (res.success) {
+        showSuccess("Berhasil!", "Password akun Anda berhasil diperbarui.");
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+        setActiveTab("info");
+      } else {
+        showError("Gagal Mengubah Password", res.message || "Password tidak dapat diperbarui. Pastikan password lama sesuai.");
       }
-      showSuccess("Berhasil!", "Password akun Anda berhasil diperbarui di Firebase.");
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-      setActiveTab("info");
     } catch (err) {
       console.error("Gagal mengubah password:", err);
-      showError("Gagal Mengubah Password", err.message || "Password tidak dapat diperbarui. Pastikan Anda telah login ulang baru-baru ini.");
+      showError("Gagal Mengubah Password", err.message || "Terjadi kesalahan saat memperbarui password.");
     } finally {
       setIsSavingPassword(false);
     }
   };
+
 
   const getInitials = (nameStr) => {
     if (!nameStr) return "PG";

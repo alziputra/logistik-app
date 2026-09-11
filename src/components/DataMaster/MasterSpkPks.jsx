@@ -53,7 +53,7 @@ export default function MasterSpkPks({
   const [previewItem, setPreviewItem] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
 
-  const canEdit = userRole !== "viewer";
+  const canEdit = userRole === "admin" || userRole === "officer";
 
   // Statistics calculation
   const stats = useMemo(() => {
@@ -480,7 +480,7 @@ export default function MasterSpkPks({
                 </th>
 
                 {/* Spesifikasi Barang */}
-                <th className="px-5 py-4 min-w-[280px]">Spesifikasi / Uraian Barang</th>
+                <th className="px-5 py-4 min-w-70">Spesifikasi / Uraian Barang</th>
 
                 {/* Jumlah Barang */}
                 <th
@@ -626,7 +626,7 @@ export default function MasterSpkPks({
                         <td className="px-5 py-3.5 text-slate-700 dark:text-slate-300">
                           <div className="flex items-center gap-1.5">
                             <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                            <span className="truncate max-w-[180px] font-medium">{item.vendor_nama || "-"}</span>
+                            <span className="truncate max-w-45 font-medium">{item.vendor_nama || "-"}</span>
                           </div>
                         </td>
 

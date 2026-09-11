@@ -94,6 +94,7 @@ export default function Navbar({
 
   const userRole = (user?.role || "officer").toLowerCase();
   const isAdmin = userRole === "admin" || userRole === "administrator";
+  const isOfficerOrAdmin = isAdmin || userRole === "officer" || userRole === "logistik officer";
 
   const [activeRailCategory, setActiveRailCategory] = useState(getCategoryFromView(view));
   const [openGroups, setOpenGroups] = useState({ spk: true, sopp: true });
@@ -150,6 +151,7 @@ export default function Navbar({
   const renderNavItems = (items, isMobile = false) => {
     return items.map((item) => {
       if (item.adminOnly && !isAdmin) return null;
+      if (item.officerOrAdminOnly && !isOfficerOrAdmin) return null;
 
       if (item.isGroup) {
         return <NavGroup key={item.id} item={item} view={view} isOpen={!!openGroups[item.id]} onToggle={() => toggleGroup(item.id)} onSelect={handleNavClick} isMobile={isMobile} />;
@@ -161,6 +163,7 @@ export default function Navbar({
       return <NavItem key={item.id} item={item} isActive={isActive} onClick={onClick} isMobile={isMobile} />;
     });
   };
+
 
   return (
     <>

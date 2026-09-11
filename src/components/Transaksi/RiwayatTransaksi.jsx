@@ -23,12 +23,15 @@ export default function RiwayatTransaksi({
   editDocument = null,
   viewDocument = null,
   user = null,
+  userRole = "officer",
   setActivityLogs = () => {},
 }) {
+  const canCrudSurat = userRole === "admin" || userRole === "officer";
   const { showNotif } = useNotif();
   const [search, setSearch] = useState("");
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [activeTabFilter, setActiveTabFilter] = useState("all"); // "all" | "masuk" | "keluar"
+
 
   // Sorting: Default to 'tanggal' descending (terbaru paling atas)
   const [sortField, setSortField] = useState("tanggal");
@@ -452,6 +455,12 @@ export default function RiwayatTransaksi({
 
                 <th className="px-5 py-4">Pengirim</th>
                 <th className="px-5 py-4">Penerima Barang</th>
+                <th className="px-5 py-4">
+                  <div className="flex items-center gap-1.5">
+                    <MapPin className="w-3 h-3 text-emerald-500" />
+                    <span>Outlet Tujuan</span>
+                  </div>
+                </th>
                 <th className="px-5 py-4">Rincian Barang</th>
                 <th className="px-5 py-4 text-center w-28">Aksi</th>
               </tr>
@@ -459,7 +468,7 @@ export default function RiwayatTransaksi({
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="px-6 py-8 text-center text-slate-400 italic">
+                  <td colSpan="8" className="px-6 py-8 text-center text-slate-400 italic">
                     {activeTabFilter === "masuk" ? "Belum ada riwayat surat masuk ditemukan." : activeTabFilter === "keluar" ? "Belum ada riwayat surat keluar ditemukan." : "Belum ada riwayat transaksi ditemukan."}
                   </td>
                 </tr>
@@ -505,7 +514,7 @@ export default function RiwayatTransaksi({
 
                       {/* Pengirim (Pihak 1) */}
                       <td className="px-5 py-4">
-                        <div className="flex flex-col gap-0.5 max-w-[180px]">
+                        <div className="flex flex-col gap-0.5 max-w-45">
                           <span className="font-semibold text-slate-800 dark:text-slate-200 truncate">{pengirimNama}</span>
                           {pengirimJabatan && <span className="text-[10px] text-slate-400 dark:text-slate-500 truncate">{pengirimJabatan}</span>}
                         </div>
@@ -513,7 +522,7 @@ export default function RiwayatTransaksi({
 
                       {/* Penerima Barang (Pihak 2 & Unit Kerja / Outlet) */}
                       <td className="px-5 py-4">
-                        <div className="flex flex-col gap-0.5 max-w-[220px]">
+                        <div className="flex flex-col gap-0.5 max-w-55">
                           <div className="flex items-center gap-1.5 font-semibold text-slate-900 dark:text-slate-100">
                             <User className="w-3.5 h-3.5 text-[#00753A] dark:text-emerald-400 shrink-0" />
                             <span className="truncate">{displayPenerimaNama}</span>
@@ -525,6 +534,18 @@ export default function RiwayatTransaksi({
                             </div>
                           )}
                         </div>
+                      </td>
+
+                      {/* Outlet Tujuan */}
+                      <td className="px-5 py-4">
+                        {displayTujuan ? (
+                          <div className="flex items-start gap-1.5 max-w-45">
+                            <MapPin className="w-3.5 h-3.5 text-emerald-500 dark:text-emerald-400 shrink-0 mt-0.5" />
+                            <span className="text-slate-700 dark:text-slate-300 font-medium text-xs leading-snug">{displayTujuan}</span>
+                          </div>
+                        ) : (
+                          <span className="text-slate-300 dark:text-slate-600 text-xs">—</span>
+                        )}
                       </td>
 
                       {/* Rincian Nama Barang & Kuantitas/Satuan */}
@@ -597,7 +618,13 @@ export default function RiwayatTransaksi({
         />
       </div>
 
-      <ConfirmDeleteModal show={Boolean(deleteTarget)} name={deleteTarget?.nomorSurat || "Surat Transaksi"} onConfirm={handleConfirmDelete} onCancel={() => setDeleteTarget(null)} />
+      <ConfirmDeleteModal
+        isOpen={Boolean(deleteTarget)}
+        title="Hapus Transaksi Surat?"
+        message={`Apakah Anda yakin ingin menghapus transaksi surat "${deleteTarget?.nomorSurat || "Surat Transaksi"}"? Data yang dihapus tidak dapat dikembalikan.`}
+        onConfirm={handleConfirmDelete}
+        onClose={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

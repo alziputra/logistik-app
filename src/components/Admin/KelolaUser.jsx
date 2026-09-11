@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { Users, UserPlus, Shield, Trash2, Edit, X, Eye, EyeOff, Check, UserCheck } from "lucide-react";
+import { Users, UserPlus, Shield, Trash2, Edit, X, Eye, EyeOff, Check, UserCheck, KeyRound, AlertCircle, Lock, CheckCircle2 } from "lucide-react";
 import ConfirmDeleteModal from "../Modal/ConfirmDeleteModal";
+import ToastNotif from "../Modal/ToastNotif";
 import Pagination from "../Common/Pagination";
-import { addUser, updateUser, deleteUser, getUsers } from "../../services/userService";
+import { addUser, createAdminUser, updateUser, deleteUser, getUsers } from "../../services/userService";
 
 export default function KelolaUser({ usersList = [], handleUpdateRole }) {
   const [dataUsers, setDataUsers] = useState(usersList);
@@ -13,6 +14,13 @@ export default function KelolaUser({ usersList = [], handleUpdateRole }) {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [submitError, setSubmitError] = useState("");
+  const [toast, setToast] = useState({ show: false, message: "", type: "success" });
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: "", type: "success" }), 3500);
+  };
 
   // Form for Add User
   const [form, setForm] = useState({
@@ -27,6 +35,7 @@ export default function KelolaUser({ usersList = [], handleUpdateRole }) {
     name: "",
     email: "",
     role: "User",
+    mustChangePassword: false,
   });
 
   useEffect(() => {
@@ -54,8 +63,8 @@ export default function KelolaUser({ usersList = [], handleUpdateRole }) {
   };
 
   const handleEditInputChange = (e) => {
-    const { name, value } = e.target;
-    setEditForm((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setEditForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
   };
 
   const formatRoleKey = (roleStr) => {
@@ -73,24 +82,29 @@ export default function KelolaUser({ usersList = [], handleUpdateRole }) {
 
   const handleFormSubmit = async (e) => {
     e.preventDefault();
+    setSubmitError("");
     if (!form.name || !form.email) return;
+
+    if (!form.password || form.password.length < 6) {
+      setSubmitError("Password sementara wajib diisi minimal 6 karakter.");
+      return;
+    }
 
     setIsSubmitting(true);
     try {
-      const newUserPayload = {
+      const createdDoc = await createAdminUser({
         name: form.name,
-        nama: form.name,
         email: form.email,
+        password: form.password,
         role: formatRoleKey(form.role),
-      };
-
-      const createdDoc = await addUser(newUserPayload);
+      });
 
       setDataUsers((prev) => [createdDoc, ...prev]);
       setIsModalOpen(false);
       setForm({ name: "", email: "", password: "", role: "User" });
     } catch (err) {
       console.error("Gagal menambah user baru:", err);
+      setSubmitError(err.message || "Gagal menambah user baru. Silakan coba lagi.");
     } finally {
       setIsSubmitting(false);
     }
@@ -102,6 +116,7 @@ export default function KelolaUser({ usersList = [], handleUpdateRole }) {
       name: usr.name || usr.nama || "",
       email: usr.email || "",
       role: formatRoleLabel(usr.role),
+      mustChangePassword: Boolean(usr.mustChangePassword),
     });
   };
 
@@ -117,6 +132,7 @@ export default function KelolaUser({ usersList = [], handleUpdateRole }) {
         nama: editForm.name,
         email: editForm.email,
         role: updatedRoleKey,
+        mustChangePassword: editForm.mustChangePassword,
       };
 
       await updateUser(editingUser.id, payload);
@@ -139,11 +155,14 @@ export default function KelolaUser({ usersList = [], handleUpdateRole }) {
 
   const handleConfirmDelete = async () => {
     if (!deleteTarget) return;
+    const targetName = deleteTarget.name || deleteTarget.nama || deleteTarget.email || "User";
     try {
       await deleteUser(deleteTarget.id);
       setDataUsers((prev) => prev.filter((item) => item.id !== deleteTarget.id));
+      showToast(`Akun user "${targetName}" berhasil dihapus dari sistem.`, "success");
     } catch (err) {
       console.error("Gagal menghapus user:", err);
+      showToast(`Gagal menghapus akun "${targetName}". Silakan coba lagi.`, "error");
     } finally {
       setDeleteTarget(null);
     }
@@ -181,13 +200,16 @@ export default function KelolaUser({ usersList = [], handleUpdateRole }) {
           </div>
           <div>
             <h2 className="text-2xl font-bold text-slate-100">Kelola Pengguna & Hak Akses</h2>
-            <p className="text-xs text-slate-400">Atur hak akses akun pengguna sistem logistik.</p>
+            <p className="text-xs text-slate-400">Atur akun pengguna, buat password sementara, dan kelola hak akses sistem.</p>
           </div>
         </div>
 
         <button
           type="button"
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setSubmitError("");
+            setIsModalOpen(true);
+          }}
           className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold text-xs transition-all shadow-md active:scale-95 cursor-pointer"
         >
           <UserPlus className="w-4 h-4" />
@@ -205,13 +227,14 @@ export default function KelolaUser({ usersList = [], handleUpdateRole }) {
                 <th className="px-6 py-4">NAMA USER</th>
                 <th className="px-6 py-4">EMAIL</th>
                 <th className="px-6 py-4">ROLE SAAT INI</th>
+                <th className="px-6 py-4">STATUS PASSWORD</th>
                 <th className="px-6 py-4 text-center w-36">AKSI</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800">
               {dataUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="px-6 py-8 text-center text-slate-500 italic">
+                  <td colSpan="6" className="px-6 py-8 text-center text-slate-500 italic">
                     Belum ada data user terdaftar.
                   </td>
                 </tr>
@@ -225,6 +248,19 @@ export default function KelolaUser({ usersList = [], handleUpdateRole }) {
                       <td className="px-6 py-4 text-slate-300 font-mono">{usr.email}</td>
                       <td className="px-6 py-4">
                         {renderRoleBadge(usr.role)}
+                      </td>
+                      <td className="px-6 py-4">
+                        {usr.mustChangePassword ? (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                            <KeyRound className="w-3 h-3 text-amber-400" />
+                            <span>Wajib Ganti Password</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+                            <Check className="w-3 h-3 text-emerald-400" />
+                            <span>Password Aktif</span>
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center gap-2">
@@ -284,9 +320,16 @@ export default function KelolaUser({ usersList = [], handleUpdateRole }) {
               </div>
               <div>
                 <h3 className="text-lg font-bold text-slate-100">Tambah User Pengguna Baru</h3>
-                <p className="text-xs text-slate-400">Lengkapi data untuk mendaftarkan akun baru.</p>
+                <p className="text-xs text-slate-400">Admin membuatkan akun dan password sementara.</p>
               </div>
             </div>
+
+            {submitError && (
+              <div className="mb-4 p-3 bg-rose-950/60 border border-rose-800 rounded-xl flex items-center gap-2 text-xs text-rose-300">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                <span>{submitError}</span>
+              </div>
+            )}
 
             <form onSubmit={handleFormSubmit} className="space-y-4">
               <div>
@@ -299,7 +342,7 @@ export default function KelolaUser({ usersList = [], handleUpdateRole }) {
                   required
                   value={form.name}
                   onChange={handleInputChange}
-                  placeholder="Contoh: Ahmad Dendy"
+                  placeholder="Contoh: Evi Noviawati"
                   className="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 outline-none focus:border-emerald-500 transition-colors"
                 />
               </div>
@@ -314,31 +357,37 @@ export default function KelolaUser({ usersList = [], handleUpdateRole }) {
                   required
                   value={form.email}
                   onChange={handleInputChange}
-                  placeholder="user@pegadaian.co.id"
+                  placeholder="evi.noviawati@pegadaian.co.id"
                   className="w-full px-3.5 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 outline-none focus:border-emerald-500 transition-colors"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Password Akun
+                  Password Akun Sementara <span className="text-rose-400">*</span>
                 </label>
                 <div className="relative">
                   <input
                     type={showPassword ? "text" : "password"}
                     name="password"
+                    required
+                    minLength={6}
                     value={form.password}
                     onChange={handleInputChange}
-                    placeholder="••••••••"
+                    placeholder="password123"
                     className="w-full px-3.5 py-2 pr-10 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 outline-none focus:border-emerald-500 transition-colors"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 cursor-pointer"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
+                </div>
+                <div className="mt-1.5 p-2 bg-emerald-950/40 border border-emerald-800/30 rounded-lg flex items-center gap-1.5 text-[11px] text-emerald-300 font-medium">
+                  <KeyRound className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                  <span>User wajib mengganti password ini saat pertama kali login.</span>
                 </div>
               </div>
 
@@ -369,9 +418,16 @@ export default function KelolaUser({ usersList = [], handleUpdateRole }) {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold text-xs transition-colors shadow-md disabled:opacity-50 cursor-pointer"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold text-xs transition-colors shadow-md disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
                 >
-                  {isSubmitting ? "Menyimpan..." : "Simpan User"}
+                  {isSubmitting ? (
+                    <span>Menyimpan...</span>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      <span>Simpan User</span>
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -385,7 +441,7 @@ export default function KelolaUser({ usersList = [], handleUpdateRole }) {
           <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 shadow-2xl relative">
             <button
               onClick={() => setEditingUser(null)}
-              className="absolute top-4 right-4 p-1 text-slate-400 hover:text-slate-200 rounded-lg hover:bg-slate-800 transition-colors"
+              className="absolute top-4 right-4 p-1 text-slate-400 hover:text-slate-200 rounded-lg hover:bg-slate-800 transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -396,7 +452,7 @@ export default function KelolaUser({ usersList = [], handleUpdateRole }) {
               </div>
               <div>
                 <h3 className="text-lg font-bold text-slate-100">Edit Data Pengguna</h3>
-                <p className="text-xs text-slate-400">Perbarui informasi pengguna sistem logistik.</p>
+                <p className="text-xs text-slate-400">Perbarui informasi dan hak akses akun user.</p>
               </div>
             </div>
 
@@ -447,6 +503,23 @@ export default function KelolaUser({ usersList = [], handleUpdateRole }) {
                 </select>
               </div>
 
+              {/* Status Wajib Ganti Password Switch */}
+              <div className="pt-2 border-t border-slate-800">
+                <label className="flex items-center gap-2.5 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    name="mustChangePassword"
+                    checked={editForm.mustChangePassword}
+                    onChange={handleEditInputChange}
+                    className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 bg-slate-950 border-slate-700 cursor-pointer"
+                  />
+                  <div className="text-xs">
+                    <span className="font-semibold text-slate-200">Wajibkan Ganti Password</span>
+                    <p className="text-[11px] text-slate-400">User harus mengubah password saat login berikutnya.</p>
+                  </div>
+                </label>
+              </div>
+
               <div className="pt-3 flex items-center justify-end gap-3 border-t border-slate-800">
                 <button
                   type="button"
@@ -474,8 +547,15 @@ export default function KelolaUser({ usersList = [], handleUpdateRole }) {
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleConfirmDelete}
         title="Hapus Akun Pengguna?"
-        message={`Apakah Anda yakin ingin menghapus akun user "${deleteTarget?.name || deleteTarget?.email || ""}"?`}
+        message={`Apakah Anda yakin ingin menghapus akun user "${deleteTarget?.name || deleteTarget?.nama || deleteTarget?.email || ""}"? Data akun yang dihapus tidak dapat dikembalikan.`}
+      />
+
+      {/* Toast Notifikasi Hapus User */}
+      <ToastNotif
+        notif={toast}
+        onClose={() => setToast({ show: false, message: "", type: "success" })}
       />
     </div>
   );
 }
+

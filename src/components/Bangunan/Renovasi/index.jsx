@@ -121,10 +121,10 @@ export default function BangunanRenovasi({
               if (loadAllData) loadAllData();
             }}
           />
-          {userRole === "admin" && (
+          {(userRole === "admin" || userRole === "officer") && (
             <button
               onClick={openAdd}
-              className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-sm transition-colors cursor-pointer shrink-0"
+              className="flex items-center gap-2 bg-[#00753A] hover:bg-[#006030] text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-sm transition-colors cursor-pointer shrink-0"
             >
               <Plus className="w-4 h-4" /> Tambah Renovasi
             </button>
@@ -158,13 +158,13 @@ export default function BangunanRenovasi({
                 <th className="px-4 py-3">Pelaksana / Kontraktor</th>
                 <th className="px-4 py-3 text-right">Nilai SPK</th>
                 <th className="px-4 py-3 text-center">Status</th>
-                {userRole === "admin" && <th className="px-4 py-3 text-center">Aksi</th>}
+                {(userRole === "admin" || userRole === "officer") && <th className="px-4 py-3 text-center">Aksi</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800">
               {paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={userRole === "admin" ? "8" : "7"} className="px-6 py-8 text-center text-slate-500 italic">
+                  <td colSpan={(userRole === "admin" || userRole === "officer") ? "8" : "7"} className="px-6 py-8 text-center text-slate-500 italic">
                     Belum ada data pekerjaan renovasi.
                   </td>
                 </tr>
@@ -184,7 +184,7 @@ export default function BangunanRenovasi({
                         {item.status || "Berjalan"}
                       </span>
                     </td>
-                    {userRole === "admin" && (
+                    {(userRole === "admin" || userRole === "officer") && (
                       <td className="px-4 py-3 text-center">
                         <div className="flex justify-center gap-2">
                           <button onClick={() => openEdit(item)} className="p-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-lg cursor-pointer">

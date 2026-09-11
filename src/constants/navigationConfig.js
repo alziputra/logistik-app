@@ -69,12 +69,14 @@ export const NAV_CATEGORIES = [
         desc: "Dokumen Masuk & Keluar",
         icon: FileText,
         isStartNew: true,
+        officerOrAdminOnly: true,
       },
       {
         id: "spk",
         label: "SPK (Perintah Kerja)",
         icon: FileCheck,
         isGroup: true,
+        officerOrAdminOnly: true,
         subItems: [
           { id: "spk_renovasi", label: "Renovasi", desc: "Pekerjaan Gedung" },
           { id: "spk_elektronik", label: "Elektronik", desc: "Perangkat IT" },
@@ -86,6 +88,7 @@ export const NAV_CATEGORIES = [
         label: "SOPP",
         icon: FileCheck,
         isGroup: true,
+        officerOrAdminOnly: true,
         subItems: [
           { id: "sopp_pengadaan", label: "Pengadaan", desc: "Belanja Barang" },
           { id: "sopp_sewa", label: "Sewa", desc: "Perjanjian Sewa" },

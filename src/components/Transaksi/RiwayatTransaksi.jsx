@@ -333,11 +333,34 @@ export default function RiwayatTransaksi({
     }
   };
 
-  const exportDataFormatted = filtered.map((t) => ({
-    ...t,
-    penerimaLengkap: `${t.penerimaNama || t.pihak2Nama || "-"} (${t.tujuan || t.outletTujuan || t.penerimaInstansi || "-"})`,
-    rincianBarangStr: (t.items || []).map((it) => `${it.namaBarang || it.nama || "Barang"} (${it.jumlah || it.kuantitas || 1} ${it.satuan || "Unit"})`).join(", "),
-  }));
+  // Export: satu baris per item barang agar mudah dibaca di Excel
+  const exportDataFormatted = filtered.flatMap((t) => {
+    const pengirimNama    = t.pengirimNama  || t.pihak1Nama  || "-";
+    const pengirimJabatan = t.pengirimJabatan || t.pihak1Jabatan || "-";
+    const penerimaNama    = t.penerimaNama  || t.pihak2Nama  || "-";
+    const penerimaJabatan = t.penerimaJabatan || t.pihak2Jabatan || "-";
+    const outletTujuan    = t.tujuan || t.outletTujuan || t.penerimaInstansi || "-";
+    const items           = t.items && t.items.length > 0 ? t.items : [{}];
+
+    return items.map((item, idx) => ({
+      nomorSurat:      idx === 0 ? (t.nomorSurat || "-") : "",   // hanya tulis di baris pertama
+      tanggal:         idx === 0 ? (t.tanggal    || "-") : "",
+      jenisTransaksi:  idx === 0 ? (t.jenisTransaksi || "-") : "",
+      lokasi:          idx === 0 ? (t.lokasi     || "-") : "",
+      pengirimNama:    idx === 0 ? pengirimNama       : "",
+      pengirimJabatan: idx === 0 ? pengirimJabatan    : "",
+      penerimaNama:    idx === 0 ? penerimaNama       : "",
+      penerimaJabatan: idx === 0 ? penerimaJabatan    : "",
+      outletTujuan:    idx === 0 ? outletTujuan        : "",
+      noItem:          idx + 1,
+      namaBarang:      item.namaBarang || item.nama || "-",
+      jumlah:          item.jumlah     || item.kuantitas || "",
+      satuan:          item.satuan     || "Unit",
+      sn:              item.sn         || "",
+      outletBarang:    item.outlet     || outletTujuan || "-",
+      keteranganBarang: item.keterangan || "",
+    }));
+  });
 
   return (
     <div className="max-w-7xl mx-auto p-6 animate-in fade-in duration-300">
@@ -370,16 +393,26 @@ export default function RiwayatTransaksi({
             data={exportDataFormatted}
             fileName="Riwayat_Transaksi_Logistik"
             headersMap={{
-              nomorSurat: "Nomor Surat",
-              tanggal: "Tanggal",
-              jenisTransaksi: "Jenis Transaksi",
-              pengirimNama: "Pengirim",
-              penerimaLengkap: "Penerima Barang / Tujuan",
-              rincianBarangStr: "Rincian Barang",
-              lokasi: "Lokasi",
+              nomorSurat:       "Nomor Surat",
+              tanggal:          "Tanggal",
+              jenisTransaksi:   "Jenis Transaksi",
+              lokasi:           "Lokasi",
+              pengirimNama:     "Nama Pengirim",
+              pengirimJabatan:  "Jabatan Pengirim",
+              penerimaNama:     "Nama Penerima",
+              penerimaJabatan:  "Jabatan Penerima",
+              outletTujuan:     "Outlet / Tujuan",
+              noItem:           "No",
+              namaBarang:       "Nama Barang",
+              jumlah:           "Jumlah",
+              satuan:           "Satuan",
+              sn:               "Serial Number",
+              outletBarang:     "Outlet Barang",
+              keteranganBarang: "Keterangan",
             }}
             showImport={false}
           />
+
         </div>
       </div>
 
@@ -554,7 +587,7 @@ export default function RiwayatTransaksi({
                                 <div key={oi} className="flex items-start gap-1.5">
                                   <MapPin className="w-3 h-3 text-emerald-500 dark:text-emerald-400 shrink-0 mt-0.5" />
                                   <div className="flex flex-col gap-0.5 min-w-0">
-                                    <span className="text-slate-700 dark:text-slate-300 font-medium text-[11px] leading-snug break-words">{ol}</span>
+                                    <span className="text-slate-700 dark:text-slate-300 font-medium text-[11px] leading-snug wrap-break-word">{ol}</span>
                                     {count > 1 && (
                                       <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400">{count} item</span>
                                     )}

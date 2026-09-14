@@ -64,7 +64,7 @@ const ExcelActionButtons = ({
           type="file"
           ref={fileInputRef}
           onChange={handleImportFileChange}
-          accept=".csv, .xlsx, .xls"
+          accept=".xlsx, .xls"
           className="hidden"
         />
       )}
@@ -75,7 +75,7 @@ const ExcelActionButtons = ({
           type="button"
           onClick={handleTemplateClick}
           className="p-2.5 bg-purple-600/20 hover:bg-purple-600/40 text-purple-300 border border-purple-500/30 rounded-xl transition-all shadow-sm hover:shadow-md cursor-pointer active:scale-95 flex items-center justify-center shrink-0"
-          title="Download Template Format Excel"
+          title="Download Template Excel (.xlsx)"
         >
           <FileText className="w-4 h-4" />
         </button>
@@ -88,7 +88,7 @@ const ExcelActionButtons = ({
           onClick={() => fileInputRef.current?.click()}
           disabled={isImporting}
           className="p-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl transition-all shadow-sm hover:shadow-md cursor-pointer active:scale-95 disabled:opacity-60 flex items-center justify-center shrink-0"
-          title="Import Data dari Excel / CSV"
+          title="Import Data dari Excel (.xlsx)"
         >
           {isImporting ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -104,7 +104,7 @@ const ExcelActionButtons = ({
           type="button"
           onClick={handleExportClick}
           className="p-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl transition-all shadow-sm hover:shadow-md cursor-pointer active:scale-95 flex items-center justify-center shrink-0"
-          title="Export Data ke Excel / CSV"
+          title="Export Data ke Excel (.xlsx)"
         >
           <Download className="w-4 h-4" />
         </button>

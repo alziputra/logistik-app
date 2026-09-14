@@ -7,7 +7,8 @@ import QrLabelModal from "../../Modal/QrLabelModal";
 import ConfirmDeleteModal from "../../Modal/ConfirmDeleteModal";
 import ToastNotif from "../../Modal/ToastNotif";
 import ExcelActionButtons from "../../Common/ExcelActionButtons";
-import { addLaptop, updateLaptop, deleteLaptop, importLaptopCSV } from "../../../services/laptopService";
+import { addLaptop, updateLaptop, deleteLaptop } from "../../../services/laptopService";
+
 import { useDeviceTableState } from "../../../hooks/useDeviceTableState";
 
 const DEFAULT_LAPTOP_FORM = {
@@ -135,7 +136,65 @@ export default function DataLaptop({ userRole = "admin", laptops = [], vendors =
         </div>
 
         {/* Excel Actions */}
-        <ExcelActionButtons data={laptops} filename="Data_Laptop_Pegadaian" onImportComplete={loadAllData} importHandler={importLaptopCSV} />
+        <ExcelActionButtons
+          data={laptops}
+          fileName="Data_Laptop_Pegadaian"
+          headersMap={{
+            nik: "NIK",
+            nama: "Nama Pegawai",
+            jabatan: "Jabatan",
+            departemen: "Departemen",
+            hostname: "Hostname",
+            sn: "Serial Number",
+            os: "OS",
+            vendor: "Vendor",
+            tanggalMulai: "Tanggal Mulai",
+            tanggalSelesai: "Tanggal Selesai",
+            status: "Status",
+            kondisi: "Kondisi",
+          }}
+          sampleRow={{
+            nik: "P80524",
+            nama: "NAMA PEGAWAI",
+            jabatan: "Kepala Departemen",
+            departemen: "Departemen Logistik & Umum",
+            hostname: "NB-00108-P80524",
+            sn: "5CG4222JJW",
+            os: "Windows",
+            vendor: "PT GLOBAL SOLUSINDO KOMPUDATA",
+            tanggalMulai: "2024-01-01",
+            tanggalSelesai: "2026-01-01",
+            status: "Sewa Berjalan",
+            kondisi: "BAIK",
+          }}
+          onImport={async (parsedRows) => {
+            if (!parsedRows || parsedRows.length === 0) return;
+            for (const row of parsedRows) {
+              const nik = row.nik || row["NIK"] || "";
+              const nama = row.nama || row["Nama Pegawai"] || "";
+              if (!nama) continue;
+              try {
+                await addLaptop({
+                  nik,
+                  nama,
+                  jabatan: row.jabatan || row["Jabatan"] || "",
+                  departemen: row.departemen || row["Departemen"] || "Departemen Logistik & Umum",
+                  hostname: row.hostname || row["Hostname"] || "",
+                  sn: row.sn || row["Serial Number"] || "",
+                  os: row.os || row["OS"] || "Windows",
+                  vendor: row.vendor || row["Vendor"] || "PT GLOBAL SOLUSINDO KOMPUDATA",
+                  tanggalMulai: row.tanggalMulai || row["Tanggal Mulai"] || "",
+                  tanggalSelesai: row.tanggalSelesai || row["Tanggal Selesai"] || "",
+                  status: row.status || row["Status"] || "Sewa Berjalan",
+                  kondisi: row.kondisi || row["Kondisi"] || "BAIK",
+                });
+              } catch (err) {
+                console.error("Import laptop row error:", err);
+              }
+            }
+            loadAllData();
+          }}
+        />
       </div>
 
       {/* LAPTOP TABLE CONTAINER */}

@@ -21,15 +21,34 @@ const DEFAULT_MASTER_VENDORS = [
 ];
 
 export default function KomputerModal({ isOpen, editingId, formData = {}, setFormData = () => {}, isSaving = false, outletsList = [], inventoryList = [], vendorsList = [], onClose = () => {}, onSave = () => {} }) {
-  const [tglMulai, setTglMulai] = useState(formData.tanggalMulai || formData.tanggal_mulai || "");
-  const [tglSelesai, setTglSelesai] = useState(formData.tanggalSelesai || formData.tanggal_selesai || "");
+  // Normalisasi berbagai format tanggal → "YYYY-MM-DD" yang dibutuhkan <input type="date">
+  const toDateInput = (val) => {
+    if (!val) return "";
+    // Firestore Timestamp object
+    if (typeof val?.toDate === "function") return val.toDate().toISOString().slice(0, 10);
+    // Firestore Timestamp {seconds, nanoseconds}
+    if (val?.seconds) return new Date(val.seconds * 1000).toISOString().slice(0, 10);
+    const str = String(val).trim();
+    // Sudah format YYYY-MM-DD
+    if (/^\d{4}-\d{2}-\d{2}/.test(str)) return str.slice(0, 10);
+    // Format DD/MM/YYYY atau DD-MM-YYYY
+    const dmy = str.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
+    if (dmy) return `${dmy[3]}-${dmy[2].padStart(2,"0")}-${dmy[1].padStart(2,"0")}`;
+    // Coba parse biasa
+    const parsed = new Date(str);
+    if (!isNaN(parsed)) return parsed.toISOString().slice(0, 10);
+    return "";
+  };
+
+  const [tglMulai, setTglMulai] = useState(() => toDateInput(formData.tanggalMulai || formData.tanggal_mulai));
+  const [tglSelesai, setTglSelesai] = useState(() => toDateInput(formData.tanggalSelesai || formData.tanggal_selesai));
 
   useEffect(() => {
     if (isOpen) {
-      setTglMulai(formData.tanggalMulai || formData.tanggal_mulai || "");
-      setTglSelesai(formData.tanggalSelesai || formData.tanggal_selesai || "");
+      setTglMulai(toDateInput(formData.tanggalMulai || formData.tanggal_mulai));
+      setTglSelesai(toDateInput(formData.tanggalSelesai || formData.tanggal_selesai));
     }
-  }, [isOpen, editingId]);
+  }, [isOpen, editingId, formData.tanggalMulai, formData.tanggal_mulai, formData.tanggalSelesai, formData.tanggal_selesai]);
 
   const { status, masaSewa } = useMemo(() => {
     return calculateLease(tglMulai, tglSelesai);
@@ -37,6 +56,31 @@ export default function KomputerModal({ isOpen, editingId, formData = {}, setFor
 
   const activeInventory = inventoryList.length > 0 ? inventoryList : DEFAULT_MASTER_COMPUTERS;
   const activeVendors = vendorsList.length > 0 ? vendorsList : DEFAULT_MASTER_VENDORS;
+
+  const handleSelectProduct = (item) => {
+    if (!item) return;
+    const name = item.nama || item.produk || "";
+    const spkNo = item.no_spk || item.no_pks || item.spkNo || "";
+    const vendorName = item.vendor_nama || item.vendor?.nama || (typeof item.vendor === "string" ? item.vendor : "");
+    const rawMulai = item.tanggal_mulai || item.tgl_mulai_sewa || item.tanggalMulai || item.tgl_mulai || item.tglMulai || "";
+    const rawSelesai = item.tanggal_selesai || item.tgl_selesai_sewa || item.tanggalSelesai || item.tgl_selesai || item.tglSelesai || "";
+    const parsedMulai = toDateInput(rawMulai);
+    const parsedSelesai = toDateInput(rawSelesai);
+
+    setFormData((p) => ({
+      ...p,
+      produk: name,
+      vendor: vendorName || p.vendor || "",
+      penyedia: vendorName || p.penyedia || "",
+      no_spk: spkNo || p.no_spk || "",
+      tanggalMulai: parsedMulai || p.tanggalMulai || "",
+      tanggal_mulai: parsedMulai || p.tanggal_mulai || "",
+      tanggalSelesai: parsedSelesai || p.tanggalSelesai || "",
+      tanggal_selesai: parsedSelesai || p.tanggal_selesai || "",
+    }));
+    if (parsedMulai) setTglMulai(parsedMulai);
+    if (parsedSelesai) setTglSelesai(parsedSelesai);
+  };
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
@@ -132,22 +176,18 @@ export default function KomputerModal({ isOpen, editingId, formData = {}, setFor
                     options={activeInventory}
                     disabled={isSaving}
                     placeholder="Pilih atau ketik produk model PC..."
-                    onChange={(val) => setFormData((p) => ({ ...p, produk: val }))}
+                    onChange={(val) => {
+                      const found = activeInventory.find(
+                        (i) => (i.nama || i.produk)?.toLowerCase() === val.toLowerCase()
+                      );
+                      if (found) {
+                        handleSelectProduct(found);
+                      } else {
+                        setFormData((p) => ({ ...p, produk: val }));
+                      }
+                    }}
                     onSelect={(item) => {
-                      const name = item.nama || item.produk;
-                      const spkNo = item.no_spk || item.no_pks || "";
-                      const vendorName = item.vendor_nama || item.vendor?.nama || (typeof item.vendor === "string" ? item.vendor : "");
-                      setFormData((p) => ({
-                        ...p,
-                        produk: name,
-                        vendor: vendorName || p.vendor,
-                        penyedia: vendorName || p.penyedia,
-                        no_spk: spkNo || p.no_spk,
-                        tanggalMulai: item.tgl_mulai_sewa || p.tanggalMulai,
-                        tanggalSelesai: item.tgl_selesai_sewa || p.tanggalSelesai,
-                      }));
-                      if (item.tgl_mulai_sewa) setTglMulai(item.tgl_mulai_sewa);
-                      if (item.tgl_selesai_sewa) setTglSelesai(item.tgl_selesai_sewa);
+                      handleSelectProduct(item);
                     }}
                     renderOption={(item) => {
                       const name = item.nama || item.produk;
@@ -183,12 +223,15 @@ export default function KomputerModal({ isOpen, editingId, formData = {}, setFor
                     className="sm:col-span-2"
                     inputClassName={inputCls}
                     labelClassName={labelCls}
-                    value={formData.penyedia || ""}
+                    value={formData.penyedia || formData.vendor || ""}
                     options={activeVendors}
                     disabled={isSaving}
                     placeholder="Pilih atau ketik vendor penyedia..."
-                    onChange={(val) => setFormData((p) => ({ ...p, penyedia: val }))}
-                    onSelect={(v) => setFormData((p) => ({ ...p, penyedia: v.nama_perusahaan || v.nama }))}
+                    onChange={(val) => setFormData((p) => ({ ...p, penyedia: val, vendor: val }))}
+                    onSelect={(v) => {
+                      const vName = v.nama_perusahaan || v.nama || "";
+                      setFormData((p) => ({ ...p, penyedia: vName, vendor: vName }));
+                    }}
                     renderOption={(v) => (
                       <div className="w-full text-left px-3 py-2 text-xs rounded-lg hover:bg-[#00753A]/30 hover:text-emerald-300 transition-colors flex items-center justify-between group">
                         <div>
@@ -206,12 +249,30 @@ export default function KomputerModal({ isOpen, editingId, formData = {}, setFor
 
                   <div>
                     <label className={labelCls}>Tgl Mulai Sewa</label>
-                    <input type="date" value={tglMulai} onChange={(e) => setTglMulai(e.target.value)} disabled={isSaving} className={inputCls} />
+                    <input
+                      type="date"
+                      value={tglMulai}
+                      onChange={(e) => {
+                        setTglMulai(e.target.value);
+                        setFormData((p) => ({ ...p, tanggalMulai: e.target.value, tanggal_mulai: e.target.value }));
+                      }}
+                      disabled={isSaving}
+                      className={inputCls}
+                    />
                   </div>
 
                   <div>
                     <label className={labelCls}>Tgl Selesai Sewa</label>
-                    <input type="date" value={tglSelesai} onChange={(e) => setTglSelesai(e.target.value)} disabled={isSaving} className={inputCls} />
+                    <input
+                      type="date"
+                      value={tglSelesai}
+                      onChange={(e) => {
+                        setTglSelesai(e.target.value);
+                        setFormData((p) => ({ ...p, tanggalSelesai: e.target.value, tanggal_selesai: e.target.value }));
+                      }}
+                      disabled={isSaving}
+                      className={inputCls}
+                    />
                   </div>
 
                   <div>

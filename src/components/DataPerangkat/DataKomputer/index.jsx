@@ -96,26 +96,66 @@ export default function DataKomputer({
             data={filteredData}
             fileName="Data_Komputer_Pegadaian"
             headersMap={{
+              outlet: "Outlet / Unit Kerja",
+              idOutlet: "ID Outlet",
+              kondisi: "Kondisi Hardware",
               produk: "Model / Perangkat",
               sn: "Serial Number",
-              outlet: "Outlet / Unit Kerja",
-              ipAddress: "IP Address",
+              penyedia: "Vendor / Penyedia",
+              tanggalMulai: "Tgl Mulai Sewa",
+              tanggalSelesai: "Tgl Selesai Sewa",
               status: "Status",
+              ipAddress: "IP Address",
+              macAddress: "MAC Address",
+              cpu: "Processor (CPU)",
+              ram: "RAM",
+              storage: "Storage / Harddisk",
+              os: "Operating System",
+              keterangan: "Keterangan",
+            }}
+            sampleRow={{
+              outlet: "CP PONDOK MELATI",
+              idOutlet: "12425",
+              kondisi: "BAIK",
+              produk: "Dell Optiplex SFF 7010",
+              sn: "5CG4222JJW",
+              penyedia: "PT GALASOLUSI DINAMINDO KREATIFDATA",
+              tanggalMulai: "2024-01-10",
+              tanggalSelesai: "2027-01-10",
+              status: "Sewa Berjalan",
+              ipAddress: "10.81.135.63",
+              macAddress: "4c:d7:17:9e:24:b4",
+              cpu: "13th Gen Intel(R) Core(TM) i5-13600",
+              ram: "7 GB",
+              storage: "503GB",
+              os: "Ubuntu Pegadaian V.22 Build 2024.11.01",
+              keterangan: "",
             }}
             onImport={async (parsedRows) => {
               if (!parsedRows || parsedRows.length === 0) return;
               let count = 0;
               for (const row of parsedRows) {
-                const produk = row.produk || row["Model / Perangkat"] || row["produk"];
-                const sn = row.sn || row["Serial Number"] || row["sn"];
-                if (!produk || !sn) continue;
+                const produk = row.produk || row["Model / Perangkat"] || "";
+                const sn = row.sn || row["Serial Number"] || "";
+                if (!produk && !sn) continue;
                 try {
                   await addKomputer({
+                    outlet: row.outlet || row["Outlet / Unit Kerja"] || "",
+                    idOutlet: row.idOutlet || row["ID Outlet"] || "",
+                    kondisi: row.kondisi || row["Kondisi Hardware"] || "BAIK",
                     produk,
                     sn,
-                    outlet: row.outlet || row["Outlet / Unit Kerja"] || "-",
-                    ipAddress: row.ipAddress || row["IP Address"] || "-",
-                    status: row.status || row["Status"] || "Aktif",
+                    penyedia: row.penyedia || row["Vendor / Penyedia"] || "",
+                    tanggalMulai: row.tanggalMulai || row["Tgl Mulai Sewa"] || "",
+                    tanggalSelesai: row.tanggalSelesai || row["Tgl Selesai Sewa"] || "",
+                    status: row.status || row["Status"] || "Sewa Berjalan",
+                    ipAddress: row.ipAddress || row["IP Address"] || "",
+                    macAddress: row.macAddress || row["MAC Address"] || "",
+                    cpu: row.cpu || row["Processor (CPU)"] || "",
+                    ram: row.ram || row["RAM"] || "",
+                    storage: row.storage || row["Storage / Harddisk"] || "",
+                    os: row.os || row["Operating System"] || "",
+                    keterangan: row.keterangan || row["Keterangan"] || "",
                   });
                   count++;
                 } catch (err) {
@@ -126,6 +166,7 @@ export default function DataKomputer({
               if (loadAllData) loadAllData();
             }}
           />
+
           {(userRole === "admin" || userRole === "officer" || userRole === "user") && (
             <button onClick={() => openAddModal({})} className="flex items-center gap-2 bg-[#00753A] hover:bg-[#006030] text-white px-4 py-2.5 rounded-xl font-semibold shadow-sm transition-colors text-sm cursor-pointer">
               <Plus className="w-4 h-4" /> Tambah Komputer

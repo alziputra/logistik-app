@@ -84,13 +84,21 @@ export default function KomputerModal({ isOpen, editingId, formData = {}, setFor
 
   const handleFormSubmit = (e) => {
     e.preventDefault();
+    const now = new Date();
+    const todayStr = now.toISOString().slice(0, 10);
+    const timeStr = now.toTimeString().slice(0, 8);
+    const v = formData.penyedia || formData.vendor || "";
     setFormData((prev) => ({
       ...prev,
+      penyedia: v,
+      vendor: v,
       tanggalMulai: tglMulai,
       tanggal_mulai: tglMulai,
       tanggalSelesai: tglSelesai,
       tanggal_selesai: tglSelesai,
       status: status,
+      lastUpdate: prev.lastUpdate || todayStr,
+      timeUpdate: prev.timeUpdate || timeStr,
     }));
     if (onSave) onSave(e);
   };
@@ -100,6 +108,15 @@ export default function KomputerModal({ isOpen, editingId, formData = {}, setFor
   const inputCls = "w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-slate-100 outline-none focus:border-emerald-500 placeholder:text-slate-500 transition-colors";
   const inputPurple = "w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-slate-100 outline-none focus:border-purple-500 placeholder:text-slate-500 transition-colors";
   const labelCls = "block text-[11px] font-semibold text-slate-300 mb-1";
+
+  const setCurrentTimestamp = () => {
+    const now = new Date();
+    setFormData((p) => ({
+      ...p,
+      lastUpdate: now.toISOString().slice(0, 10),
+      timeUpdate: now.toTimeString().slice(0, 8),
+    }));
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
@@ -152,8 +169,34 @@ export default function KomputerModal({ isOpen, editingId, formData = {}, setFor
 
                   {/* ID Outlet */}
                   <div>
-                    <label className={labelCls}>ID Outlet (Kode)</label>
+                    <label className={labelCls}>Outlet Id (Kode)</label>
                     <input type="text" readOnly value={formData.idOutlet || ""} className={`${inputCls} bg-slate-950 text-slate-400 cursor-not-allowed`} placeholder="Otomatis" />
+                  </div>
+
+                  {/* Username */}
+                  <div>
+                    <label className={labelCls}>Username</label>
+                    <input
+                      type="text"
+                      value={formData.username || ""}
+                      onChange={(e) => setFormData((p) => ({ ...p, username: e.target.value }))}
+                      disabled={isSaving}
+                      className={`${inputCls} font-mono`}
+                      placeholder="pegadaian..."
+                    />
+                  </div>
+
+                  {/* Hostname */}
+                  <div>
+                    <label className={labelCls}>Hostname</label>
+                    <input
+                      type="text"
+                      value={formData.hostname || ""}
+                      onChange={(e) => setFormData((p) => ({ ...p, hostname: e.target.value }))}
+                      disabled={isSaving}
+                      className={`${inputCls} font-mono`}
+                      placeholder="pc-12473-2.pegadaiann.co.id..."
+                    />
                   </div>
 
                   {/* Kondisi Hardware */}
@@ -168,14 +211,14 @@ export default function KomputerModal({ isOpen, editingId, formData = {}, setFor
 
                   {/* Produk / Model PC */}
                   <SearchableSelect
-                    label="Produk / Model PC"
+                    label="Product Hardware / Model"
                     className="sm:col-span-2"
                     inputClassName={inputCls}
                     labelClassName={labelCls}
                     value={formData.produk || ""}
                     options={activeInventory}
                     disabled={isSaving}
-                    placeholder="Pilih atau ketik produk model PC..."
+                    placeholder="Pilih atau ketik model PC..."
                     onChange={(val) => {
                       const found = activeInventory.find(
                         (i) => (i.nama || i.produk)?.toLowerCase() === val.toLowerCase()
@@ -210,13 +253,26 @@ export default function KomputerModal({ isOpen, editingId, formData = {}, setFor
                   {/* Serial Number */}
                   <div className="sm:col-span-2">
                     <label className={labelCls}>Serial Number (S/N)</label>
-                    <input required type="text" value={formData.sn || ""} onChange={(e) => setFormData((p) => ({ ...p, sn: e.target.value }))} disabled={isSaving} className={`${inputCls} font-mono`} placeholder="Ketik Serial Number..." />
+                    <input required type="text" value={formData.sn || ""} onChange={(e) => setFormData((p) => ({ ...p, sn: e.target.value }))} disabled={isSaving} className={`${inputCls} font-mono`} placeholder="8V63PD4..." />
                   </div>
                 </div>
 
                 <h4 className="font-bold text-xs text-emerald-400 border-b border-slate-800 pb-2 pt-2 uppercase tracking-wider">Vendor & Masa Kontrak</h4>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* SPK */}
+                  <div className="sm:col-span-2">
+                    <label className={labelCls}>Nomor SPK / Kontrak</label>
+                    <input
+                      type="text"
+                      value={formData.no_spk || ""}
+                      onChange={(e) => setFormData((p) => ({ ...p, no_spk: e.target.value }))}
+                      disabled={isSaving}
+                      className={`${inputCls} font-mono`}
+                      placeholder="642/00108.04/2026..."
+                    />
+                  </div>
+
                   {/* Penyedia / Vendor */}
                   <SearchableSelect
                     label="Penyedia / Vendor"
@@ -248,7 +304,7 @@ export default function KomputerModal({ isOpen, editingId, formData = {}, setFor
                   />
 
                   <div>
-                    <label className={labelCls}>Tgl Mulai Sewa</label>
+                    <label className={labelCls}>Awal Sewa (Tgl Mulai)</label>
                     <input
                       type="date"
                       value={tglMulai}
@@ -262,7 +318,7 @@ export default function KomputerModal({ isOpen, editingId, formData = {}, setFor
                   </div>
 
                   <div>
-                    <label className={labelCls}>Tgl Selesai Sewa</label>
+                    <label className={labelCls}>Akhir Sewa (Tgl Selesai)</label>
                     <input
                       type="date"
                       value={tglSelesai}
@@ -287,64 +343,89 @@ export default function KomputerModal({ isOpen, editingId, formData = {}, setFor
                 </div>
               </div>
 
-              {/* KOLOM KANAN: Jaringan & Spesifikasi */}
+              {/* KOLOM KANAN: Jaringan, Spesifikasi & Update */}
               <div className="space-y-4 bg-slate-950/60 p-4 rounded-xl border border-slate-800">
-                <h4 className="font-bold text-xs text-purple-400 border-b border-slate-800 pb-2 uppercase tracking-wider">Jaringan & Spesifikasi Teknis</h4>
+                <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                  <h4 className="font-bold text-xs text-purple-400 uppercase tracking-wider">Jaringan & Spesifikasi Teknis</h4>
+                  <button
+                    type="button"
+                    onClick={setCurrentTimestamp}
+                    className="text-[10px] px-2 py-0.5 rounded bg-purple-950 hover:bg-purple-900 text-purple-300 border border-purple-800/80 transition-colors cursor-pointer"
+                    title="Set Last Update dan Time Update ke waktu sekarang"
+                  >
+                    Update Waktu Sekarang
+                  </button>
+                </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className={labelCls}>IP Address</label>
+                    <label className={labelCls}>Ip Address</label>
                     <input
                       type="text"
                       value={formData.ipAddress || ""}
                       onChange={(e) => setFormData((p) => ({ ...p, ipAddress: e.target.value }))}
                       disabled={isSaving}
                       className={`${inputPurple} font-mono text-emerald-400`}
-                      placeholder="10.81.58.23"
+                      placeholder="10.81.182.30"
                     />
                   </div>
 
                   <div>
-                    <label className={labelCls}>MAC Address</label>
+                    <label className={labelCls}>Mac Address</label>
                     <input
                       type="text"
                       value={formData.macAddress || ""}
                       onChange={(e) => setFormData((p) => ({ ...p, macAddress: e.target.value }))}
                       disabled={isSaving}
                       className={`${inputPurple} font-mono`}
-                      placeholder="cc:96:e5:3f:af:e8"
+                      placeholder="d4:a2:cd:a4:94:e0"
                     />
                   </div>
 
                   <div className="sm:col-span-2">
-                    <label className={labelCls}>Processor (CPU)</label>
-                    <input type="text" value={formData.cpu || ""} onChange={(e) => setFormData((p) => ({ ...p, cpu: e.target.value }))} disabled={isSaving} className={inputPurple} placeholder="Intel Core i5-13600..." />
+                    <label className={labelCls}>CPU (Processor)</label>
+                    <input type="text" value={formData.cpu || ""} onChange={(e) => setFormData((p) => ({ ...p, cpu: e.target.value }))} disabled={isSaving} className={inputPurple} placeholder="Intel(R) Core(TM) i5-14600..." />
                   </div>
 
                   <div>
-                    <label className={labelCls}>Kapasitas RAM</label>
-                    <input type="text" value={formData.ram || ""} onChange={(e) => setFormData((p) => ({ ...p, ram: e.target.value }))} disabled={isSaving} className={inputPurple} placeholder="16 GB" />
+                    <label className={labelCls}>Physical Memory (RAM)</label>
+                    <input type="text" value={formData.ram || ""} onChange={(e) => setFormData((p) => ({ ...p, ram: e.target.value }))} disabled={isSaving} className={inputPurple} placeholder="7 GB" />
                   </div>
 
                   <div>
-                    <label className={labelCls}>Storage / Harddisk</label>
-                    <input type="text" value={formData.storage || ""} onChange={(e) => setFormData((p) => ({ ...p, storage: e.target.value }))} disabled={isSaving} className={inputPurple} placeholder="512GB SSD" />
+                    <label className={labelCls}>Physical Disk (Storage)</label>
+                    <input type="text" value={formData.storage || ""} onChange={(e) => setFormData((p) => ({ ...p, storage: e.target.value }))} disabled={isSaving} className={inputPurple} placeholder="503GB" />
                   </div>
 
-                  <div className="sm:col-span-2">
-                    <label className={labelCls}>Operating System (OS)</label>
-                    <input type="text" value={formData.os || ""} onChange={(e) => setFormData((p) => ({ ...p, os: e.target.value }))} disabled={isSaving} className={inputPurple} placeholder="Ubuntu Pegadaian V.22 / Windows 11" />
+                  <div>
+                    <label className={labelCls}>OS Name</label>
+                    <input type="text" value={formData.os || ""} onChange={(e) => setFormData((p) => ({ ...p, os: e.target.value }))} disabled={isSaving} className={inputPurple} placeholder="Ubuntu 22.04 Build 2025.11.11" />
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>OS Version</label>
+                    <input type="text" value={formData.osVersion || ""} onChange={(e) => setFormData((p) => ({ ...p, osVersion: e.target.value }))} disabled={isSaving} className={inputPurple} placeholder="22.04" />
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>Last Update</label>
+                    <input type="date" value={formData.lastUpdate || ""} onChange={(e) => setFormData((p) => ({ ...p, lastUpdate: e.target.value }))} disabled={isSaving} className={inputPurple} />
+                  </div>
+
+                  <div>
+                    <label className={labelCls}>Time Update</label>
+                    <input type="text" value={formData.timeUpdate || ""} onChange={(e) => setFormData((p) => ({ ...p, timeUpdate: e.target.value }))} disabled={isSaving} className={`${inputPurple} font-mono`} placeholder="17:40:09" />
                   </div>
 
                   <div className="sm:col-span-2">
                     <label className={labelCls}>Keterangan / Catatan Tambahan</label>
                     <textarea
-                      rows={3}
+                      rows={2}
                       value={formData.keterangan || ""}
                       onChange={(e) => setFormData((p) => ({ ...p, keterangan: e.target.value }))}
                       disabled={isSaving}
                       className={`${inputPurple} resize-none`}
-                      placeholder="Catatan kondisi atau kerusakan jika ada..."
+                      placeholder="Catatan kondisi atau keterangan tambahan..."
                     />
                   </div>
                 </div>

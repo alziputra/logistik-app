@@ -1,5 +1,5 @@
 import { db } from "../config/firebase";
-import { collection, getDocs, addDoc, setDoc, deleteDoc, doc, query } from "firebase/firestore";
+import { collection, getDocs, addDoc, setDoc, deleteDoc, doc, query, writeBatch } from "firebase/firestore";
 
 /**
  * Direct Firebase Firestore SDK Operations Helper
@@ -91,8 +91,45 @@ export const deleteDocumentData = async (primaryPath, id) => {
   }
 };
 
+export const batchUpsertDocuments = async (primaryPath, items) => {
+  if (!items || items.length === 0) return 0;
+  const BATCH_SIZE = 400;
+  const now = new Date().toISOString();
+  let totalCommitted = 0;
+
+  for (let i = 0; i < items.length; i += BATCH_SIZE) {
+    const chunk = items.slice(i, i + BATCH_SIZE);
+    const batch = writeBatch(db);
+
+    for (const item of chunk) {
+      if (item.isNew || !item.id) {
+        const colRef = getColRef(primaryPath);
+        const newDocRef = doc(colRef);
+        batch.set(newDocRef, {
+          created_at: now,
+          createdAt: now,
+          updated_at: now,
+          updatedAt: now,
+          ...item.data,
+        });
+      } else {
+        const docRef = getDocRef(primaryPath, item.id);
+        batch.set(docRef, {
+          updated_at: now,
+          updatedAt: now,
+          ...item.data,
+        }, { merge: true });
+      }
+    }
+
+    await batch.commit();
+    totalCommitted += chunk.length;
+  }
+  return totalCommitted;
+};
+
 export const importCollectionCSV = async (addFn, rows) => {
-  if (!rows || rows.length === 0) throw new Error("File CSV kosong");
+  if (!rows || rows.length === 0) throw new Error("File kosong");
   const added = [];
   for (const row of rows) {
     const res = await addFn(row);
@@ -100,3 +137,4 @@ export const importCollectionCSV = async (addFn, rows) => {
   }
   return { success: true, count: added.length, items: added };
 };
+
